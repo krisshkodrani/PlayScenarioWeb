@@ -108,13 +108,13 @@ const PersonalityFramework: React.FC<PersonalityFrameworkProps> = ({ data, onCha
                   <p className="text-xs text-muted-foreground mt-1">{trait.description}</p>
                 </div>
                 <span className="text-sm font-mono bg-muted px-2 py-1 rounded">
-                  {data[key as keyof typeof data] || 5}
+                  {(data[key as keyof typeof data] as number) || 5}
                 </span>
               </div>
               
               <div className="space-y-2">
                 <Slider
-                  value={[data[key as keyof typeof data] || 5]}
+                  value={[(data[key as keyof typeof data] as number) || 5]}
                   onValueChange={(value) => handleTraitChange(key, value)}
                   min={1}
                   max={10}

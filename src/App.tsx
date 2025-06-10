@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import GameplayDemo from "./pages/GameplayDemo";
 import BrowseScenarios from "./pages/BrowseScenarios";
 import CharacterCreation from "./pages/CharacterCreation";
+import ScenarioCreation from "./pages/ScenarioCreation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/demo" element={<GameplayDemo />} />
           <Route path="/browse" element={<BrowseScenarios />} />
           <Route path="/create-character" element={<CharacterCreation />} />
+          <Route path="/create-scenario" element={<ScenarioCreation />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

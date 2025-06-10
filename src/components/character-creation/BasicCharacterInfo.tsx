@@ -96,7 +96,7 @@ const BasicCharacterInfo: React.FC<BasicCharacterInfoProps> = ({ data, onChange 
               <div className="flex items-center justify-between mb-1">
                 <h4 className="font-medium text-sm">{role.name}</h4>
                 {(data.role || []).includes(role.id) && (
-                  <Badge variant="secondary" size="sm">Selected</Badge>
+                  <Badge variant="secondary">Selected</Badge>
                 )}
               </div>
               <p className="text-xs text-muted-foreground">{role.description}</p>
