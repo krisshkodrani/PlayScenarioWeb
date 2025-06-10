@@ -1,94 +1,75 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
+/* PlayScenarioAI Design System - Dark Sci-Fi Theme */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Dark sci-fi color palette */
+    --background: 222 84% 4.9%; /* #0F172A - Deep space background */
+    --foreground: 210 40% 98%; /* #FFFFFF - Primary text */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 217 32% 17%; /* #1E293B - Surface containers */
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 217 32% 17%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Neon cyan primary - futuristic accent */
+    --primary: 188 96% 53%; /* #22D3EE - Electric cyan */
+    --primary-foreground: 222 84% 4.9%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Purple secondary accent */
+    --secondary: 258 90% 66%; /* #8B5CF6 - Violet */
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 215 28% 17%;
+    --muted-foreground: 217 11% 65%; /* #CBD5E1 - Secondary text */
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Golden amber accent for critical elements */
+    --accent: 45 97% 54%; /* #FACC15 - Amber gold */
+    --accent-foreground: 222 84% 4.9%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84% 60%; /* #EF4444 - Error red */
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 215 28% 17%;
+    --input: 217 33% 23%; /* #374151 - Input backgrounds */
+    --ring: 188 96% 53%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem; /* Slightly larger radius for futuristic feel */
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Supporting colors for the sci-fi theme */
+    --success: 142 76% 36%; /* #10B981 - Success green */
+    --warning: 38 92% 50%; /* #F59E0B - Warning orange */
+    --info: 199 89% 48%; /* #0EA5E9 - Info blue */
+    --surface-dark: 217 33% 23%; /* #374151 - Darker surfaces */
+    --surface-light: 215 20% 65%; /* #64748B - Supporting text */
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    /* Dark theme is our primary theme */
+    --background: 222 84% 4.9%;
     --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
+    --card: 217 32% 17%;
     --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
+    --popover: 217 32% 17%;
     --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
+    --primary: 188 96% 53%;
+    --primary-foreground: 222 84% 4.9%;
+    --secondary: 258 90% 66%;
     --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
+    --muted: 215 28% 17%;
+    --muted-foreground: 217 11% 65%;
+    --accent: 45 97% 54%;
+    --accent-foreground: 222 84% 4.9%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 215 28% 17%;
+    --input: 217 33% 23%;
+    --ring: 188 96% 53%;
   }
 }
 
@@ -98,6 +79,135 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    /* Subtle grid background for sci-fi feel */
+    background-image: 
+      linear-gradient(rgba(34, 211, 238, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34, 211, 238, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+
+  /* Futuristic scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary/50 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary/70;
+  }
+}
+
+@layer components {
+  /* Futuristic glowing effects */
+  .glow-primary {
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 15px rgba(250, 204, 21, 0.4);
+  }
+
+  .glow-secondary {
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+  }
+
+  /* Holographic border effect */
+  .holo-border {
+    position: relative;
+    border: 1px solid transparent;
+    background: linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
+                linear-gradient(45deg, hsl(var(--primary)), hsl(var(--secondary)), hsl(var(--accent))) border-box;
+  }
+
+  /* Animated background for special elements */
+  .circuit-bg {
+    background-image: 
+      radial-gradient(circle at 1px 1px, rgba(34, 211, 238, 0.15) 1px, transparent 0);
+    background-size: 20px 20px;
+    animation: circuit-pulse 4s ease-in-out infinite;
+  }
+
+  @keyframes circuit-pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.8; }
+  }
+
+  /* Chat bubble animations */
+  .message-enter {
+    animation: messageSlideIn 0.3s ease-out;
+  }
+
+  @keyframes messageSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  /* Typing indicator animation */
+  .typing-dots {
+    animation: typingPulse 1.5s infinite;
+  }
+
+  @keyframes typingPulse {
+    0%, 60%, 100% { opacity: 0.3; }
+    30% { opacity: 1; }
+  }
+
+  /* Objective panel highlight */
+  .objective-highlight {
+    background: linear-gradient(90deg, 
+      rgba(250, 204, 21, 0.1) 0%, 
+      rgba(250, 204, 21, 0.2) 50%, 
+      rgba(250, 204, 21, 0.1) 100%);
+    border-left: 3px solid hsl(var(--accent));
+  }
+
+  /* NPC avatar selection states */
+  .npc-avatar {
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+  }
+
+  .npc-avatar:hover {
+    border-color: hsl(var(--primary));
+    transform: scale(1.05);
+  }
+
+  .npc-avatar.active {
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 15px rgba(34, 211, 238, 0.5);
+  }
+
+  /* Credit meter styling */
+  .credit-meter {
+    background: linear-gradient(90deg, 
+      hsl(var(--primary)) 0%, 
+      hsl(var(--secondary)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Resource warning states */
+  .resource-warning {
+    animation: resourcePulse 2s ease-in-out infinite;
+  }
+
+  @keyframes resourcePulse {
+    0%, 100% { color: hsl(var(--accent)); }
+    50% { color: hsl(var(--destructive)); }
   }
 }
