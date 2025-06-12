@@ -46,10 +46,10 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({
     'Advanced': 'bg-red-500/20 text-red-400 border-red-500'
   };
 
-  // Mock status based on play count for demo
+  // Determine status based on database fields
   const getStatus = () => {
-    if (scenario.play_count > 0) return 'published';
-    return Math.random() > 0.5 ? 'draft' : 'private';
+    if (scenario.is_public) return 'published';
+    return 'private';
   };
 
   const status = getStatus();
