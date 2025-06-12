@@ -61,7 +61,8 @@ export const MOCK_SCENARIOS: Scenario[] = [
     average_rating: 4.8,
     tags: ['impossible-scenario', 'moral-dilemma', 'leadership', 'star-trek'],
     is_liked: false,
-    is_bookmarked: true
+    is_bookmarked: true,
+    is_public: true
   },
   {
     id: 'paperclip-maximizer',
@@ -131,7 +132,8 @@ export const MOCK_SCENARIOS: Scenario[] = [
     average_rating: 4.9,
     tags: ['ai-alignment', 'optimization', 'safety', 'existential-risk'],
     is_liked: true,
-    is_bookmarked: false
+    is_bookmarked: false,
+    is_public: true
   },
   {
     id: 'corporate-data-breach',
@@ -215,7 +217,8 @@ export const MOCK_SCENARIOS: Scenario[] = [
     average_rating: 4.6,
     tags: ['cybersecurity', 'crisis-management', 'compliance', 'leadership'],
     is_liked: false,
-    is_bookmarked: true
+    is_bookmarked: true,
+    is_public: true
   },
   {
     id: 'startup-funding-crisis',
@@ -277,7 +280,8 @@ export const MOCK_SCENARIOS: Scenario[] = [
     average_rating: 4.4,
     tags: ['startup', 'funding', 'negotiation', 'leadership'],
     is_liked: true,
-    is_bookmarked: false
+    is_bookmarked: false,
+    is_public: false
   },
   {
     id: 'diplomatic-hostage-crisis',
@@ -353,7 +357,8 @@ export const MOCK_SCENARIOS: Scenario[] = [
     average_rating: 4.7,
     tags: ['diplomacy', 'hostage-negotiation', 'international-crisis', 'security'],
     is_liked: false,
-    is_bookmarked: false
+    is_bookmarked: false,
+    is_public: true
   },
   {
     id: 'medical-ethics-dilemma',
@@ -429,7 +434,8 @@ export const MOCK_SCENARIOS: Scenario[] = [
     average_rating: 4.5,
     tags: ['medical-ethics', 'healthcare', 'family-dynamics', 'legal-compliance'],
     is_liked: true,
-    is_bookmarked: true
+    is_bookmarked: true,
+    is_public: false
   },
   {
     id: 'climate-summit-negotiation',
@@ -513,6 +519,7 @@ export const MOCK_SCENARIOS: Scenario[] = [
     average_rating: 4.8,
     tags: ['climate-change', 'international-negotiation', 'diplomacy', 'environmental-policy'],
     is_liked: false,
-    is_bookmarked: true
+    is_bookmarked: true,
+    is_public: true
   }
 ];

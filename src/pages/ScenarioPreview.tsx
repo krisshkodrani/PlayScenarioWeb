@@ -79,7 +79,8 @@ const ScenarioPreview: React.FC = () => {
         average_rating: 4.6,
         tags: ["crisis-management", "leadership", "communication", "business"],
         is_liked: false,
-        is_bookmarked: false
+        is_bookmarked: false,
+        is_public: true
       };
 
       const mockCharacters: Character[] = [
