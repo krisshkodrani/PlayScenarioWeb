@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import BrowseScenarios from "./pages/BrowseScenarios";
 import CharacterCreation from "./pages/CharacterCreation";
 import ScenarioCreation from "./pages/ScenarioCreation";
+import ScenarioPreview from "./pages/ScenarioPreview";
 import CoreChatPage from "./pages/CoreChatPage";
 import NotFound from "./pages/NotFound";
 
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/browse" element={<BrowseScenarios />} />
           <Route path="/create-character" element={<CharacterCreation />} />
           <Route path="/create-scenario" element={<ScenarioCreation />} />
+          <Route path="/scenario/:id" element={<ScenarioPreview />} />
           <Route path="/core-chat" element={<CoreChatPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
