@@ -1,17 +1,11 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Save, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ScenarioData } from '@/types/scenario';
-import SimplifiedBasicInfo from './scenario-creation/SimplifiedBasicInfo';
-import SimplifiedObjectives from './scenario-creation/SimplifiedObjectives';
-import SimplifiedCharacters from './scenario-creation/SimplifiedCharacters';
-import SimplifiedSettings from './scenario-creation/SimplifiedSettings';
+import ScenarioProgressHeader from './scenario-creation/ScenarioProgressHeader';
+import ScenarioFormTabs from './scenario-creation/ScenarioFormTabs';
+import ScenarioSidebar from './scenario-creation/ScenarioSidebar';
+import CreationTips from './scenario-creation/CreationTips';
 
 const defaultScenarioData: ScenarioData = {
   title: '',
@@ -47,13 +41,6 @@ const ScenarioCreationForm: React.FC = () => {
     const completedFields = requiredFields.filter(Boolean).length;
     return (completedFields / requiredFields.length) * 100;
   };
-
-  const tabs = [
-    { id: 'basic', label: 'Basic Info', component: SimplifiedBasicInfo },
-    { id: 'objectives', label: 'Objectives', component: SimplifiedObjectives },
-    { id: 'characters', label: 'Characters', component: SimplifiedCharacters },
-    { id: 'settings', label: 'Settings', component: SimplifiedSettings }
-  ];
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -124,126 +111,27 @@ const ScenarioCreationForm: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold">Create Scenario</h1>
-              <p className="text-slate-400 mt-1">
-                Design an interactive AI scenario for training or entertainment
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant={isComplete ? "default" : "secondary"} className="bg-cyan-500">
-                {isComplete ? "Ready to Publish" : "In Development"}
-              </Badge>
-            </div>
-          </div>
-          
-          <Card className="bg-slate-800 border-slate-700">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-sm text-slate-400">Creation Progress</span>
-                <span className="text-sm text-cyan-400 font-medium">{Math.round(progress)}% Complete</span>
-              </div>
-              <Progress value={progress} className="h-2" />
-              <div className="flex justify-between text-xs text-slate-500 mt-2">
-                <span>Basic Info</span>
-                <span>Objectives</span>
-                <span>Characters</span>
-                <span>Settings</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <ScenarioProgressHeader progress={progress} isComplete={isComplete} />
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-3">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid grid-cols-2 lg:grid-cols-4 bg-slate-800 p-1">
-                {tabs.map((tab) => (
-                  <TabsTrigger
-                    key={tab.id}
-                    value={tab.id}
-                    className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white text-xs"
-                  >
-                    {tab.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
-              {tabs.map((tab) => {
-                const Component = tab.component;
-                return (
-                  <TabsContent key={tab.id} value={tab.id}>
-                    <Component data={scenarioData} onChange={updateScenarioData} />
-                  </TabsContent>
-                );
-              })}
-            </Tabs>
+            <ScenarioFormTabs
+              scenarioData={scenarioData}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              onDataChange={updateScenarioData}
+            />
           </div>
 
           <div className="space-y-6">
-            <Card className="bg-slate-800 border-slate-700 sticky top-8">
-              <CardHeader>
-                <CardTitle className="text-sm text-slate-400">Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button 
-                  onClick={handleSave} 
-                  variant="outline" 
-                  className="w-full border-slate-600 text-slate-300 hover:text-white hover:border-slate-500"
-                  disabled={isLoading}
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {isLoading ? 'Saving...' : 'Save Draft'}
-                </Button>
-                <Button 
-                  onClick={handlePublish} 
-                  className="w-full bg-cyan-500 hover:bg-cyan-600"
-                  disabled={!isComplete || isLoading}
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  {isLoading ? 'Publishing...' : isComplete ? 'Publish Scenario' : 'Complete Required Fields'}
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-sm text-slate-400">Scenario Stats</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Characters:</span>
-                  <span className="text-cyan-400">{scenarioData.characters.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Objectives:</span>
-                  <span className="text-cyan-400">{scenarioData.objectives.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Max Turns:</span>
-                  <span className="text-cyan-400">{scenarioData.max_turns}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Visibility:</span>
-                  <span className="text-cyan-400">{scenarioData.is_public ? 'Public' : 'Private'}</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-sm text-slate-400">Creation Tips</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-slate-300 space-y-2">
-                <p>• Start with clear objectives that guide the experience</p>
-                <p>• Create characters with distinct personalities and expertise</p>
-                <p>• Write an engaging initial scene prompt</p>
-                <p>• Define clear win and lose conditions</p>
-                <p>• Test your scenario before publishing</p>
-              </CardContent>
-            </Card>
+            <ScenarioSidebar
+              scenarioData={scenarioData}
+              isComplete={isComplete}
+              isLoading={isLoading}
+              onSave={handleSave}
+              onPublish={handlePublish}
+            />
+            <CreationTips />
           </div>
         </div>
       </div>
