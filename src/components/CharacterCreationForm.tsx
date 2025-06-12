@@ -103,7 +103,7 @@ const CharacterCreationForm = () => {
               Save Character
             </Button>
           </div>
-          <SimplifiedPreview data={characterData} />
+          <SimplifiedPreview characterData={characterData} />
         </div>
       </div>
     );
