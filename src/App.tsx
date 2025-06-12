@@ -5,8 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import GameplayDemo from "./pages/GameplayDemo";
-import Gameplay from "./pages/Gameplay";
 import BrowseScenarios from "./pages/BrowseScenarios";
 import CharacterCreation from "./pages/CharacterCreation";
 import ScenarioCreation from "./pages/ScenarioCreation";
@@ -23,8 +21,6 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/demo" element={<GameplayDemo />} />
-          <Route path="/gameplay" element={<Gameplay />} />
           <Route path="/browse" element={<BrowseScenarios />} />
           <Route path="/create-character" element={<CharacterCreation />} />
           <Route path="/create-scenario" element={<ScenarioCreation />} />
