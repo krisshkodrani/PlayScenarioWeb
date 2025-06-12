@@ -10,6 +10,7 @@ import CharacterCreation from "./pages/CharacterCreation";
 import ScenarioCreation from "./pages/ScenarioCreation";
 import ScenarioPreview from "./pages/ScenarioPreview";
 import CoreChatPage from "./pages/CoreChatPage";
+import MyScenarios from "./pages/MyScenarios";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/create-scenario" element={<ScenarioCreation />} />
           <Route path="/scenario/:id" element={<ScenarioPreview />} />
           <Route path="/core-chat" element={<CoreChatPage />} />
+          <Route path="/my-scenarios" element={<MyScenarios />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
