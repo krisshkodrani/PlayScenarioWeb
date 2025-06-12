@@ -1,91 +1,7 @@
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { DashboardData, GameStats, ScenarioStats, ActivityItem } from '@/types/dashboard';
-
-// Mock data
-const mockUser = {
-  id: '1',
-  email: 'user@example.com',
-  username: 'scenario_master',
-  created_at: '2024-01-15T10:30:00Z'
-};
-
-const mockCredits = {
-  credits: 25,
-  last_updated: '2024-01-20T15:45:00Z'
-};
-
-const mockTransactions = [
-  {
-    id: '1',
-    credits_change: -2,
-    reason: 'Played scenario: Corporate Crisis',
-    created_at: '2024-01-20T14:30:00Z'
-  },
-  {
-    id: '2',
-    credits_change: 50,
-    reason: 'Credit purchase',
-    created_at: '2024-01-19T10:15:00Z'
-  },
-  {
-    id: '3',
-    credits_change: -3,
-    reason: 'Played scenario: Space Station Emergency',
-    created_at: '2024-01-18T16:20:00Z'
-  }
-];
-
-const mockScenarios = [
-  {
-    id: '1',
-    title: 'Corporate Crisis Management',
-    is_public: true,
-    play_count: 45,
-    like_count: 12,
-    bookmark_count: 8,
-    created_at: '2024-01-10T09:00:00Z'
-  },
-  {
-    id: '2',
-    title: 'Medieval Diplomacy',
-    is_public: false,
-    play_count: 3,
-    like_count: 2,
-    bookmark_count: 1,
-    created_at: '2024-01-15T14:30:00Z'
-  }
-];
-
-const mockGameInstances = [
-  {
-    id: '1',
-    scenario_id: '1',
-    status: 'won',
-    final_score: 85,
-    started_at: '2024-01-20T13:00:00Z',
-    ended_at: '2024-01-20T14:30:00Z',
-    scenario: { title: 'Corporate Crisis Management' }
-  },
-  {
-    id: '2',
-    scenario_id: '3',
-    status: 'completed',
-    final_score: 72,
-    started_at: '2024-01-19T16:00:00Z',
-    ended_at: '2024-01-19T17:45:00Z',
-    scenario: { title: 'Space Station Emergency' }
-  },
-  {
-    id: '3',
-    scenario_id: '1',
-    status: 'playing',
-    final_score: null,
-    started_at: '2024-01-21T10:00:00Z',
-    ended_at: null,
-    scenario: { title: 'Corporate Crisis Management' }
-  }
-];
 
 const processGameStats = (instances: any[]): GameStats => {
   const total = instances.length;
@@ -135,7 +51,7 @@ const generateActivityFeed = (
     .forEach(instance => {
       activities.push({
         type: 'game_completed',
-        title: `Completed scenario "${instance.scenario?.title}"`,
+        title: `Completed scenario "${instance.scenario?.title || 'Unknown Scenario'}"`,
         description: `Result: ${instance.status} • Score: ${instance.final_score || 'N/A'}`,
         timestamp: instance.ended_at || instance.started_at,
         metadata: { instanceId: instance.id, scenarioId: instance.scenario_id }
@@ -161,8 +77,8 @@ const generateActivityFeed = (
     .forEach(transaction => {
       activities.push({
         type: 'credit_transaction',
-        title: transaction.credits_change > 0 ? 'Credits purchased' : 'Credits used',
-        description: `${Math.abs(transaction.credits_change)} credits • ${transaction.reason}`,
+        title: transaction.amount > 0 ? 'Credits purchased' : 'Credits used',
+        description: `${Math.abs(transaction.amount)} credits • ${transaction.description}`,
         timestamp: transaction.created_at,
         metadata: { transactionId: transaction.id }
       });
@@ -183,17 +99,108 @@ export const useDashboardData = () => {
       try {
         setLoading(true);
         
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 800));
+        // Get current user
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+          throw new Error('Not authenticated');
+        }
+
+        // Fetch user profile
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError && profileError.code !== 'PGRST116') {
+          throw new Error('Failed to fetch profile');
+        }
+
+        // Fetch transactions
+        const { data: transactions, error: transactionsError } = await supabase
+          .from('transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        if (transactionsError) {
+          console.error('Failed to fetch transactions:', transactionsError);
+        }
+
+        // Mock scenarios and game instances for now (since tables don't exist yet)
+        const mockScenarios = [
+          {
+            id: '1',
+            title: 'Corporate Crisis Management',
+            is_public: true,
+            play_count: 45,
+            like_count: 12,
+            bookmark_count: 8,
+            created_at: '2024-01-10T09:00:00Z'
+          },
+          {
+            id: '2',
+            title: 'Medieval Diplomacy',
+            is_public: false,
+            play_count: 3,
+            like_count: 2,
+            bookmark_count: 1,
+            created_at: '2024-01-15T14:30:00Z'
+          }
+        ];
+
+        const mockGameInstances = [
+          {
+            id: '1',
+            scenario_id: '1',
+            status: 'won',
+            final_score: 85,
+            started_at: '2024-01-20T13:00:00Z',
+            ended_at: '2024-01-20T14:30:00Z',
+            scenario: { title: 'Corporate Crisis Management' }
+          },
+          {
+            id: '2',
+            scenario_id: '3',
+            status: 'completed',
+            final_score: 72,
+            started_at: '2024-01-19T16:00:00Z',
+            ended_at: '2024-01-19T17:45:00Z',
+            scenario: { title: 'Space Station Emergency' }
+          },
+          {
+            id: '3',
+            scenario_id: '1',
+            status: 'playing',
+            final_score: null,
+            started_at: '2024-01-21T10:00:00Z',
+            ended_at: null,
+            scenario: { title: 'Corporate Crisis Management' }
+          }
+        ];
         
         const gameStats = processGameStats(mockGameInstances);
         const scenarioStats = processScenarioStats(mockScenarios);
-        const activityFeed = generateActivityFeed(mockGameInstances, mockScenarios, mockTransactions);
+        const activityFeed = generateActivityFeed(mockGameInstances, mockScenarios, transactions || []);
         
         setData({
-          user: mockUser,
-          credits: mockCredits,
-          recentTransactions: mockTransactions,
+          user: {
+            id: user.id,
+            email: user.email || '',
+            username: profile?.username || null,
+            created_at: user.created_at || new Date().toISOString()
+          },
+          credits: {
+            credits: profile?.credits || 0,
+            last_updated: profile?.updated_at || new Date().toISOString()
+          },
+          recentTransactions: (transactions || []).map(t => ({
+            id: t.id,
+            credits_change: t.amount,
+            reason: t.description || 'Transaction',
+            created_at: t.created_at
+          })),
           scenarios: mockScenarios,
           gameInstances: mockGameInstances,
           gameStats,
@@ -201,7 +208,7 @@ export const useDashboardData = () => {
           activityFeed
         });
       } catch (err) {
-        setError('Failed to load dashboard data');
+        setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
         console.error('Dashboard fetch error:', err);
       } finally {
         setLoading(false);

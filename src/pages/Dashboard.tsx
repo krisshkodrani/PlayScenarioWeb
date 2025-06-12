@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardWelcome from '@/components/dashboard/DashboardWelcome';
 import DashboardStats from '@/components/dashboard/DashboardStats';
@@ -13,28 +13,6 @@ import { useDashboardData } from '@/hooks/useDashboardData';
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { data, loading, error } = useDashboardData();
-
-  // Mock authentication check - replace with real auth
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    // Simulate auth check
-    const checkAuth = () => {
-      const mockAuthToken = localStorage.getItem('authToken');
-      if (!mockAuthToken) {
-        setIsAuthenticated(false);
-        navigate('/login'); // Redirect to login page
-        return;
-      }
-      setIsAuthenticated(true);
-    };
-
-    checkAuth();
-  }, [navigate]);
-
-  if (isAuthenticated === false) {
-    return null; // Will redirect to login
-  }
 
   if (loading) {
     return (
@@ -54,13 +32,17 @@ const Dashboard: React.FC = () => {
           <p className="text-slate-400 mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 px-6 py-2 rounded-lg font-medium"
+            className="bg-cyan-400 hover:bg-cyan-300 text-slate-900 px-6 py-2 rounded-lg font-medium"
           >
             Try Again
           </button>
         </div>
       </div>
     );
+  }
+
+  if (!data) {
+    return null;
   }
 
   // Check if user is new (no scenarios or games)
