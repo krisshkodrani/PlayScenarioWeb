@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,6 +17,7 @@ import ScenarioPreview from "./pages/ScenarioPreview";
 import CoreChatPage from "./pages/CoreChatPage";
 import MyScenarios from "./pages/MyScenarios";
 import NotFound from "./pages/NotFound";
+import Results from "./pages/Results";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +62,11 @@ const App = () => (
             <Route path="/my-scenarios" element={
               <ProtectedRoute>
                 <MyScenarios />
+              </ProtectedRoute>
+            } />
+            <Route path="/results/:instance_id" element={
+              <ProtectedRoute>
+                <Results />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
