@@ -339,6 +339,242 @@ const MOCK_SCENARIOS: Scenario[] = [
     tags: ['startup', 'funding', 'negotiation', 'leadership'],
     is_liked: true,
     is_bookmarked: false
+  },
+  {
+    id: 'diplomatic-hostage-crisis',
+    title: 'International Hostage Crisis',
+    description: 'Terrorists have taken embassy staff hostage in a foreign country. Navigate complex international politics while saving lives.',
+    category: 'crisis-management',
+    difficulty: 'Advanced',
+    estimated_duration: 50,
+    character_count: 4,
+    characters: [
+      {
+        id: 'ambassador',
+        name: 'Ambassador Elena Rodriguez',
+        role: 'Head of Mission',
+        personality: 'Diplomatic, strategic, culturally-aware',
+        expertise_keywords: ['diplomacy', 'international-relations', 'negotiation'],
+        avatar_color: 'bg-blue-800'
+      },
+      {
+        id: 'security-chief',
+        name: 'Colonel Mike Harrison',
+        role: 'Security Attaché',
+        personality: 'Tactical, protective, decisive',
+        expertise_keywords: ['security', 'military', 'threat-assessment'],
+        avatar_color: 'bg-green-800'
+      },
+      {
+        id: 'negotiator',
+        name: 'Dr. Sarah Mitchell',
+        role: 'Crisis Negotiator',
+        personality: 'Empathetic, patient, psychologically-trained',
+        expertise_keywords: ['psychology', 'negotiation', 'crisis-intervention'],
+        avatar_color: 'bg-purple-800'
+      },
+      {
+        id: 'intelligence',
+        name: 'Agent David Clarke',
+        role: 'Intelligence Officer',
+        personality: 'Analytical, cautious, information-focused',
+        expertise_keywords: ['intelligence', 'analysis', 'surveillance'],
+        avatar_color: 'bg-gray-800'
+      }
+    ],
+    objectives: [
+      {
+        id: 'secure-hostages',
+        title: 'Secure Safe Release',
+        description: 'Ensure all embassy staff are released unharmed',
+        priority: 'critical'
+      },
+      {
+        id: 'maintain-relations',
+        title: 'Preserve Diplomatic Relations',
+        description: 'Avoid damaging international relationships during crisis',
+        priority: 'critical'
+      },
+      {
+        id: 'gather-intelligence',
+        title: 'Intelligence Gathering',
+        description: 'Collect information on terrorist organization and motives',
+        priority: 'important'
+      },
+      {
+        id: 'media-control',
+        title: 'Control Media Narrative',
+        description: 'Manage public information to avoid escalation',
+        priority: 'important'
+      }
+    ],
+    created_at: '2024-02-15T16:20:00Z',
+    created_by: 'Foreign Service Institute',
+    play_count: 743,
+    average_rating: 4.7,
+    tags: ['diplomacy', 'hostage-negotiation', 'international-crisis', 'security'],
+    is_liked: false,
+    is_bookmarked: false
+  },
+  {
+    id: 'medical-ethics-dilemma',
+    title: 'Medical Ethics Committee Crisis',
+    description: 'A groundbreaking but controversial medical treatment raises ethical questions. Navigate competing medical, legal, and moral perspectives.',
+    category: 'leadership',
+    difficulty: 'Intermediate',
+    estimated_duration: 30,
+    character_count: 4,
+    characters: [
+      {
+        id: 'chief-physician',
+        name: 'Dr. Michael Chen',
+        role: 'Chief of Medicine',
+        personality: 'Clinical, evidence-based, patient-focused',
+        expertise_keywords: ['medicine', 'clinical-trials', 'patient-care'],
+        avatar_color: 'bg-blue-600'
+      },
+      {
+        id: 'ethicist',
+        name: 'Dr. Rebecca Williams',
+        role: 'Medical Ethicist',
+        personality: 'Principled, thoughtful, philosophical',
+        expertise_keywords: ['ethics', 'philosophy', 'medical-law'],
+        avatar_color: 'bg-purple-600'
+      },
+      {
+        id: 'family-advocate',
+        name: 'Maria Santos',
+        role: 'Patient Family Representative',
+        personality: 'Emotional, determined, advocacy-focused',
+        expertise_keywords: ['patient-rights', 'family-support', 'advocacy'],
+        avatar_color: 'bg-rose-600'
+      },
+      {
+        id: 'legal-counsel',
+        name: 'Attorney John Thompson',
+        role: 'Hospital Legal Counsel',
+        personality: 'Cautious, procedural, risk-averse',
+        expertise_keywords: ['medical-law', 'liability', 'compliance'],
+        avatar_color: 'bg-slate-600'
+      }
+    ],
+    objectives: [
+      {
+        id: 'patient-welfare',
+        title: 'Prioritize Patient Welfare',
+        description: 'Ensure decisions serve the best interests of the patient',
+        priority: 'critical'
+      },
+      {
+        id: 'ethical-compliance',
+        title: 'Maintain Ethical Standards',
+        description: 'Uphold medical ethics and professional standards',
+        priority: 'critical'
+      },
+      {
+        id: 'legal-protection',
+        title: 'Ensure Legal Compliance',
+        description: 'Protect hospital from legal liability',
+        priority: 'important'
+      },
+      {
+        id: 'family-communication',
+        title: 'Clear Family Communication',
+        description: 'Maintain transparent dialogue with patient family',
+        priority: 'important'
+      }
+    ],
+    created_at: '2024-02-05T13:30:00Z',
+    created_by: 'Medical Ethics Institute',
+    play_count: 1456,
+    average_rating: 4.5,
+    tags: ['medical-ethics', 'healthcare', 'family-dynamics', 'legal-compliance'],
+    is_liked: true,
+    is_bookmarked: true
+  },
+  {
+    id: 'climate-summit-negotiation',
+    title: 'Climate Summit Deadlock',
+    description: 'Global climate negotiations have stalled. As a key diplomat, break the deadlock between competing national interests.',
+    category: 'business-negotiation',
+    difficulty: 'Advanced',
+    estimated_duration: 55,
+    character_count: 5,
+    characters: [
+      {
+        id: 'developing-nation',
+        name: 'Minister Priya Sharma',
+        role: 'Developing Nation Representative',
+        personality: 'Passionate, justice-oriented, economically-focused',
+        expertise_keywords: ['development', 'economic-growth', 'social-justice'],
+        avatar_color: 'bg-orange-600'
+      },
+      {
+        id: 'industrial-nation',
+        name: 'Secretary James Miller',
+        role: 'Industrial Nation Delegate',
+        personality: 'Pragmatic, industry-focused, technology-oriented',
+        expertise_keywords: ['industry', 'technology', 'economic-policy'],
+        avatar_color: 'bg-blue-600'
+      },
+      {
+        id: 'climate-scientist',
+        name: 'Dr. Lisa Anderson',
+        role: 'Climate Science Advisor',
+        personality: 'Urgent, data-driven, environmentally-focused',
+        expertise_keywords: ['climate-science', 'data-analysis', 'environmental-impact'],
+        avatar_color: 'bg-green-600'
+      },
+      {
+        id: 'youth-activist',
+        name: 'Alex Rivera',
+        role: 'Youth Climate Activist',
+        personality: 'Idealistic, urgent, future-focused',
+        expertise_keywords: ['activism', 'youth-perspective', 'social-movement'],
+        avatar_color: 'bg-emerald-600'
+      },
+      {
+        id: 'un-mediator',
+        name: 'Ambassador Patricia Wong',
+        role: 'UN Climate Mediator',
+        personality: 'Diplomatic, balanced, process-oriented',
+        expertise_keywords: ['diplomacy', 'mediation', 'international-law'],
+        avatar_color: 'bg-indigo-600'
+      }
+    ],
+    objectives: [
+      {
+        id: 'reach-agreement',
+        title: 'Achieve Consensus',
+        description: 'Broker a climate agreement acceptable to all parties',
+        priority: 'critical'
+      },
+      {
+        id: 'emission-targets',
+        title: 'Set Meaningful Targets',
+        description: 'Establish emissions reduction goals that matter scientifically',
+        priority: 'critical'
+      },
+      {
+        id: 'funding-mechanism',
+        title: 'Secure Climate Funding',
+        description: 'Create financing for developing nation climate adaptation',
+        priority: 'important'
+      },
+      {
+        id: 'implementation-timeline',
+        title: 'Define Implementation',
+        description: 'Establish realistic timelines and accountability measures',
+        priority: 'important'
+      }
+    ],
+    created_at: '2024-01-25T10:15:00Z',
+    created_by: 'Climate Diplomacy Institute',
+    play_count: 967,
+    average_rating: 4.8,
+    tags: ['climate-change', 'international-negotiation', 'diplomacy', 'environmental-policy'],
+    is_liked: false,
+    is_bookmarked: true
   }
 ];
 
@@ -393,9 +629,9 @@ const BrowseScenarios = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Professional Header */}
-      <div className="bg-gradient-to-r from-slate-800/80 to-slate-700/50 backdrop-blur border-b border-slate-600">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Fixed Professional Header */}
+      <div className="bg-gradient-to-r from-slate-800/80 to-slate-700/50 backdrop-blur border-b border-slate-600 flex-shrink-0">
         <div className="container mx-auto px-4 py-6">
           <h1 className="text-3xl font-bold text-white mb-2">
             Training Scenarios
@@ -406,214 +642,220 @@ const BrowseScenarios = () => {
         </div>
       </div>
 
-      {/* Enhanced Search & Filters */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex flex-col lg:flex-row gap-4 mb-8">
-          {/* Search with gradient focus */}
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-slate-700/50 backdrop-blur border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all"
-              placeholder="Search scenarios, characters, or skills..."
-            />
+      {/* Fixed Enhanced Search & Filters */}
+      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-b border-slate-600 flex-shrink-0">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex flex-col lg:flex-row gap-4 mb-4">
+            {/* Search with gradient focus */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-slate-700/50 backdrop-blur border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all"
+                placeholder="Search scenarios, characters, or skills..."
+              />
+            </div>
+
+            {/* Category Filter */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="min-w-[180px] justify-between bg-slate-700/50 backdrop-blur border-slate-600 text-white hover:bg-slate-600/50">
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4" />
+                    <span className="text-sm">{getCategoryInfo(selectedCategory).icon}</span>
+                    <span>{getCategoryInfo(selectedCategory).name}</span>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-slate-800 border-slate-600">
+                {SCENARIO_CATEGORIES.map(category => (
+                  <DropdownMenuItem 
+                    key={category.id}
+                    onClick={() => setSelectedCategory(category.id)}
+                    className={`text-white hover:bg-slate-700 ${selectedCategory === category.id ? 'bg-slate-700' : ''}`}
+                  >
+                    <span className="mr-2">{category.icon}</span>
+                    {category.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Sort Filter */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="min-w-[160px] justify-between bg-slate-700/50 backdrop-blur border-slate-600 text-white hover:bg-slate-600/50">
+                  Sort: {sortOptions.find(opt => opt.value === sortBy)?.label}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-slate-800 border-slate-600">
+                {sortOptions.map(option => (
+                  <DropdownMenuItem 
+                    key={option.value}
+                    onClick={() => setSortBy(option.value)}
+                    className={`text-white hover:bg-slate-700 ${sortBy === option.value ? 'bg-slate-700' : ''}`}
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
-          {/* Category Filter */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="min-w-[180px] justify-between bg-slate-700/50 backdrop-blur border-slate-600 text-white hover:bg-slate-600/50">
-                <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4" />
-                  <span className="text-sm">{getCategoryInfo(selectedCategory).icon}</span>
-                  <span>{getCategoryInfo(selectedCategory).name}</span>
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-slate-800 border-slate-600">
-              {SCENARIO_CATEGORIES.map(category => (
-                <DropdownMenuItem 
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className={`text-white hover:bg-slate-700 ${selectedCategory === category.id ? 'bg-slate-700' : ''}`}
-                >
-                  <span className="mr-2">{category.icon}</span>
-                  {category.name}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Sort Filter */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="min-w-[160px] justify-between bg-slate-700/50 backdrop-blur border-slate-600 text-white hover:bg-slate-600/50">
-                Sort: {sortOptions.find(opt => opt.value === sortBy)?.label}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-slate-800 border-slate-600">
-              {sortOptions.map(option => (
-                <DropdownMenuItem 
-                  key={option.value}
-                  onClick={() => setSortBy(option.value)}
-                  className={`text-white hover:bg-slate-700 ${sortBy === option.value ? 'bg-slate-700' : ''}`}
-                >
-                  {option.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Results Summary */}
+          <div>
+            <p className="text-sm text-slate-400">
+              Showing {filteredScenarios.length} scenarios
+              {selectedCategory !== 'all' && ` in ${getCategoryInfo(selectedCategory).name}`}
+              {searchQuery && ` matching "${searchQuery}"`}
+            </p>
+          </div>
         </div>
+      </div>
 
-        {/* Results Summary */}
-        <div className="mb-6">
-          <p className="text-sm text-slate-400">
-            Showing {filteredScenarios.length} scenarios
-            {selectedCategory !== 'all' && ` in ${getCategoryInfo(selectedCategory).name}`}
-            {searchQuery && ` matching "${searchQuery}"`}
-          </p>
-        </div>
+      {/* Scrollable Scenario Grid */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="container mx-auto px-4 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredScenarios.map(scenario => {
+              const categoryInfo = getCategoryInfo(scenario.category);
+              return (
+                <div 
+                  key={scenario.id} 
+                  className="bg-gradient-to-br from-slate-800/80 to-slate-700/50 backdrop-blur border border-slate-600 rounded-xl p-6 hover:border-cyan-400/50 transition-all duration-300 group"
+                >
+                  {/* Header with category badge */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-lg">{categoryInfo.icon}</span>
+                        <span className="text-xs px-2 py-1 bg-gradient-to-r from-cyan-400/20 to-violet-500/20 border border-cyan-400 rounded-full text-cyan-400 font-medium">
+                          {categoryInfo.name}
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-bold text-white mb-2 group-hover:text-cyan-400 transition-colors">
+                        {scenario.title}
+                      </h3>
+                      <p className="text-sm text-slate-300 leading-relaxed">
+                        {scenario.description}
+                      </p>
+                    </div>
+                    <div className="flex gap-1 ml-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-slate-400 hover:text-red-400"
+                        onClick={() => toggleLike(scenario.id)}
+                      >
+                        <Heart className={`w-4 h-4 ${scenario.is_liked ? 'fill-red-400 text-red-400' : ''}`} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-slate-400 hover:text-amber-400"
+                        onClick={() => toggleBookmark(scenario.id)}
+                      >
+                        <Bookmark className={`w-4 h-4 ${scenario.is_bookmarked ? 'fill-amber-400 text-amber-400' : ''}`} />
+                      </Button>
+                    </div>
+                  </div>
 
-        {/* Scenario Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredScenarios.map(scenario => {
-            const categoryInfo = getCategoryInfo(scenario.category);
-            return (
-              <div 
-                key={scenario.id} 
-                className="bg-gradient-to-br from-slate-800/80 to-slate-700/50 backdrop-blur border border-slate-600 rounded-xl p-6 hover:border-cyan-400/50 transition-all duration-300 group"
-              >
-                {/* Header with category badge */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
+                  {/* Key Differentiator: Character Count & Roles */}
+                  <div className="mb-4 p-3 bg-slate-700/30 rounded-lg border border-slate-600">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-lg">{categoryInfo.icon}</span>
-                      <span className="text-xs px-2 py-1 bg-gradient-to-r from-cyan-400/20 to-violet-500/20 border border-cyan-400 rounded-full text-cyan-400 font-medium">
-                        {categoryInfo.name}
+                      <Users className="w-4 h-4 text-violet-400" />
+                      <span className="text-sm font-semibold text-violet-400">
+                        {scenario.character_count} AI Characters
                       </span>
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2 group-hover:text-cyan-400 transition-colors">
-                      {scenario.title}
-                    </h3>
-                    <p className="text-sm text-slate-300 leading-relaxed">
-                      {scenario.description}
-                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {scenario.characters.map(char => (
+                        <div key={char.id} className="flex items-center gap-1 text-xs bg-slate-800/50 rounded px-2 py-1">
+                          <div className={`w-2 h-2 rounded-full ${char.avatar_color}`} />
+                          <span className="text-slate-300">{char.name}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex gap-1 ml-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-slate-400 hover:text-red-400"
-                      onClick={() => toggleLike(scenario.id)}
-                    >
-                      <Heart className={`w-4 h-4 ${scenario.is_liked ? 'fill-red-400 text-red-400' : ''}`} />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-slate-400 hover:text-amber-400"
-                      onClick={() => toggleBookmark(scenario.id)}
-                    >
-                      <Bookmark className={`w-4 h-4 ${scenario.is_bookmarked ? 'fill-amber-400 text-amber-400' : ''}`} />
-                    </Button>
-                  </div>
-                </div>
 
-                {/* Key Differentiator: Character Count & Roles */}
-                <div className="mb-4 p-3 bg-slate-700/30 rounded-lg border border-slate-600">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Users className="w-4 h-4 text-violet-400" />
-                    <span className="text-sm font-semibold text-violet-400">
-                      {scenario.character_count} AI Characters
-                    </span>
+                  {/* Metadata with gradients */}
+                  <div className="flex items-center gap-4 text-xs text-slate-400 mb-4">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {scenario.estimated_duration} min
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Target className="w-3 h-3" />
+                      {scenario.objectives.length} objectives
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Star className="w-3 h-3 text-amber-400" />
+                      {scenario.average_rating}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-1">
-                    {scenario.characters.map(char => (
-                      <div key={char.id} className="flex items-center gap-1 text-xs bg-slate-800/50 rounded px-2 py-1">
-                        <div className={`w-2 h-2 rounded-full ${char.avatar_color}`} />
-                        <span className="text-slate-300">{char.name}</span>
-                      </div>
+
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-1 mb-4">
+                    {scenario.tags.slice(0, 3).map(tag => (
+                      <span key={tag} className="text-xs px-2 py-1 bg-slate-600/50 rounded text-slate-400">
+                        {tag}
+                      </span>
                     ))}
+                    {scenario.tags.length > 3 && (
+                      <span className="text-xs px-2 py-1 bg-slate-600/50 rounded text-slate-400">
+                        +{scenario.tags.length - 3} more
+                      </span>
+                    )}
                   </div>
-                </div>
 
-                {/* Metadata with gradients */}
-                <div className="flex items-center gap-4 text-xs text-slate-400 mb-4">
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {scenario.estimated_duration} min
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Target className="w-3 h-3" />
-                    {scenario.objectives.length} objectives
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Star className="w-3 h-3 text-amber-400" />
-                    {scenario.average_rating}
-                  </div>
-                </div>
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-1 mb-4">
-                  {scenario.tags.slice(0, 3).map(tag => (
-                    <span key={tag} className="text-xs px-2 py-1 bg-slate-600/50 rounded text-slate-400">
-                      {tag}
+                  {/* Footer with difficulty and start button */}
+                  <div className="flex items-center justify-between">
+                    <span className={`text-xs px-3 py-1 rounded-full font-medium ${getDifficultyStyles(scenario.difficulty)}`}>
+                      {scenario.difficulty}
                     </span>
-                  ))}
-                  {scenario.tags.length > 3 && (
-                    <span className="text-xs px-2 py-1 bg-slate-600/50 rounded text-slate-400">
-                      +{scenario.tags.length - 3} more
-                    </span>
-                  )}
-                </div>
+                    
+                    {/* Start Conversation Button */}
+                    <button className="bg-gradient-to-r from-cyan-400 to-violet-500 text-white px-4 py-2 rounded-lg font-medium hover:from-cyan-300 hover:to-violet-400 transition-all shadow-lg flex items-center">
+                      <Play className="w-4 h-4 mr-2" />
+                      Start Conversation
+                    </button>
+                  </div>
 
-                {/* Footer with difficulty and start button */}
-                <div className="flex items-center justify-between">
-                  <span className={`text-xs px-3 py-1 rounded-full font-medium ${getDifficultyStyles(scenario.difficulty)}`}>
-                    {scenario.difficulty}
-                  </span>
-                  
-                  {/* Start Conversation Button */}
-                  <button className="bg-gradient-to-r from-cyan-400 to-violet-500 text-white px-4 py-2 rounded-lg font-medium hover:from-cyan-300 hover:to-violet-400 transition-all shadow-lg">
-                    <Play className="w-4 h-4 mr-2" />
-                    Start Conversation
-                  </button>
-                </div>
-
-                {/* Creator and play count */}
-                <div className="mt-3 pt-3 border-t border-slate-600 text-xs text-slate-500">
-                  <div className="flex justify-between">
-                    <span>by {scenario.created_by}</span>
-                    <span>{scenario.play_count.toLocaleString()} plays</span>
+                  {/* Creator and play count */}
+                  <div className="mt-3 pt-3 border-t border-slate-600 text-xs text-slate-500">
+                    <div className="flex justify-between">
+                      <span>by {scenario.created_by}</span>
+                      <span>{scenario.play_count.toLocaleString()} plays</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Empty State */}
-        {filteredScenarios.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-slate-400 mb-4">
-              <Search className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-medium text-white">No scenarios found</h3>
-              <p className="text-sm">Try adjusting your search or filters</p>
-            </div>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedCategory('all');
-              }}
-              className="bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50"
-            >
-              Clear Filters
-            </Button>
+              );
+            })}
           </div>
-        )}
+
+          {/* Empty State */}
+          {filteredScenarios.length === 0 && (
+            <div className="text-center py-12">
+              <div className="text-slate-400 mb-4">
+                <Search className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-medium text-white">No scenarios found</h3>
+                <p className="text-sm">Try adjusting your search or filters</p>
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedCategory('all');
+                }}
+                className="bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50"
+              >
+                Clear Filters
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
