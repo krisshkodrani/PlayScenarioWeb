@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/navigation/PageHeader';
@@ -72,7 +71,7 @@ const Dashboard: React.FC = () => {
         />
         
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3 space-y-6">
             <DashboardStats 
               totalGamesPlayed={data.gameStats.total}
               scenariosCreated={data.scenarioStats.total}
@@ -80,6 +79,12 @@ const Dashboard: React.FC = () => {
               winRate={data.gameStats.winRate}
               totalLikesReceived={data.scenarioStats.totalLikes}
               totalBookmarksReceived={data.scenarioStats.totalBookmarks}
+            />
+            <QuickActions 
+              onCreateScenario={() => navigate('/create-scenario')}
+              onBrowseScenarios={() => navigate('/browse')}
+              onViewProfile={() => navigate('/profile')}
+              onViewMyScenarios={() => navigate('/my-scenarios')}
             />
           </div>
           <div>
@@ -91,18 +96,8 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <RecentActivity activities={data.activityFeed} />
-          </div>
-          <div>
-            <QuickActions 
-              onCreateScenario={() => navigate('/create-scenario')}
-              onBrowseScenarios={() => navigate('/browse')}
-              onViewProfile={() => navigate('/profile')}
-              onViewMyScenarios={() => navigate('/my-scenarios')}
-            />
-          </div>
+        <div className="grid grid-cols-1">
+          <RecentActivity activities={data.activityFeed} />
         </div>
       </div>
     </div>
