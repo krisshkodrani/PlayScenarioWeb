@@ -73,14 +73,14 @@ const CharacterFilters: React.FC<CharacterFiltersProps> = ({
         <Select
           value={filters.role}
           onValueChange={(value: string) => 
-            onFilterChange({ role: value })
+            onFilterChange({ role: value === 'all-roles' ? '' : value })
           }
         >
           <SelectTrigger className="w-full lg:w-48 bg-slate-700 border-slate-600 text-white">
             <SelectValue placeholder="All Roles" />
           </SelectTrigger>
           <SelectContent className="bg-slate-700 border-slate-600">
-            <SelectItem value="" className="text-white hover:bg-slate-600">All Roles</SelectItem>
+            <SelectItem value="all-roles" className="text-white hover:bg-slate-600">All Roles</SelectItem>
             <SelectItem value="Chief" className="text-white hover:bg-slate-600">Leadership</SelectItem>
             <SelectItem value="Director" className="text-white hover:bg-slate-600">Management</SelectItem>
             <SelectItem value="Manager" className="text-white hover:bg-slate-600">Operations</SelectItem>
@@ -92,14 +92,14 @@ const CharacterFilters: React.FC<CharacterFiltersProps> = ({
         <Select
           value={filters.expertise}
           onValueChange={(value: string) => 
-            onFilterChange({ expertise: value })
+            onFilterChange({ expertise: value === 'all-expertise' ? '' : value })
           }
         >
           <SelectTrigger className="w-full lg:w-48 bg-slate-700 border-slate-600 text-white">
             <SelectValue placeholder="All Expertise" />
           </SelectTrigger>
           <SelectContent className="bg-slate-700 border-slate-600">
-            <SelectItem value="" className="text-white hover:bg-slate-600">All Expertise</SelectItem>
+            <SelectItem value="all-expertise" className="text-white hover:bg-slate-600">All Expertise</SelectItem>
             <SelectItem value="medical" className="text-white hover:bg-slate-600">Medical</SelectItem>
             <SelectItem value="security" className="text-white hover:bg-slate-600">Security</SelectItem>
             <SelectItem value="engineering" className="text-white hover:bg-slate-600">Engineering</SelectItem>
