@@ -23,7 +23,7 @@ const ProgressRing: React.FC<ProgressRingProps> = ({ percentage, onClick, hasUpd
         aria-label="View mission objectives"
       >
         <svg
-          className="w-15 h-15 transform -rotate-90"
+          className="w-15 h-15 transform -rotate-90 drop-shadow-lg"
           width="60"
           height="60"
           viewBox="0 0 60 60"
@@ -48,20 +48,20 @@ const ProgressRing: React.FC<ProgressRingProps> = ({ percentage, onClick, hasUpd
             fill="transparent"
             strokeDasharray={strokeDasharray}
             strokeDashoffset={strokeDashoffset}
-            className="text-cyan-400 transition-all duration-500 ease-out"
+            className="text-cyan-400 transition-all duration-500 ease-out drop-shadow-lg"
             strokeLinecap="round"
           />
         </svg>
         {/* Percentage text */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-xs font-semibold text-cyan-400">
+          <span className="text-xs font-semibold text-cyan-400 drop-shadow-lg">
             {Math.round(percentage)}%
           </span>
         </div>
         
         {/* Update notification badge */}
         {hasUpdates && (
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border-2 border-slate-900" />
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-amber-400 to-violet-500 rounded-full border-2 border-slate-900 shadow-lg" />
         )}
       </button>
     </div>

@@ -30,7 +30,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, character }) => 
   if (isUser) {
     return (
       <div className="flex justify-end">
-        <div className="bg-cyan-400 text-slate-900 px-4 py-3 rounded-2xl rounded-br-sm max-w-xs ml-auto">
+        <div className="bg-gradient-to-br from-cyan-500 to-violet-600 text-white px-4 py-3 rounded-2xl rounded-br-sm max-w-xs ml-auto shadow-lg">
           <p className="text-sm md:text-base">{message.message}</p>
         </div>
       </div>
@@ -46,7 +46,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, character }) => 
         {character && (
           <p className="text-xs text-slate-400 mb-1 ml-1">{character.name}</p>
         )}
-        <div className="bg-slate-800 text-white px-4 py-3 rounded-2xl rounded-bl-sm max-w-xs mr-auto">
+        <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur border border-slate-600 text-white px-4 py-3 rounded-2xl rounded-bl-sm max-w-xs mr-auto shadow-lg">
           <p className="text-sm md:text-base">{message.message}</p>
         </div>
       </div>

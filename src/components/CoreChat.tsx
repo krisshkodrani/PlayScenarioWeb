@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Send } from 'lucide-react';
 import MessageBubble from './chat/MessageBubble';
@@ -228,7 +229,7 @@ const CoreChat: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-slate-900 text-white">
+    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       {/* Floating Progress Ring */}
       <ProgressRing 
         percentage={progressPercentage} 
@@ -237,7 +238,7 @@ const CoreChat: React.FC = () => {
       />
       
       {/* Chat Header */}
-      <div className="bg-slate-800 border-b border-slate-700 p-4">
+      <div className="bg-gradient-to-r from-slate-800/80 to-slate-700/50 backdrop-blur border-b border-slate-600 p-4">
         <h1 className="text-lg font-semibold text-cyan-400">Kobayashi Maru Simulation</h1>
         <p className="text-sm text-slate-400">Turn {turn} • {credits} Credits</p>
       </div>
@@ -256,7 +257,7 @@ const CoreChat: React.FC = () => {
         {isTyping && (
           <div className="flex items-center gap-3">
             <CharacterAvatar character={CHARACTERS[0]} size="sm" />
-            <div className="bg-slate-800 text-slate-400 px-4 py-3 rounded-2xl rounded-bl-sm max-w-xs">
+            <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur border border-slate-600 text-slate-400 px-4 py-3 rounded-2xl rounded-bl-sm max-w-xs">
               <div className="flex gap-1">
                 <div className="w-2 h-2 bg-slate-400 rounded-full animate-pulse"></div>
                 <div className="w-2 h-2 bg-slate-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
