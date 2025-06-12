@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { authService, User } from '@/services/authService';
+import { authService, User, RegisterCredentials } from '@/services/authService';
 import { Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
@@ -9,9 +9,10 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-  signUp: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (credentials: RegisterCredentials) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
+  resendVerificationEmail: (email: string) => Promise<{ error: string | null }>;
   isAuthenticated: boolean;
 }
 
@@ -68,8 +69,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return { error: null };
   };
 
-  const signUp = async (email: string, password: string): Promise<{ error: string | null }> => {
-    const { user, error } = await authService.signUp({ email, password });
+  const signUp = async (credentials: RegisterCredentials): Promise<{ error: string | null }> => {
+    const { user, error } = await authService.signUp(credentials);
     
     if (error) {
       return { error: authService.getErrorMessage(error) };
@@ -94,6 +95,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return { error: null };
   };
 
+  const resendVerificationEmail = async (email: string): Promise<{ error: string | null }> => {
+    const { error } = await authService.resendVerificationEmail(email);
+    
+    if (error) {
+      return { error: authService.getErrorMessage(error) };
+    }
+
+    return { error: null };
+  };
+
   const value: AuthContextType = {
     user,
     session,
@@ -102,6 +113,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signUp,
     signOut,
     resetPassword,
+    resendVerificationEmail,
     isAuthenticated: !!user,
   };
 

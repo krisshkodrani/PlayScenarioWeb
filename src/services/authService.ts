@@ -7,6 +7,12 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface RegisterCredentials {
+  email: string;
+  password: string;
+  username?: string;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -27,12 +33,13 @@ export class AuthService {
     };
   }
 
-  async signUp(credentials: LoginCredentials): Promise<{ user: User | null; error: AuthError | null }> {
+  async signUp(credentials: RegisterCredentials): Promise<{ user: User | null; error: AuthError | null }> {
     const { data, error } = await supabase.auth.signUp({
       email: credentials.email,
       password: credentials.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+        data: credentials.username ? { username: credentials.username } : undefined
       }
     });
 
@@ -50,6 +57,17 @@ export class AuthService {
   async resetPassword(email: string): Promise<{ error: AuthError | null }> {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`
+    });
+    return { error };
+  }
+
+  async resendVerificationEmail(email: string): Promise<{ error: AuthError | null }> {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/dashboard`
+      }
     });
     return { error };
   }
@@ -76,6 +94,8 @@ export class AuthService {
         'Invalid email': 'Please enter a valid email address.',
         'Password should be at least 6 characters': 'Password must be at least 6 characters long.',
         'Email already registered': 'An account with this email already exists.',
+        'User already registered': 'An account with this email already exists.',
+        'Signup requires a valid password': 'Please enter a valid password.'
       };
 
       return errorMap[message] || message;

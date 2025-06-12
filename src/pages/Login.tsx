@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -43,6 +42,13 @@ const Login: React.FC = () => {
       navigate(redirectTo);
     }
   }, [user, authLoading, navigate, searchParams]);
+
+  // Show success message if coming from verification
+  useEffect(() => {
+    if (searchParams.get('verified') === 'true') {
+      // Could show a success toast here
+    }
+  }, [searchParams]);
 
   const validateForm = (): boolean => {
     const newErrors: LoginErrors = {};
@@ -131,6 +137,15 @@ const Login: React.FC = () => {
             Sign in to your PlayScenarioAI account
           </p>
         </div>
+
+        {/* Verification Success Message */}
+        {searchParams.get('verified') === 'true' && (
+          <div className="bg-emerald-500/10 border border-emerald-400/20 rounded-lg p-4">
+            <p className="text-emerald-400 text-sm">
+              ✅ Email verified successfully! You've received 10 welcome credits. Please sign in to continue.
+            </p>
+          </div>
+        )}
 
         {/* Reset Email Confirmation */}
         {resetEmailSent && (
