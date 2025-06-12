@@ -2,7 +2,12 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, User, FileText } from 'lucide-react';
+import { 
+  Plus, 
+  Search, 
+  FileText, 
+  User 
+} from 'lucide-react';
 
 interface QuickActionsProps {
   onCreateScenario: () => void;
@@ -23,28 +28,28 @@ const QuickActions: React.FC<QuickActionsProps> = ({
       description: 'Build a new interactive scenario',
       icon: Plus,
       onClick: onCreateScenario,
-      color: 'bg-cyan-400 hover:bg-cyan-300 text-slate-900'
+      className: 'bg-gradient-to-r from-cyan-500 to-violet-500 hover:from-cyan-600 hover:to-violet-600'
     },
     {
       title: 'Browse Scenarios',
-      description: 'Explore community creations',
+      description: 'Discover community content',
       icon: Search,
       onClick: onBrowseScenarios,
-      color: 'bg-violet-400 hover:bg-violet-300 text-white'
+      className: 'bg-emerald-500 hover:bg-emerald-600'
     },
     {
       title: 'My Scenarios',
       description: 'Manage your creations',
       icon: FileText,
       onClick: onViewMyScenarios,
-      color: 'bg-slate-700 hover:bg-slate-600 text-white border border-slate-600'
+      className: 'bg-violet-500 hover:bg-violet-600'
     },
     {
       title: 'View Profile',
-      description: 'Update account settings',
+      description: 'Account settings & stats',
       icon: User,
       onClick: onViewProfile,
-      color: 'bg-slate-700 hover:bg-slate-600 text-white border border-slate-600'
+      className: 'bg-slate-600 hover:bg-slate-700'
     }
   ];
 
@@ -53,25 +58,23 @@ const QuickActions: React.FC<QuickActionsProps> = ({
       <CardHeader>
         <CardTitle className="text-white">Quick Actions</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {actions.map((action, index) => (
-            <Button
-              key={index}
-              onClick={action.onClick}
-              className={`w-full justify-start h-auto p-4 ${action.color}`}
-              variant="secondary"
-            >
-              <div className="flex items-center gap-3">
-                <action.icon className="w-5 h-5" />
-                <div className="text-left">
-                  <div className="font-medium">{action.title}</div>
-                  <div className="text-xs opacity-80">{action.description}</div>
-                </div>
+      <CardContent className="space-y-3">
+        {actions.map((action, index) => (
+          <Button
+            key={index}
+            onClick={action.onClick}
+            className={`w-full justify-start text-left h-auto p-4 ${action.className}`}
+            variant="default"
+          >
+            <div className="flex items-center space-x-3">
+              <action.icon className="w-5 h-5" />
+              <div>
+                <div className="font-medium text-white">{action.title}</div>
+                <div className="text-xs opacity-90">{action.description}</div>
               </div>
-            </Button>
-          ))}
-        </div>
+            </div>
+          </Button>
+        ))}
       </CardContent>
     </Card>
   );
