@@ -108,57 +108,65 @@ const MyCharacters: React.FC = () => {
     : `Manage your collection of ${characterStats.totalCharacters} AI character${characterStats.totalCharacters === 1 ? '' : 's'}`;
 
   return (
-    <div className="min-h-screen bg-slate-900">
-      <div className="container mx-auto px-4 py-8">
-        <PageHeader
-          title="My Characters"
-          subtitle={subtitle}
-          badge={headerBadge}
-          actions={headerActions}
-        />
+    <div className="h-screen bg-slate-900 flex flex-col">
+      {/* Sticky Header and Stats */}
+      <div className="sticky top-0 z-10 bg-slate-900 border-b border-slate-800">
+        <div className="container mx-auto px-4 py-8">
+          <PageHeader
+            title="My Characters"
+            subtitle={subtitle}
+            badge={headerBadge}
+            actions={headerActions}
+          />
 
-        <CharacterStatsCards stats={characterStats} />
+          <CharacterStatsCards stats={characterStats} />
 
-        {hasCharacters && (
-          <>
+          {hasCharacters && (
             <CharacterFilters
               filters={filters}
               onFilterChange={handleFilterChange}
               viewMode={viewMode}
               onViewModeChange={setViewMode}
             />
+          )}
+        </div>
+      </div>
 
-            {hasSearchResults ? (
-              <>
-                <CharacterList
-                  characters={characters}
-                  viewMode={viewMode}
-                  onEdit={handleEdit}
-                  onDuplicate={handleDuplicate}
-                  onDelete={handleDelete}
-                  onUseInScenario={handleUseInScenario}
-                />
-
-                {pagination.total > pagination.limit && (
-                  <CharacterPagination
-                    currentPage={pagination.page}
-                    totalPages={Math.ceil(pagination.total / pagination.limit)}
-                    onPageChange={handlePageChange}
-                  />
-                )}
-              </>
-            ) : (
-              <NoSearchResults 
-                query={filters.search}
-                onClearSearch={() => handleFilterChange({ search: '' })}
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="container mx-auto px-4 py-6">
+          {hasCharacters && hasSearchResults && (
+            <>
+              <CharacterList
+                characters={characters}
+                viewMode={viewMode}
+                onEdit={handleEdit}
+                onDuplicate={handleDuplicate}
+                onDelete={handleDelete}
+                onUseInScenario={handleUseInScenario}
               />
-            )}
-          </>
-        )}
 
-        {!hasCharacters && !filters.search && (
-          <EmptyCharacters onCreateNew={handleCreateNew} />
-        )}
+              {pagination.total > pagination.limit && (
+                <CharacterPagination
+                  currentPage={pagination.page}
+                  totalPages={Math.ceil(pagination.total / pagination.limit)}
+                  onPageChange={handlePageChange}
+                />
+              )}
+            </>
+          )}
+
+          {hasCharacters && !hasSearchResults && (
+            <NoSearchResults 
+              query={filters.search}
+              onClearSearch={() => handleFilterChange({ search: '' })}
+            />
+          )}
+
+          {!hasCharacters && !filters.search && (
+            <EmptyCharacters onCreateNew={handleCreateNew} />
+          )}
+        </div>
       </div>
     </div>
   );
