@@ -59,15 +59,15 @@ const QuickActions: React.FC<QuickActionsProps> = ({
         <CardTitle className="text-white">Quick Actions</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {actions.map((action, index) => (
             <Button
               key={index}
               onClick={action.onClick}
-              className={`h-auto p-4 flex flex-col items-center text-center ${action.className}`}
+              className={`h-28 p-6 flex flex-col items-center justify-center text-center ${action.className}`}
               variant="default"
             >
-              <action.icon className="w-6 h-6 mb-2" />
+              <action.icon className="w-8 h-8 mb-3" />
               <div className="space-y-1">
                 <div className="font-medium text-white text-sm">{action.title}</div>
                 <div className="text-xs opacity-90 hidden lg:block">{action.description}</div>
