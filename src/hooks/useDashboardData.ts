@@ -51,7 +51,7 @@ const generateActivityFeed = (
     .forEach(instance => {
       activities.push({
         type: 'game_completed',
-        title: `Completed scenario "${instance.scenario?.title || 'Unknown Scenario'}"`,
+        title: `Completed scenario "${instance.scenarios?.title || 'Unknown Scenario'}"`,
         description: `Result: ${instance.status} • Score: ${instance.final_score || 'N/A'}`,
         timestamp: instance.ended_at || instance.started_at,
         metadata: { instanceId: instance.id, scenarioId: instance.scenario_id }
@@ -128,61 +128,34 @@ export const useDashboardData = () => {
           console.error('Failed to fetch transactions:', transactionsError);
         }
 
-        // Mock scenarios and game instances for now (since tables don't exist yet)
-        const mockScenarios = [
-          {
-            id: '1',
-            title: 'Corporate Crisis Management',
-            is_public: true,
-            play_count: 45,
-            like_count: 12,
-            bookmark_count: 8,
-            created_at: '2024-01-10T09:00:00Z'
-          },
-          {
-            id: '2',
-            title: 'Medieval Diplomacy',
-            is_public: false,
-            play_count: 3,
-            like_count: 2,
-            bookmark_count: 1,
-            created_at: '2024-01-15T14:30:00Z'
-          }
-        ];
+        // Fetch scenarios created by user
+        const { data: scenarios, error: scenariosError } = await supabase
+          .from('scenarios')
+          .select('*')
+          .eq('creator_id', user.id)
+          .order('created_at', { ascending: false });
 
-        const mockGameInstances = [
-          {
-            id: '1',
-            scenario_id: '1',
-            status: 'won',
-            final_score: 85,
-            started_at: '2024-01-20T13:00:00Z',
-            ended_at: '2024-01-20T14:30:00Z',
-            scenario: { title: 'Corporate Crisis Management' }
-          },
-          {
-            id: '2',
-            scenario_id: '3',
-            status: 'completed',
-            final_score: 72,
-            started_at: '2024-01-19T16:00:00Z',
-            ended_at: '2024-01-19T17:45:00Z',
-            scenario: { title: 'Space Station Emergency' }
-          },
-          {
-            id: '3',
-            scenario_id: '1',
-            status: 'playing',
-            final_score: null,
-            started_at: '2024-01-21T10:00:00Z',
-            ended_at: null,
-            scenario: { title: 'Corporate Crisis Management' }
-          }
-        ];
+        if (scenariosError) {
+          console.error('Failed to fetch scenarios:', scenariosError);
+        }
+
+        // Fetch game instances for user
+        const { data: gameInstances, error: instancesError } = await supabase
+          .from('scenario_instances')
+          .select(`
+            *,
+            scenarios:scenario_id(title)
+          `)
+          .eq('user_id', user.id)
+          .order('started_at', { ascending: false });
+
+        if (instancesError) {
+          console.error('Failed to fetch game instances:', instancesError);
+        }
         
-        const gameStats = processGameStats(mockGameInstances);
-        const scenarioStats = processScenarioStats(mockScenarios);
-        const activityFeed = generateActivityFeed(mockGameInstances, mockScenarios, transactions || []);
+        const gameStats = processGameStats(gameInstances || []);
+        const scenarioStats = processScenarioStats(scenarios || []);
+        const activityFeed = generateActivityFeed(gameInstances || [], scenarios || [], transactions || []);
         
         setData({
           user: {
@@ -201,8 +174,8 @@ export const useDashboardData = () => {
             reason: t.description || 'Transaction',
             created_at: t.created_at
           })),
-          scenarios: mockScenarios,
-          gameInstances: mockGameInstances,
+          scenarios: scenarios || [],
+          gameInstances: gameInstances || [],
           gameStats,
           scenarioStats,
           activityFeed
