@@ -1,3 +1,29 @@
+export interface ObjectiveData {
+  id: number;
+  description: string;
+}
+
+export interface CharacterData {
+  name: string;
+  personality: string;
+  expertise_keywords: string[];
+  is_player_character: boolean;
+}
+
+export interface ScenarioData {
+  // Core scenario fields (matches ScenarioBase in backend)
+  title: string;
+  description: string;
+  objectives: ObjectiveData[];
+  win_conditions: string;
+  lose_conditions: string;
+  max_turns: number;
+  initial_scene_prompt: string;
+  is_public: boolean;
+  
+  // Characters for this scenario
+  characters: CharacterData[];
+}
 
 export interface Character {
   id: string;
