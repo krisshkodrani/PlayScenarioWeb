@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import PageHeader from '@/components/navigation/PageHeader';
 import DashboardWelcome from '@/components/dashboard/DashboardWelcome';
 import DashboardStats from '@/components/dashboard/DashboardStats';
 import RecentActivity from '@/components/dashboard/RecentActivity';
@@ -52,7 +53,10 @@ const Dashboard: React.FC = () => {
     return (
       <div className="min-h-screen bg-slate-900">
         <div className="container mx-auto px-4 py-8">
-          <DashboardWelcome user={data.user} />
+          <PageHeader
+            title={`Welcome back, ${data.user.username}!`}
+            subtitle="Let's get you started with your first AI scenario"
+          />
           <NewUserDashboard />
         </div>
       </div>
@@ -62,7 +66,10 @@ const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-900">
       <div className="container mx-auto px-4 py-8">
-        <DashboardWelcome user={data.user} />
+        <PageHeader
+          title={`Welcome back, ${data.user.username}!`}
+          subtitle="Here's what's happening with your scenarios and games"
+        />
         
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
           <div className="lg:col-span-3">

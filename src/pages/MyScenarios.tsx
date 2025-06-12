@@ -1,6 +1,8 @@
 
 import React, { useState } from 'react';
-import MyScenariosHeader from '@/components/my-scenarios/MyScenariosHeader';
+import { Button } from '@/components/ui/button';
+import { Plus, Lightbulb } from 'lucide-react';
+import PageHeader from '@/components/navigation/PageHeader';
 import ScenarioStatsCards from '@/components/my-scenarios/ScenarioStatsCards';
 import ScenarioFilters from '@/components/my-scenarios/ScenarioFilters';
 import ScenarioList from '@/components/my-scenarios/ScenarioList';
@@ -77,12 +79,43 @@ const MyScenarios: React.FC = () => {
   const hasScenarios = scenarios.length > 0;
   const hasSearchResults = filters.search ? scenarios.length > 0 : true;
 
+  const headerBadge = scenarioStats.totalScenarios > 0 ? (
+    <span className="bg-slate-700 text-cyan-400 px-3 py-1 rounded-full text-sm font-medium">
+      {scenarioStats.totalScenarios}
+    </span>
+  ) : null;
+
+  const headerActions = (
+    <>
+      {scenarioStats.totalScenarios === 0 && (
+        <div className="hidden sm:flex items-center gap-2 text-sm text-slate-400 bg-slate-800 px-3 py-2 rounded-lg border border-slate-700">
+          <Lightbulb className="w-4 h-4 text-amber-400" />
+          <span>Start with a simple idea</span>
+        </div>
+      )}
+      
+      <Button 
+        onClick={handleCreateNew}
+        className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-medium"
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Create New Scenario
+      </Button>
+    </>
+  );
+
+  const subtitle = scenarioStats.totalScenarios === 0 
+    ? "Create your first interactive AI scenario to start engaging with users"
+    : `Manage your collection of ${scenarioStats.totalScenarios} scenario${scenarioStats.totalScenarios === 1 ? '' : 's'}`;
+
   return (
     <div className="min-h-screen bg-slate-900">
       <div className="container mx-auto px-4 py-8">
-        <MyScenariosHeader
-          totalScenarios={scenarioStats.totalScenarios}
-          onCreateNew={handleCreateNew}
+        <PageHeader
+          title="My Scenarios"
+          subtitle={subtitle}
+          badge={headerBadge}
+          actions={headerActions}
         />
 
         <ScenarioStatsCards stats={scenarioStats} />

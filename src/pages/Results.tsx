@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Trophy, XCircle, Clock, CheckCircle, Star } from 'lucide-react';
 import { resultsService, GameResults, ConversationStats } from '@/services/resultsService';
+import PageHeader from '@/components/navigation/PageHeader';
 import ObjectivesBreakdown from '@/components/results/ObjectivesBreakdown';
 import PerformanceMetrics from '@/components/results/PerformanceMetrics';
 import AIFeedback from '@/components/results/AIFeedback';
@@ -82,9 +83,22 @@ const Results: React.FC = () => {
   if (loading) return <LoadingResults />;
   if (error || !results || !stats) return <ResultsNotFound />;
 
+  // Custom breadcrumbs for results page
+  const customBreadcrumbs = [
+    { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Game Results' }
+  ];
+
   return (
-    <div className="min-h-screen bg-slate-900 py-8">
-      <div className="container mx-auto px-4 max-w-4xl">
+    <div className="min-h-screen bg-slate-900">
+      <div className="container mx-auto px-4 py-8">
+        <PageHeader
+          title="Game Results"
+          subtitle={`Results for scenario: ${results.scenario.title}`}
+          showBackButton={true}
+          customBreadcrumbs={customBreadcrumbs}
+        />
+
         {/* Outcome Header */}
         <Card className="bg-slate-800 border-slate-700 mb-8">
           <CardContent className="text-center py-12">
