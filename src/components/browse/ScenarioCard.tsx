@@ -31,7 +31,7 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario, onLike, onBookmar
   const categoryInfo = getCategoryInfo(scenario.category);
 
   return (
-    <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/50 backdrop-blur border border-slate-600 rounded-xl p-6 hover:border-cyan-400/50 transition-all duration-300 group">
+    <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/50 backdrop-blur border border-slate-600 rounded-xl p-6 hover:border-cyan-400/50 transition-all duration-300 group flex flex-col">
       {/* Header with category badge */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
@@ -116,16 +116,18 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario, onLike, onBookmar
         )}
       </div>
 
-      {/* Footer with difficulty and start button */}
-      <div className="flex items-center justify-between">
+      {/* Difficulty Badge */}
+      <div className="mb-4">
         <span className={`text-xs px-3 py-1 rounded-full font-medium ${getDifficultyStyles(scenario.difficulty)}`}>
           {scenario.difficulty}
         </span>
-        
-        {/* Start Conversation Button */}
-        <button className="bg-gradient-to-r from-cyan-400 to-violet-500 text-white px-4 py-2 rounded-lg font-medium hover:from-cyan-300 hover:to-violet-400 transition-all shadow-lg flex items-center">
-          <Play className="w-4 h-4 mr-2" />
-          Start Conversation
+      </div>
+
+      {/* Full-width Start Button - pushed to bottom */}
+      <div className="mt-auto">
+        <button className="w-full bg-gradient-to-r from-cyan-400 to-violet-500 text-white px-4 py-3 rounded-lg font-medium hover:from-cyan-300 hover:to-violet-400 transition-all shadow-lg flex items-center justify-center gap-2">
+          <Play className="w-4 h-4" />
+          Start
         </button>
       </div>
 
