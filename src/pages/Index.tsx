@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,25 +11,25 @@ const Index = () => {
   const features = [
     {
       icon: Brain,
-      title: "AI-Powered Scenarios",
-      description: "Engage with sophisticated AI characters in complex ethical and strategic situations"
+      title: "Real-World Scenario Training",
+      description: "Practice high-stakes situations like crisis management, business negotiations, and leadership challenges with intelligent AI characters"
     },
     {
       icon: Target,
-      title: "Objective-Driven Gameplay",
-      description: "Navigate scenarios with clear goals and meaningful choices that shape outcomes"
+      title: "Mission-Based Learning",
+      description: "Complete specific objectives while managing competing priorities, time constraints, and stakeholder relationships"
     },
     {
       icon: Users,
-      title: "Multi-Character Interactions",
-      description: "Communicate with multiple AI personalities in rich, dynamic conversations"
+      title: "Dynamic Team Conversations",
+      description: "Engage with 2-5 AI characters simultaneously, each with distinct expertise, personalities, and perspectives on your decisions"
     }
   ];
 
   const stats = [
-    { label: "Active Scenarios", value: "150+", color: "text-primary" },
-    { label: "AI Characters", value: "500+", color: "text-secondary" },
-    { label: "Players", value: "10K+", color: "text-accent" }
+    { label: "Live Scenarios", value: "50+", color: "text-primary" },
+    { label: "AI Characters", value: "200+", color: "text-secondary" },
+    { label: "Training Hours", value: "25K+", color: "text-accent" }
   ];
 
   return (
@@ -55,7 +54,7 @@ const Index = () => {
               onClick={() => navigate('/demo')}
             >
               <BookOpen className="w-4 h-4 mr-2" />
-              Live Demo
+              Try Demo
             </Button>
             <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
               <User className="w-4 h-4 mr-2" />
@@ -75,19 +74,18 @@ const Index = () => {
           <div className="max-w-4xl mx-auto text-center">
             <Badge variant="secondary" className="mb-6 px-4 py-2 text-sm font-medium">
               <Zap className="w-4 h-4 mr-2" />
-              AI Alignment Training Platform
+              Multi-Agent AI Scenario Platform
             </Badge>
             
             <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-              Navigate Complex
+              Master Real-World
               <span className="block bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-                AI Scenarios
+                Scenarios with AI Characters
               </span>
             </h1>
             
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-              Experience strategic role-playing with AI characters in scenarios that explore ethics, 
-              alignment, and complex decision-making. Train your judgment in a safe, simulated environment.
+              Practice critical decision-making through immersive conversations with multiple AI characters. From crisis management to strategic negotiations - develop your skills in realistic, consequence-free scenarios.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -102,7 +100,7 @@ const Index = () => {
               </Button>
               <Button variant="outline" size="lg" className="px-8 py-3 text-lg border-primary/30 hover:border-primary/50">
                 <BookOpen className="w-5 h-5 mr-2" />
-                Explore Scenarios
+                Browse Training Scenarios
               </Button>
             </div>
           </div>
@@ -132,11 +130,10 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Advanced AI Simulation Platform
+              Professional Skills Training Platform
             </h2>
             <p className="text-lg text-muted-foreground">
-              Engage with cutting-edge AI technology designed to challenge your thinking 
-              and improve decision-making in complex scenarios.
+              Build critical decision-making abilities through realistic scenarios powered by advanced multi-agent AI technology.
             </p>
           </div>
           
@@ -165,10 +162,10 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              See It In Action
+              Experience Multi-Character Conversations
             </h2>
             <p className="text-lg text-muted-foreground mb-8">
-              Experience the immersive interface designed for complex AI interactions
+              See how multiple AI characters respond dynamically to your decisions in real-time
             </p>
             <Button 
               size="lg" 
@@ -190,15 +187,15 @@ const Index = () => {
                     <ul className="space-y-3 text-muted-foreground">
                       <li className="flex items-center space-x-3">
                         <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        <span>Engage with multiple AI personalities simultaneously</span>
+                        <span>Navigate conversations with 2-5 AI characters at once</span>
                       </li>
                       <li className="flex items-center space-x-3">
                         <div className="w-2 h-2 bg-secondary rounded-full"></div>
-                        <span>Track objectives and progress in real-time</span>
+                        <span>Monitor mission objectives and success metrics live</span>
                       </li>
                       <li className="flex items-center space-x-3">
                         <div className="w-2 h-2 bg-accent rounded-full"></div>
-                        <span>Make strategic decisions with consequences</span>
+                        <span>Experience realistic consequences for every decision</span>
                       </li>
                     </ul>
                   </div>
@@ -210,11 +207,11 @@ const Index = () => {
                         </div>
                         <div>
                           <div className="text-sm font-medium text-primary">Dr. Chen</div>
-                          <div className="text-xs text-muted-foreground">AI Safety Lead</div>
+                          <div className="text-xs text-muted-foreground">Crisis Manager</div>
                         </div>
                       </div>
                       <div className="text-sm text-muted-foreground bg-muted/20 rounded p-3">
-                        "The autonomous system failure requires immediate investigation..."
+                        "We need immediate damage control. The board is meeting in 30 minutes and they want answers..."
                       </div>
                     </div>
                   </div>
@@ -231,14 +228,14 @@ const Index = () => {
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Ready to Begin Your Journey?
+              Ready to Level Up Your Decision-Making?
             </h2>
             <p className="text-lg text-muted-foreground mb-8">
-              Join thousands of players exploring the future of AI interaction and ethical decision-making.
+              Join professionals and students training their leadership and crisis management skills through realistic AI-powered scenarios.
             </p>
             <Button size="lg" className="glow-primary px-8 py-3 text-lg font-semibold">
               <Play className="w-5 h-5 mr-2" />
-              Create Your Account
+              Start Training Now
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </div>
@@ -256,7 +253,7 @@ const Index = () => {
               <span className="font-semibold text-foreground">PlayScenarioAI</span>
             </div>
             <div className="text-sm text-muted-foreground">
-              © 2024 PlayScenarioAI. Building the future of AI interaction.
+              © 2024 PlayScenarioAI. Advancing professional training through AI-powered scenarios.
             </div>
           </div>
         </div>
