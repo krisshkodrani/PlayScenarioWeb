@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Send } from 'lucide-react';
 import MessageBubble from './chat/MessageBubble';
 import CharacterAvatar from './chat/CharacterAvatar';
 import ProgressRing from './chat/ProgressRing';
 import ChatInput from './chat/ChatInput';
+import ObjectiveDrawer from './chat/ObjectiveDrawer';
 
 interface Character {
   id: string;
@@ -100,6 +100,39 @@ const AI_RESPONSES = [
   }
 ];
 
+const OBJECTIVE_DATA = [
+  {
+    id: "rescue-crew",
+    title: "Rescue Kobayashi Maru Crew",
+    description: "Attempt to save 300 civilian lives aboard the disabled vessel",
+    completion_percentage: 25,
+    status: "active" as const,
+    priority: "critical" as const,
+    hints: ["Consider diplomatic approach", "Evaluate ship capabilities", "Time is critical"],
+    progress_notes: "Initial distress signal acknowledged. Multiple strategy options available."
+  },
+  {
+    id: "avoid-war", 
+    title: "Prevent Galactic Incident",
+    description: "Navigate Klingon territory without triggering interstellar conflict",
+    completion_percentage: 10,
+    status: "active" as const,
+    priority: "critical" as const, 
+    hints: ["Review Federation treaties", "Consider Klingon honor code", "Diplomatic channels available"],
+    progress_notes: "Entered neutral zone. Klingon patrol ships detected nearby."
+  },
+  {
+    id: "preserve-ship",
+    title: "Minimize Enterprise Damage", 
+    description: "Protect your crew and vessel from destruction",
+    completion_percentage: 85,
+    status: "active" as const,
+    priority: "normal" as const,
+    hints: ["Shield optimization available", "Emergency protocols ready", "Crew safety paramount"],
+    progress_notes: "Shields at optimal levels. All systems functioning normally."
+  }
+];
+
 const CoreChat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [inputValue, setInputValue] = useState('');
@@ -107,6 +140,9 @@ const CoreChat: React.FC = () => {
   const [progressPercentage, setProgressPercentage] = useState(15);
   const [turn, setTurn] = useState(1);
   const [credits, setCredits] = useState(95);
+  const [showObjectiveDrawer, setShowObjectiveDrawer] = useState(false);
+  const [objectives, setObjectives] = useState(OBJECTIVE_DATA);
+  const [hasObjectiveUpdates, setHasObjectiveUpdates] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -156,6 +192,10 @@ const CoreChat: React.FC = () => {
     
     setIsTyping(false);
     setProgressPercentage(prev => Math.min(prev + 5, 100));
+    
+    // Simulate objective updates
+    setHasObjectiveUpdates(true);
+    setTimeout(() => setHasObjectiveUpdates(false), 3000);
   };
 
   const handleSendMessage = async () => {
@@ -180,10 +220,21 @@ const CoreChat: React.FC = () => {
     }, 500);
   };
 
+  const toggleObjectiveDrawer = () => {
+    setShowObjectiveDrawer(!showObjectiveDrawer);
+    if (!showObjectiveDrawer) {
+      setHasObjectiveUpdates(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-slate-900 text-white">
       {/* Floating Progress Ring */}
-      <ProgressRing percentage={progressPercentage} />
+      <ProgressRing 
+        percentage={progressPercentage} 
+        onClick={toggleObjectiveDrawer}
+        hasUpdates={hasObjectiveUpdates}
+      />
       
       {/* Chat Header */}
       <div className="bg-slate-800 border-b border-slate-700 p-4">
@@ -224,6 +275,13 @@ const CoreChat: React.FC = () => {
         onChange={setInputValue}
         onSend={handleSendMessage}
         disabled={isTyping}
+      />
+
+      {/* Objective Drawer */}
+      <ObjectiveDrawer
+        isOpen={showObjectiveDrawer}
+        onClose={() => setShowObjectiveDrawer(false)}
+        objectives={objectives}
       />
     </div>
   );

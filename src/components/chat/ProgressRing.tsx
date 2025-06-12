@@ -3,9 +3,11 @@ import React from 'react';
 
 interface ProgressRingProps {
   percentage: number;
+  onClick?: () => void;
+  hasUpdates?: boolean;
 }
 
-const ProgressRing: React.FC<ProgressRingProps> = ({ percentage }) => {
+const ProgressRing: React.FC<ProgressRingProps> = ({ percentage, onClick, hasUpdates = false }) => {
   const radius = 24;
   const circumference = 2 * Math.PI * radius;
   const strokeDasharray = circumference;
@@ -13,7 +15,13 @@ const ProgressRing: React.FC<ProgressRingProps> = ({ percentage }) => {
 
   return (
     <div className="fixed top-4 right-4 z-50">
-      <div className="relative w-15 h-15">
+      <button
+        onClick={onClick}
+        className={`relative w-15 h-15 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded-full ${
+          hasUpdates ? 'animate-pulse' : ''
+        }`}
+        aria-label="View mission objectives"
+      >
         <svg
           className="w-15 h-15 transform -rotate-90"
           width="60"
@@ -50,7 +58,12 @@ const ProgressRing: React.FC<ProgressRingProps> = ({ percentage }) => {
             {Math.round(percentage)}%
           </span>
         </div>
-      </div>
+        
+        {/* Update notification badge */}
+        {hasUpdates && (
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border-2 border-slate-900" />
+        )}
+      </button>
     </div>
   );
 };
