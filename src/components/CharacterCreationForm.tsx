@@ -4,84 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { ChevronRight, Save, Eye } from 'lucide-react';
-import BasicCharacterInfo from './character-creation/BasicCharacterInfo';
-import PersonalityFramework from './character-creation/PersonalityFramework';
-import ExpertiseAndKnowledge from './character-creation/ExpertiseAndKnowledge';
-import CommunicationPatterns from './character-creation/CommunicationPatterns';
-import RelationshipDynamics from './character-creation/RelationshipDynamics';
-import GoalsAndMotivations from './character-creation/GoalsAndMotivations';
-import ContextualModifiers from './character-creation/ContextualModifiers';
-import CharacterPreview from './character-creation/CharacterPreview';
-
-interface CharacterData {
-  // Basic Info
-  name: string;
-  displayName: string;
-  role: string[];
-  avatar: string;
-  
-  // Personality
-  personality: {
-    openness: number;
-    conscientiousness: number;
-    extraversion: number;
-    agreeableness: number;
-    neuroticism: number;
-    description: string;
-    traits: string[];
-  };
-  
-  // Expertise
-  expertise: {
-    domains: string[];
-    knowledgeDepth: Record<string, string>;
-    experience: string;
-    education: string;
-  };
-  
-  // Communication
-  communication: {
-    vocabularyLevel: string;
-    formalityLevel: string;
-    emotionalExpression: string;
-    conflictStyle: string;
-  };
-  
-  // Relationships
-  relationships: Array<{
-    characterId: string;
-    type: string;
-    intensity: number;
-    description: string;
-  }>;
-  
-  // Goals
-  goals: {
-    primary: string[];
-    secondary: string[];
-    hidden: string[];
-    motivations: string;
-    moralFramework: string;
-  };
-  
-  // Contextual
-  contextual: {
-    stressResponse: string;
-    authorityInteraction: string;
-    culturalBackground: string;
-    adaptability: number;
-  };
-}
+import { ChevronRight, Save, Eye, User, Brain, Lightbulb } from 'lucide-react';
+import { CharacterData, CharacterContext } from '@/types/character';
+import SimplifiedBasicInfo from './character-creation/SimplifiedBasicInfo';
+import EnhancedPersonality from './character-creation/EnhancedPersonality';
+import SimplifiedExpertise from './character-creation/SimplifiedExpertise';
+import SimplifiedPreview from './character-creation/SimplifiedPreview';
 
 const sections = [
-  { id: 'basic', title: 'Basic Information', component: BasicCharacterInfo },
-  { id: 'personality', title: 'Personality Framework', component: PersonalityFramework },
-  { id: 'expertise', title: 'Expertise & Knowledge', component: ExpertiseAndKnowledge },
-  { id: 'communication', title: 'Communication Patterns', component: CommunicationPatterns },
-  { id: 'relationships', title: 'Relationship Dynamics', component: RelationshipDynamics },
-  { id: 'goals', title: 'Goals & Motivations', component: GoalsAndMotivations },
-  { id: 'contextual', title: 'Contextual Modifiers', component: ContextualModifiers },
+  { id: 'basic', title: 'Basic Information', icon: User },
+  { id: 'personality', title: 'Personality', icon: Brain },
+  { id: 'expertise', title: 'Expertise', icon: Lightbulb },
 ];
 
 const CharacterCreationForm = () => {
@@ -89,121 +22,102 @@ const CharacterCreationForm = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [characterData, setCharacterData] = useState<CharacterData>({
     name: '',
-    displayName: '',
-    role: [],
-    avatar: '',
-    personality: {
-      openness: 5,
-      conscientiousness: 5,
-      extraversion: 5,
-      agreeableness: 5,
-      neuroticism: 5,
-      description: '',
-      traits: []
-    },
-    expertise: {
-      domains: [],
-      knowledgeDepth: {},
-      experience: '',
-      education: ''
-    },
-    communication: {
-      vocabularyLevel: 'intermediate',
-      formalityLevel: 'professional',
-      emotionalExpression: 'moderate',
-      conflictStyle: 'collaborative'
-    },
-    relationships: [],
-    goals: {
-      primary: [],
-      secondary: [],
-      hidden: [],
-      motivations: '',
-      moralFramework: ''
-    },
-    contextual: {
-      stressResponse: 'composed',
-      authorityInteraction: 'respectful',
-      culturalBackground: '',
-      adaptability: 5
-    }
+    personality: '',
+    expertise_keywords: [],
+    is_player_character: false
+  });
+  const [characterContext, setCharacterContext] = useState<CharacterContext>({
+    role: ''
   });
 
-  const handleDataChange = (sectionId: string, updates: any) => {
-    setCharacterData(prev => ({
-      ...prev,
-      [sectionId]: typeof updates === 'function' ? updates(prev[sectionId]) : { ...prev[sectionId], ...updates }
-    }));
-  };
-
+  // Enhanced completion progress
   const getCompletionProgress = () => {
-    const requiredFields = [
-      characterData.name,
-      characterData.role.length > 0,
-      characterData.personality.description,
-      characterData.expertise.domains.length > 0,
-      characterData.goals.primary.length > 0
+    const requirements = [
+      !!characterData.name.trim(),                    // Name required
+      characterData.personality.length >= 100,       // Minimum personality length
+      characterData.expertise_keywords.length > 0    // At least 1 expertise keyword
     ];
     
-    const completed = requiredFields.filter(Boolean).length;
-    return (completed / requiredFields.length) * 100;
+    const completed = requirements.filter(Boolean).length;
+    return (completed / requirements.length) * 100;
   };
 
   const getSectionCompletionStatus = (sectionId: string) => {
     switch (sectionId) {
       case 'basic':
-        return characterData.name && characterData.role.length > 0;
+        return !!characterData.name.trim();
       case 'personality':
-        return characterData.personality.description.length > 0;
+        return characterData.personality.length >= 100; // Require meaningful content
       case 'expertise':
-        return characterData.expertise.domains.length > 0;
-      case 'communication':
-        return true; // Always has defaults
-      case 'relationships':
-        return true; // Optional section
-      case 'goals':
-        return characterData.goals.primary.length > 0;
-      case 'contextual':
-        return true; // Always has defaults
+        return characterData.expertise_keywords.length > 0;
       default:
         return false;
     }
   };
 
-  const ActiveComponent = sections.find(s => s.id === activeSection)?.component;
+  const renderActiveComponent = () => {
+    switch (activeSection) {
+      case 'basic':
+        return (
+          <SimplifiedBasicInfo
+            characterData={characterData}
+            characterContext={characterContext}
+            setCharacterData={setCharacterData}
+            setCharacterContext={setCharacterContext}
+          />
+        );
+      case 'personality':
+        return (
+          <EnhancedPersonality
+            characterData={characterData}
+            characterContext={characterContext}
+            setCharacterData={setCharacterData}
+          />
+        );
+      case 'expertise':
+        return (
+          <SimplifiedExpertise
+            characterData={characterData}
+            setCharacterData={setCharacterData}
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
   if (showPreview) {
     return (
-      <div className="min-h-screen bg-background p-4">
+      <div className="min-h-screen bg-slate-900 p-4">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <Button 
               variant="ghost" 
               onClick={() => setShowPreview(false)}
-              className="text-primary"
+              className="text-cyan-400 hover:text-cyan-300"
             >
               ← Back to Editor
             </Button>
-            <Button className="glow-primary">
+            <Button className="bg-gradient-to-r from-cyan-400 to-violet-500 hover:from-cyan-300 hover:to-violet-400 shadow-lg shadow-cyan-400/30">
               <Save className="w-4 h-4 mr-2" />
               Save Character
             </Button>
           </div>
-          <CharacterPreview data={characterData} />
+          <SimplifiedPreview data={characterData} />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-slate-900">
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Create Character</h1>
-              <p className="text-muted-foreground mt-1">
+              <h1 className="text-3xl font-bold text-white">Create Character</h1>
+              <p className="text-slate-400 mt-1">
                 Design an AI personality for your scenarios
               </p>
             </div>
@@ -211,12 +125,12 @@ const CharacterCreationForm = () => {
               <Button 
                 variant="outline" 
                 onClick={() => setShowPreview(true)}
-                className="border-primary/30 hover:border-primary"
+                className="border-cyan-400/30 hover:border-cyan-400 text-cyan-400 hover:text-cyan-300"
               >
                 <Eye className="w-4 h-4 mr-2" />
                 Preview
               </Button>
-              <Button className="glow-primary">
+              <Button className="bg-gradient-to-r from-cyan-400 to-violet-500 hover:from-cyan-300 hover:to-violet-400 shadow-lg shadow-cyan-400/30">
                 <Save className="w-4 h-4 mr-2" />
                 Save Draft
               </Button>
@@ -226,61 +140,62 @@ const CharacterCreationForm = () => {
           {/* Progress */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Character Development Progress</span>
-              <span className="text-primary font-medium">{Math.round(getCompletionProgress())}% Complete</span>
+              <span className="text-slate-400">Character Development Progress</span>
+              <span className="text-cyan-400 font-medium">{Math.round(getCompletionProgress())}% Complete</span>
             </div>
-            <Progress value={getCompletionProgress()} className="h-2" />
+            <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+              <div 
+                className="bg-gradient-to-r from-cyan-400 to-violet-500 h-2 rounded-full transition-all duration-500"
+                style={{ width: `${getCompletionProgress()}%` }}
+              />
+            </div>
           </div>
         </div>
 
         <div className="flex gap-8">
           {/* Sidebar Navigation */}
           <div className="w-80 shrink-0">
-            <Card className="sticky top-6">
+            <Card className="sticky top-6 bg-gradient-to-br from-slate-800/80 to-slate-700/50 backdrop-blur border border-slate-600">
               <CardHeader>
-                <CardTitle className="text-lg">Character Sections</CardTitle>
+                <CardTitle className="text-lg text-white">Character Sections</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {sections.map((section) => (
-                  <button
-                    key={section.id}
-                    onClick={() => setActiveSection(section.id)}
-                    className={`w-full text-left p-3 rounded-md transition-colors ${
-                      activeSection === section.id
-                        ? 'bg-primary/20 border border-primary/30'
-                        : 'hover:bg-muted'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-sm">{section.title}</span>
-                      <div className="flex items-center space-x-2">
-                        {getSectionCompletionStatus(section.id) && (
-                          <Badge variant="secondary" className="text-xs">Complete</Badge>
-                        )}
-                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                {sections.map((section) => {
+                  const IconComponent = section.icon;
+                  return (
+                    <button
+                      key={section.id}
+                      onClick={() => setActiveSection(section.id)}
+                      className={`w-full text-left p-3 rounded-md transition-colors ${
+                        activeSection === section.id
+                          ? 'bg-cyan-400/20 border border-cyan-400/30'
+                          : 'hover:bg-slate-700/50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <IconComponent className="w-4 h-4 text-cyan-400" />
+                          <span className="font-medium text-sm text-white">{section.title}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {getSectionCompletionStatus(section.id) && (
+                            <Badge variant="secondary" className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                              Complete
+                            </Badge>
+                          )}
+                          <ChevronRight className="w-4 h-4 text-slate-400" />
+                        </div>
                       </div>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </CardContent>
             </Card>
           </div>
 
           {/* Main Content */}
           <div className="flex-1 min-w-0">
-            <Card>
-              <CardHeader>
-                <CardTitle>{sections.find(s => s.id === activeSection)?.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {ActiveComponent && (
-                  <ActiveComponent
-                    data={activeSection === 'basic' ? characterData : characterData[activeSection]}
-                    onChange={(updates: any) => handleDataChange(activeSection, updates)}
-                  />
-                )}
-              </CardContent>
-            </Card>
+            {renderActiveComponent()}
           </div>
         </div>
       </div>
