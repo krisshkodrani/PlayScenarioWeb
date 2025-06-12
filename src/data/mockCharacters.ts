@@ -79,12 +79,64 @@ export const MOCK_CHARACTERS: Character[] = [
     average_rating: 4.3,
     avatar_color: "bg-indigo-500",
     last_used: "2024-01-22T10:30:00Z"
+  },
+  {
+    id: "char7",
+    name: "Captain Zara Voss",
+    role: "Space Station Commander",
+    personality: "Fearless leader with 20 years of space exploration experience. Makes tough decisions under extreme pressure and inspires unwavering loyalty from crew members. Has a dry wit that emerges during the most dangerous situations.",
+    expertise_keywords: ["space-operations", "crisis-leadership", "astronaut-training", "interstellar-navigation"],
+    created_at: "2024-01-02T14:20:00Z",
+    scenario_count: 8,
+    total_responses: 312,
+    average_rating: 4.9,
+    avatar_color: "bg-purple-500",
+    last_used: "2024-01-23T16:45:00Z"
+  },
+  {
+    id: "char8",
+    name: "Phoenix Nakamura",
+    role: "Cybersecurity Hacker",
+    personality: "Brilliant digital detective with unconventional methods. Speaks in tech metaphors and thinks three steps ahead of cybercriminals. Prefers working alone but fiercely protective of digital privacy rights.",
+    expertise_keywords: ["cybersecurity", "ethical-hacking", "digital-forensics", "encryption", "privacy-protection"],
+    created_at: "2024-01-01T11:15:00Z",
+    scenario_count: 7,
+    total_responses: 278,
+    average_rating: 4.6,
+    avatar_color: "bg-cyan-500",
+    last_used: "2024-01-24T13:20:00Z"
+  },
+  {
+    id: "char9",
+    name: "Dr. Amara Okafor",
+    role: "Environmental Scientist",
+    personality: "Passionate climate researcher who combines scientific rigor with environmental activism. Speaks with urgency about sustainability but maintains optimism about innovative solutions. Uses nature analogies to explain complex concepts.",
+    expertise_keywords: ["climate-science", "sustainability", "environmental-policy", "renewable-energy", "ecosystem-management"],
+    created_at: "2023-12-28T08:30:00Z",
+    scenario_count: 5,
+    total_responses: 189,
+    average_rating: 4.8,
+    avatar_color: "bg-green-600",
+    last_used: "2024-01-25T10:15:00Z"
+  },
+  {
+    id: "char10",
+    name: "Lorenzo 'The Mediator' Santos",
+    role: "Conflict Resolution Specialist",
+    personality: "Former diplomat turned corporate mediator with an uncanny ability to find common ground. Speaks multiple languages fluently and uses cultural insights to bridge divides. Never raises his voice but commands respect through wisdom.",
+    expertise_keywords: ["diplomacy", "negotiation", "cultural-intelligence", "conflict-resolution", "international-relations"],
+    created_at: "2023-12-25T15:45:00Z",
+    scenario_count: 9,
+    total_responses: 356,
+    average_rating: 4.7,
+    avatar_color: "bg-orange-500",
+    last_used: "2024-01-26T09:30:00Z"
   }
 ];
 
 export const MOCK_CHARACTER_STATS: CharacterStats = {
-  totalCharacters: 12,
-  activeCharacters: 8,
-  mostUsedCharacter: "David Kumar",
-  averageRating: 4.6
+  totalCharacters: 16,
+  activeCharacters: 12,
+  mostUsedCharacter: "Lorenzo 'The Mediator' Santos",
+  averageRating: 4.7
 };
