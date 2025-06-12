@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,6 +17,7 @@ import ScenarioCreation from "./pages/ScenarioCreation";
 import ScenarioPreview from "./pages/ScenarioPreview";
 import CoreChatPage from "./pages/CoreChatPage";
 import MyScenarios from "./pages/MyScenarios";
+import MyCharacters from "./pages/MyCharacters";
 import NotFound from "./pages/NotFound";
 import Results from "./pages/Results";
 
@@ -62,6 +64,11 @@ const App = () => (
             <Route path="/my-scenarios" element={
               <ProtectedRoute>
                 <MyScenarios />
+              </ProtectedRoute>
+            } />
+            <Route path="/my-characters" element={
+              <ProtectedRoute>
+                <MyCharacters />
               </ProtectedRoute>
             } />
             <Route path="/results/:instance_id" element={
