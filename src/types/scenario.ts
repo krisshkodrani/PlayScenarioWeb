@@ -1,3 +1,4 @@
+
 export interface ObjectiveData {
   id: number;
   description: string;
@@ -58,6 +59,7 @@ export interface Scenario {
   tags: string[];
   is_liked?: boolean;
   is_bookmarked?: boolean;
+  is_public: boolean;
 }
 
 export interface ScenarioCategory {
