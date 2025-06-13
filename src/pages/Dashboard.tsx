@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/navigation/PageHeader';
@@ -81,16 +80,14 @@ const Dashboard: React.FC = () => {
               totalLikesReceived={data.scenarioStats.totalLikes}
               totalBookmarksReceived={data.scenarioStats.totalBookmarks}
             />
-            <div className="h-[400px]">
-              <QuickActions 
-                onCreateScenario={() => navigate('/create-scenario')}
-                onBrowseScenarios={() => navigate('/browse')}
-                onViewProfile={() => navigate('/profile')}
-                onViewMyScenarios={() => navigate('/my-scenarios')}
-              />
-            </div>
+            <QuickActions 
+              onCreateScenario={() => navigate('/create-scenario')}
+              onBrowseScenarios={() => navigate('/browse')}
+              onViewProfile={() => navigate('/profile')}
+              onViewMyScenarios={() => navigate('/my-scenarios')}
+            />
           </div>
-          <div className="h-[400px]">
+          <div>
             <CreditStatusCard 
               balance={data.credits.credits}
               recentTransactions={data.recentTransactions}
