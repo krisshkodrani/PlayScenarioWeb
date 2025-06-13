@@ -49,7 +49,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
       description: 'Manage your AI characters',
       icon: Users,
       onClick: onViewMyCharacters,
-      className: 'bg-slate-600 hover:bg-slate-700'
+      className: 'bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600'
     }
   ];
 
