@@ -21,6 +21,11 @@ import MyCharacters from "./pages/MyCharacters";
 import CreditsPurchase from "./pages/CreditsPurchase";
 import NotFound from "./pages/NotFound";
 import Results from "./pages/Results";
+import TermsOfService from "./pages/legal/TermsOfService";
+import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
+import CookiePolicy from "./pages/legal/CookiePolicy";
+import CommunityGuidelines from "./pages/legal/CommunityGuidelines";
+import RefundPolicy from "./pages/legal/RefundPolicy";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +87,16 @@ const App = () => (
                 <Results />
               </ProtectedRoute>
             } />
+            
+            {/* Legal Pages */}
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/cookie-policy" element={<CookiePolicy />} />
+            <Route path="/community-guidelines" element={<CommunityGuidelines />} />
+            <Route path="/refund-policy" element={<RefundPolicy />} />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
