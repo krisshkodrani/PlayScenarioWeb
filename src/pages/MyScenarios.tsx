@@ -109,58 +109,62 @@ const MyScenarios: React.FC = () => {
     : `Manage your collection of ${scenarioStats.totalScenarios} scenario${scenarioStats.totalScenarios === 1 ? '' : 's'}`;
 
   return (
-    <div className="min-h-screen bg-slate-900">
-      <div className="container mx-auto px-4 py-8">
-        <PageHeader
-          title="My Scenarios"
-          subtitle={subtitle}
-          badge={headerBadge}
-          actions={headerActions}
-        />
+    <div className="min-h-screen bg-slate-900 flex flex-col">
+      {/* Sticky Header Section */}
+      <div className="sticky top-0 z-10 bg-slate-900 border-b border-slate-800">
+        <div className="container mx-auto px-4 py-8">
+          <PageHeader
+            title="My Scenarios"
+            subtitle={subtitle}
+            badge={headerBadge}
+            actions={headerActions}
+          />
 
-        <ScenarioStatsCards stats={scenarioStats} />
+          <ScenarioStatsCards stats={scenarioStats} />
 
-        {hasScenarios && (
-          <>
+          {hasScenarios && (
             <ScenarioFilters
               filters={filters}
               onFilterChange={handleFilterChange}
               viewMode={viewMode}
               onViewModeChange={setViewMode}
             />
+          )}
+        </div>
+      </div>
 
-            {hasSearchResults ? (
-              <>
-                <ScenarioList
-                  scenarios={scenarios}
-                  viewMode={viewMode}
-                  onEdit={handleEdit}
-                  onView={handleView}
-                  onDelete={handleDelete}
-                  onDuplicate={handleDuplicate}
-                  onTogglePublic={handleTogglePublic}
-                />
-
-                {pagination.total > pagination.limit && (
-                  <ScenarioPagination
-                    currentPage={pagination.page}
-                    totalPages={Math.ceil(pagination.total / pagination.limit)}
-                    onPageChange={handlePageChange}
-                  />
-                )}
-              </>
-            ) : (
-              <NoSearchResults 
-                query={filters.search}
-                onClearSearch={() => handleFilterChange({ search: '' })}
+      {/* Scrollable Content Section */}
+      <div className="flex-1 overflow-auto">
+        <div className="container mx-auto px-4 py-6">
+          {hasScenarios && hasSearchResults ? (
+            <>
+              <ScenarioList
+                scenarios={scenarios}
+                viewMode={viewMode}
+                onEdit={handleEdit}
+                onView={handleView}
+                onDelete={handleDelete}
+                onDuplicate={handleDuplicate}
+                onTogglePublic={handleTogglePublic}
               />
-            )}
-          </>
-        )}
 
-        {!hasScenarios && !filters.search && (
-          <EmptyScenarios onCreateNew={handleCreateNew} />
-        )}
+              {pagination.total > pagination.limit && (
+                <ScenarioPagination
+                  currentPage={pagination.page}
+                  totalPages={Math.ceil(pagination.total / pagination.limit)}
+                  onPageChange={handlePageChange}
+                />
+              )}
+            </>
+          ) : hasScenarios && !hasSearchResults ? (
+            <NoSearchResults 
+              query={filters.search}
+              onClearSearch={() => handleFilterChange({ search: '' })}
+            />
+          ) : (
+            <EmptyScenarios onCreateNew={handleCreateNew} />
+          )}
+        </div>
       </div>
     </div>
   );
