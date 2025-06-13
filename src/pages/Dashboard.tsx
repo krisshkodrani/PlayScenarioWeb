@@ -1,6 +1,9 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { User, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 import PageHeader from '@/components/navigation/PageHeader';
 import DashboardWelcome from '@/components/dashboard/DashboardWelcome';
 import DashboardStats from '@/components/dashboard/DashboardStats';
@@ -13,7 +16,34 @@ import { useDashboardData } from '@/hooks/useDashboardData';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   const { data, loading, error } = useDashboardData();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  const headerActions = (
+    <div className="flex items-center gap-3">
+      <Button
+        variant="outline"
+        onClick={() => navigate('/profile')}
+        className="border-gray-600 text-slate-300 hover:bg-slate-700"
+      >
+        <User className="w-4 h-4 mr-2" />
+        Profile
+      </Button>
+      <Button
+        variant="outline"
+        onClick={handleLogout}
+        className="border-red-500 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+      >
+        <LogOut className="w-4 h-4 mr-2" />
+        Logout
+      </Button>
+    </div>
+  );
 
   if (loading) {
     return (
@@ -56,6 +86,7 @@ const Dashboard: React.FC = () => {
           <PageHeader
             title={`Welcome back, ${data.user.username}!`}
             subtitle="Let's get you started with your first AI scenario"
+            actions={headerActions}
           />
           <NewUserDashboard />
         </div>
@@ -69,6 +100,7 @@ const Dashboard: React.FC = () => {
         <PageHeader
           title={`Welcome back, ${data.user.username}!`}
           subtitle="Here's what's happening with your scenarios and games"
+          actions={headerActions}
         />
         
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
