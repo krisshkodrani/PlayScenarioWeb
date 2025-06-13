@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -26,6 +25,7 @@ const BREADCRUMB_CONFIG: BreadcrumbConfig = {
   '/my-characters': { label: 'My Characters', parent: '/dashboard' },
   '/create-scenario': { label: 'Create Scenario', parent: '/my-scenarios' },
   '/create-character': { label: 'Create Character', parent: '/my-characters' },
+  '/credits/purchase': { label: 'Purchase Credits', parent: '/dashboard' },
   '/browse': { label: 'Browse Scenarios' },
   '/profile': { label: 'Profile', parent: '/dashboard' },
 };

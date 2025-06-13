@@ -18,6 +18,7 @@ import ScenarioPreview from "./pages/ScenarioPreview";
 import CoreChatPage from "./pages/CoreChatPage";
 import MyScenarios from "./pages/MyScenarios";
 import MyCharacters from "./pages/MyCharacters";
+import CreditsPurchase from "./pages/CreditsPurchase";
 import NotFound from "./pages/NotFound";
 import Results from "./pages/Results";
 
@@ -69,6 +70,11 @@ const App = () => (
             <Route path="/my-characters" element={
               <ProtectedRoute>
                 <MyCharacters />
+              </ProtectedRoute>
+            } />
+            <Route path="/credits/purchase" element={
+              <ProtectedRoute>
+                <CreditsPurchase />
               </ProtectedRoute>
             } />
             <Route path="/results/:instance_id" element={
