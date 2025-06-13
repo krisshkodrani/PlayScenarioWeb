@@ -31,14 +31,14 @@ const CreditStatusCard: React.FC<CreditStatusCardProps> = ({
   };
 
   return (
-    <Card className="bg-slate-800 border-slate-700">
+    <Card className="bg-slate-800 border-slate-700 h-full flex flex-col">
       <CardHeader>
         <CardTitle className="text-white flex items-center gap-2">
           <Coins className="w-5 h-5 text-amber-400" />
           Credit Status
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 flex flex-col">
         <div className="text-center mb-6">
           <div className={`text-4xl font-bold mb-2 ${isLowCredit ? 'text-amber-400' : 'text-emerald-400'}`}>
             {balance}
@@ -64,9 +64,9 @@ const CreditStatusCard: React.FC<CreditStatusCardProps> = ({
         </Button>
 
         {recentTransactions.length > 0 && (
-          <div>
+          <div className="flex-1 flex flex-col">
             <h4 className="text-sm font-medium text-slate-300 mb-3">Recent Transactions</h4>
-            <div className="space-y-2">
+            <div className="space-y-2 flex-1">
               {recentTransactions.slice(0, 3).map((transaction) => {
                 const formatted = formatTransaction(transaction);
                 return (
