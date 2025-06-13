@@ -6,20 +6,20 @@ import {
   Plus, 
   Search, 
   FileText, 
-  User 
+  Users 
 } from 'lucide-react';
 
 interface QuickActionsProps {
   onCreateScenario: () => void;
   onBrowseScenarios: () => void;
-  onViewProfile: () => void;
+  onViewMyCharacters: () => void;
   onViewMyScenarios: () => void;
 }
 
 const QuickActions: React.FC<QuickActionsProps> = ({
   onCreateScenario,
   onBrowseScenarios,
-  onViewProfile,
+  onViewMyCharacters,
   onViewMyScenarios
 }) => {
   const actions = [
@@ -45,10 +45,10 @@ const QuickActions: React.FC<QuickActionsProps> = ({
       className: 'bg-violet-500 hover:bg-violet-600'
     },
     {
-      title: 'View Profile',
-      description: 'Account settings & stats',
-      icon: User,
-      onClick: onViewProfile,
+      title: 'My Characters',
+      description: 'Manage your AI characters',
+      icon: Users,
+      onClick: onViewMyCharacters,
       className: 'bg-slate-600 hover:bg-slate-700'
     }
   ];
