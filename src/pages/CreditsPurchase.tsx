@@ -70,9 +70,9 @@ const CreditsPurchase: React.FC = () => {
           customBreadcrumbs={customBreadcrumbs}
         />
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {/* Left Column - Package Selection */}
-          <div className="xl:col-span-2 space-y-8">
+        <div className="space-y-8">
+          {/* Main Content Area */}
+          <div className="space-y-8">
             <CreditPackages
               packages={packages}
               selectedPackage={selectedPackage?.id || null}
@@ -88,8 +88,8 @@ const CreditsPurchase: React.FC = () => {
             )}
           </div>
 
-          {/* Right Column - Transaction History */}
-          <div className="xl:col-span-1">
+          {/* Transaction History - Below main content */}
+          <div className="max-w-4xl mx-auto">
             <TransactionHistory transactions={recentTransactions} />
           </div>
         </div>
