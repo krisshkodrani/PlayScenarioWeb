@@ -78,7 +78,7 @@ const Index = () => {
             </Badge>
             
             <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-              Master Real-World
+              Master Real-World & Futuristic
               <span className="block bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
                 Scenarios with AI Characters
               </span>
