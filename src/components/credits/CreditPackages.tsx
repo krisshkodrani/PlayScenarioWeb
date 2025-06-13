@@ -32,7 +32,7 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({
           return (
             <Card
               key={pkg.id}
-              className={`relative cursor-pointer transition-all duration-200 ${
+              className={`relative cursor-pointer transition-all duration-200 flex flex-col ${
                 isSelected
                   ? 'bg-slate-800 border-cyan-400 shadow-lg shadow-cyan-400/20 scale-105'
                   : 'bg-slate-800 border-slate-700 hover:border-slate-600 hover:bg-slate-750'
@@ -82,12 +82,12 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({
                 </div>
               </CardHeader>
 
-              <CardContent className="space-y-4">
-                <p className="text-sm text-slate-300 text-center">
+              <CardContent className="flex flex-col flex-1">
+                <p className="text-sm text-slate-300 text-center mb-4">
                   {pkg.description}
                 </p>
 
-                <div className="space-y-2">
+                <div className="space-y-2 flex-1">
                   {pkg.features.map((feature, index) => (
                     <div key={index} className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
@@ -97,7 +97,7 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({
                 </div>
 
                 <Button
-                  className={`w-full transition-all duration-200 ${
+                  className={`w-full mt-4 transition-all duration-200 ${
                     isSelected
                       ? 'bg-cyan-500 hover:bg-cyan-600 text-slate-900'
                       : 'bg-slate-700 hover:bg-slate-600 text-white'

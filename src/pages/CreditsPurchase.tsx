@@ -88,8 +88,8 @@ const CreditsPurchase: React.FC = () => {
             )}
           </div>
 
-          {/* Transaction History - Below main content */}
-          <div className="max-w-4xl mx-auto">
+          {/* Transaction History - Full width */}
+          <div className="w-full">
             <TransactionHistory transactions={recentTransactions} />
           </div>
         </div>
