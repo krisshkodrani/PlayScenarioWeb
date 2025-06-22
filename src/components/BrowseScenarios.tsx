@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Gamepad2, LogIn } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -55,12 +54,12 @@ const BrowseScenarios: React.FC = () => {
     action();
   };
 
-  const wrappedHandleLike = (scenarioId: string, isLiked: boolean) => {
-    handleAuthenticatedAction(() => handleLike(scenarioId, isLiked), 'like');
+  const wrappedHandleLike = (scenarioId: string) => {
+    handleAuthenticatedAction(() => handleLike(scenarioId), 'like');
   };
 
-  const wrappedHandleBookmark = (scenarioId: string, isBookmarked: boolean) => {
-    handleAuthenticatedAction(() => handleBookmark(scenarioId, isBookmarked), 'bookmark');
+  const wrappedHandleBookmark = (scenarioId: string) => {
+    handleAuthenticatedAction(() => handleBookmark(scenarioId), 'bookmark');
   };
 
   if (loading && scenarios.length === 0) {
