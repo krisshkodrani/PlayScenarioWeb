@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Character, CharacterStats, CharacterFilters } from '@/types/character';
-import { MOCK_CHARACTERS, MOCK_CHARACTER_STATS } from '@/data/mockCharacters';
+import { characterService } from '@/services/characterService';
 import { useToast } from '@/hooks/use-toast';
 
 interface UseMyCharactersReturn {
@@ -25,7 +25,12 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
   const { toast } = useToast();
   
   const [characters, setCharacters] = useState<Character[]>([]);
-  const [characterStats, setCharacterStats] = useState<CharacterStats>(MOCK_CHARACTER_STATS);
+  const [characterStats, setCharacterStats] = useState<CharacterStats>({
+    totalCharacters: 0,
+    activeCharacters: 0,
+    mostUsedCharacter: '',
+    averageRating: 0
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -42,85 +47,31 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
     total: 0
   });
 
-  // Filter and sort characters
-  const getFilteredCharacters = useCallback((chars: Character[], currentFilters: CharacterFilters) => {
-    let filtered = [...chars];
-
-    // Search filter
-    if (currentFilters.search) {
-      const searchLower = currentFilters.search.toLowerCase();
-      filtered = filtered.filter(char => 
-        char.name.toLowerCase().includes(searchLower) ||
-        char.role.toLowerCase().includes(searchLower) ||
-        char.personality.toLowerCase().includes(searchLower) ||
-        char.expertise_keywords.some(keyword => keyword.toLowerCase().includes(searchLower))
-      );
-    }
-
-    // Role filter
-    if (currentFilters.role) {
-      filtered = filtered.filter(char => char.role.includes(currentFilters.role));
-    }
-
-    // Expertise filter
-    if (currentFilters.expertise) {
-      filtered = filtered.filter(char => 
-        char.expertise_keywords.some(keyword => keyword.includes(currentFilters.expertise))
-      );
-    }
-
-    // Sort
-    switch (currentFilters.sortBy) {
-      case 'name':
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'created':
-        filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        break;
-      case 'usage':
-        filtered.sort((a, b) => b.scenario_count - a.scenario_count);
-        break;
-      case 'rating':
-        filtered.sort((a, b) => b.average_rating - a.average_rating);
-        break;
-      default:
-        break;
-    }
-
-    return filtered;
-  }, []);
-
-  // Fetch characters data
+  // Fetch characters data from Supabase
   const fetchCharacters = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Fetch characters and stats simultaneously
+      const [charactersResult, statsResult] = await Promise.all([
+        characterService.getUserCharacters(filters, pagination.page, pagination.limit),
+        characterService.getCharacterStats()
+      ]);
 
-      // Apply filters to mock data
-      const filteredChars = getFilteredCharacters(MOCK_CHARACTERS, filters);
-      
-      // Apply pagination
-      const startIndex = (pagination.page - 1) * pagination.limit;
-      const endIndex = startIndex + pagination.limit;
-      const paginatedChars = filteredChars.slice(startIndex, endIndex);
-
-      setCharacters(paginatedChars);
+      setCharacters(charactersResult.characters);
       setPagination(prev => ({
         ...prev,
-        total: filteredChars.length
+        total: charactersResult.total
       }));
-      
-      setCharacterStats(MOCK_CHARACTER_STATS);
+      setCharacterStats(statsResult);
     } catch (err) {
       console.error('Error fetching characters:', err);
       setError('Failed to load characters. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [filters, pagination.page, pagination.limit, getFilteredCharacters]);
+  }, [filters, pagination.page, pagination.limit]);
 
   // Handle filter changes
   const handleFilterChange = useCallback((newFilters: Partial<CharacterFilters>) => {
@@ -138,8 +89,7 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
     try {
       console.log('Deleting character:', characterId);
       
-      // TODO: Replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await characterService.deleteCharacter(characterId);
       
       toast({
         title: "Character Deleted",
@@ -147,7 +97,7 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
       });
       
       // Refresh the list
-      fetchCharacters();
+      await fetchCharacters();
     } catch (error) {
       console.error('Error deleting character:', error);
       toast({
@@ -163,8 +113,7 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
     try {
       console.log('Duplicating character:', characterId);
       
-      // TODO: Replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await characterService.duplicateCharacter(characterId);
       
       toast({
         title: "Character Duplicated",
@@ -172,7 +121,7 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
       });
       
       // Refresh the list
-      fetchCharacters();
+      await fetchCharacters();
     } catch (error) {
       console.error('Error duplicating character:', error);
       toast({

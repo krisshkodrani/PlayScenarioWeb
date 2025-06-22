@@ -5,7 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { ChevronRight, Save, Eye, User, Brain, Lightbulb } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { CharacterData, CharacterContext } from '@/types/character';
+import { characterService } from '@/services/characterService';
+import { useToast } from '@/hooks/use-toast';
 import SimplifiedBasicInfo from './character-creation/SimplifiedBasicInfo';
 import EnhancedPersonality from './character-creation/EnhancedPersonality';
 import SimplifiedExpertise from './character-creation/SimplifiedExpertise';
@@ -18,8 +21,11 @@ const sections = [
 ];
 
 const CharacterCreationForm = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [activeSection, setActiveSection] = useState('basic');
   const [showPreview, setShowPreview] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [characterData, setCharacterData] = useState<CharacterData>({
     name: '',
     personality: '',
@@ -52,6 +58,57 @@ const CharacterCreationForm = () => {
         return characterData.expertise_keywords.length > 0;
       default:
         return false;
+    }
+  };
+
+  const handleSaveCharacter = async () => {
+    if (!characterData.name.trim()) {
+      toast({
+        title: "Name Required",
+        description: "Please enter a character name.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (characterData.personality.length < 100) {
+      toast({
+        title: "Personality Too Short",
+        description: "Please provide a more detailed personality description (at least 100 characters).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (characterData.expertise_keywords.length === 0) {
+      toast({
+        title: "Expertise Required",
+        description: "Please add at least one expertise keyword.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setSaving(true);
+      await characterService.createCharacter(characterData);
+      
+      toast({
+        title: "Character Created",
+        description: `${characterData.name} has been successfully created!`,
+      });
+
+      // Navigate back to My Characters page
+      navigate('/my-characters');
+    } catch (error) {
+      console.error('Error saving character:', error);
+      toast({
+        title: "Save Failed",
+        description: "Unable to save the character. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -98,9 +155,13 @@ const CharacterCreationForm = () => {
             >
               ← Back to Editor
             </Button>
-            <Button className="bg-gradient-to-r from-cyan-400 to-violet-500 hover:from-cyan-300 hover:to-violet-400 shadow-lg shadow-cyan-400/30">
+            <Button 
+              onClick={handleSaveCharacter}
+              disabled={saving || getCompletionProgress() < 100}
+              className="bg-gradient-to-r from-cyan-400 to-violet-500 hover:from-cyan-300 hover:to-violet-400 shadow-lg shadow-cyan-400/30"
+            >
               <Save className="w-4 h-4 mr-2" />
-              Save Character
+              {saving ? 'Saving...' : 'Save Character'}
             </Button>
           </div>
           <SimplifiedPreview characterData={characterData} />
@@ -130,9 +191,13 @@ const CharacterCreationForm = () => {
                 <Eye className="w-4 h-4 mr-2" />
                 Preview
               </Button>
-              <Button className="bg-gradient-to-r from-cyan-400 to-violet-500 hover:from-cyan-300 hover:to-violet-400 shadow-lg shadow-cyan-400/30">
+              <Button 
+                onClick={handleSaveCharacter}
+                disabled={saving || getCompletionProgress() < 100}
+                className="bg-gradient-to-r from-cyan-400 to-violet-500 hover:from-cyan-300 hover:to-violet-400 shadow-lg shadow-cyan-400/30"
+              >
                 <Save className="w-4 h-4 mr-2" />
-                Save Draft
+                {saving ? 'Saving...' : 'Save Character'}
               </Button>
             </div>
           </div>
