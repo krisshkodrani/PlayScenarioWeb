@@ -58,7 +58,7 @@ const BrowseScenarios: React.FC = () => {
       search: '',
       category: 'all',
       difficulty: '',
-      sortBy: ('popularity' as const)
+      sortBy: 'popularity' as const
     });
   };
 
