@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ScenarioData, Scenario } from '@/types/scenario';
 
@@ -82,7 +81,7 @@ export const scenarioService = {
       .from('scenarios')
       .select(`
         *,
-        scenario_characters!inner(
+        scenario_characters(
           id,
           name,
           role,
@@ -114,7 +113,7 @@ export const scenarioService = {
         query = query.order('play_count', { ascending: false });
         break;
       case 'rating':
-        query = query.order('average_score', { ascending: false, nullsLast: true });
+        query = query.order('average_score', { ascending: false, nullsFirst: false });
         break;
       default:
         query = query.order('created_at', { ascending: false });
@@ -166,7 +165,7 @@ export const scenarioService = {
       .from('scenarios')
       .select(`
         *,
-        scenario_characters!inner(
+        scenario_characters(
           id,
           name,
           role,
@@ -199,7 +198,7 @@ export const scenarioService = {
         query = query.order('play_count', { ascending: false });
         break;
       case 'rating':
-        query = query.order('average_score', { ascending: false, nullsLast: true });
+        query = query.order('average_score', { ascending: false, nullsFirst: false });
         break;
       default:
         query = query.order('created_at', { ascending: false });
