@@ -5,6 +5,7 @@ import PageHeader from '@/components/navigation/PageHeader';
 import SearchAndFilters from '@/components/browse/SearchAndFilters';
 import ScenarioGrid from '@/components/browse/ScenarioGrid';
 import { useBrowseScenarios } from '@/hooks/useBrowseScenarios';
+import { ScenarioFilters } from '@/services/scenarioService';
 
 const BrowseScenarios: React.FC = () => {
   const {
@@ -54,12 +55,13 @@ const BrowseScenarios: React.FC = () => {
   }
 
   const clearFilters = () => {
-    handleFilterChange({
+    const resetFilters: Partial<ScenarioFilters> = {
       search: '',
-      category: 'all' as const,
-      difficulty: '' as const,
-      sortBy: 'popularity' as const
-    });
+      category: 'all',
+      difficulty: '',
+      sortBy: 'popularity'
+    };
+    handleFilterChange(resetFilters);
   };
 
   const hasFilters = Boolean(filters.search || filters.category !== 'all' || filters.difficulty);
