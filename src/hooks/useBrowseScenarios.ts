@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -13,11 +12,27 @@ export const useBrowseScenarios = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
+  // Helper function to safely parse sortBy from URL params
+  const parseSortBy = (value: string | null): ScenarioFilters['sortBy'] => {
+    const validSortOptions: ScenarioFilters['sortBy'][] = ['created_desc', 'created_asc', 'title', 'popularity', 'rating'];
+    return validSortOptions.includes(value as ScenarioFilters['sortBy']) 
+      ? (value as ScenarioFilters['sortBy']) 
+      : 'popularity';
+  };
+
+  // Helper function to safely parse difficulty from URL params
+  const parseDifficulty = (value: string | null): ScenarioFilters['difficulty'] => {
+    const validDifficulties: ScenarioFilters['difficulty'][] = ['', 'Beginner', 'Intermediate', 'Advanced'];
+    return validDifficulties.includes(value as ScenarioFilters['difficulty']) 
+      ? (value as ScenarioFilters['difficulty']) 
+      : '';
+  };
+
   const [filters, setFilters] = useState<ScenarioFilters>({
     search: searchParams.get('search') || '',
     category: searchParams.get('category') || 'all',
-    difficulty: (searchParams.get('difficulty') as ScenarioFilters['difficulty']) || '',
-    sortBy: (searchParams.get('sortBy') as ScenarioFilters['sortBy']) || 'popularity'
+    difficulty: parseDifficulty(searchParams.get('difficulty')),
+    sortBy: parseSortBy(searchParams.get('sortBy'))
   });
 
   const [pagination, setPagination] = useState({
