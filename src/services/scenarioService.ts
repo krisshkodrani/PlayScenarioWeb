@@ -88,7 +88,8 @@ export const scenarioService = {
           role,
           personality,
           expertise_keywords
-        )
+        ),
+        profiles!scenarios_creator_id_fkey(username)
       `, { count: 'exact' })
       .eq('creator_id', user.id);
 
@@ -171,7 +172,8 @@ export const scenarioService = {
           role,
           personality,
           expertise_keywords
-        )
+        ),
+        profiles!scenarios_creator_id_fkey(username)
       `, { count: 'exact' })
       .eq('is_public', true);
 
@@ -230,7 +232,8 @@ export const scenarioService = {
       .from('scenarios')
       .select(`
         *,
-        scenario_characters(*)
+        scenario_characters(*),
+        profiles!scenarios_creator_id_fkey(username)
       `)
       .eq('id', scenarioId)
       .single();
@@ -499,7 +502,7 @@ export const scenarioService = {
       characters: [],
       objectives: Array.isArray(dbScenario.objectives) ? dbScenario.objectives : [],
       created_at: dbScenario.created_at,
-      created_by: 'Unknown', // We'll set this to Unknown since we can't reliably join with profiles
+      created_by: dbScenario.profiles?.username || 'Unknown',
       play_count: dbScenario.play_count || 0,
       average_rating: dbScenario.average_score ? Number(dbScenario.average_score) : 0,
       tags: [], // Default empty tags since we don't have this field yet
