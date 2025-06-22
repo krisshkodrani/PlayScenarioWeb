@@ -55,12 +55,13 @@ const BrowseScenarios: React.FC = () => {
   }
 
   const clearFilters = () => {
+    // TODO: Fix TypeScript type inference for string literals vs union types
     const resetFilters: Partial<ScenarioFilters> = {
       search: '',
       category: 'all',
       difficulty: '',
       sortBy: 'popularity'
-    };
+    } as any;
     handleFilterChange(resetFilters);
   };
 
