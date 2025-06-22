@@ -1,80 +1,128 @@
 
-import { useState } from 'react';
-import { Scenario } from '@/types/scenario';
-import { MOCK_SCENARIOS } from '@/data/mockScenarios';
-import { SCENARIO_CATEGORIES } from '@/data/scenarioCategories';
-import SearchAndFilters from './browse/SearchAndFilters';
-import ScenarioGrid from './browse/ScenarioGrid';
+import React from 'react';
+import { Gamepad2 } from 'lucide-react';
+import PageHeader from '@/components/navigation/PageHeader';
+import SearchAndFilters from '@/components/browse/SearchAndFilters';
+import ScenarioGrid from '@/components/browse/ScenarioGrid';
+import { useBrowseScenarios } from '@/hooks/useBrowseScenarios';
 
-const BrowseScenarios = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [sortBy, setSortBy] = useState('popularity');
-  const [scenarios, setScenarios] = useState<Scenario[]>(MOCK_SCENARIOS);
+const BrowseScenarios: React.FC = () => {
+  const {
+    scenarios,
+    loading,
+    error,
+    filters,
+    pagination,
+    handleFilterChange,
+    handlePageChange,
+    handleLike,
+    handleBookmark,
+  } = useBrowseScenarios();
 
-  const toggleLike = (id: string) => {
-    setScenarios(prev => prev.map(scenario => 
-      scenario.id === id ? { ...scenario, is_liked: !scenario.is_liked } : scenario
-    ));
-  };
-
-  const toggleBookmark = (id: string) => {
-    setScenarios(prev => prev.map(scenario => 
-      scenario.id === id ? { ...scenario, is_bookmarked: !scenario.is_bookmarked } : scenario
-    ));
-  };
-
-  const filteredScenarios = scenarios.filter(scenario => {
-    const matchesSearch = scenario.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         scenario.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         scenario.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCategory = selectedCategory === 'all' || scenario.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  const handleClearFilters = () => {
-    setSearchQuery('');
-    setSelectedCategory('all');
-  };
-
-  const hasFilters = searchQuery !== '' || selectedCategory !== 'all';
-
-  return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Fixed Professional Header */}
-      <div className="bg-gradient-to-r from-slate-800/80 to-slate-700/50 backdrop-blur border-b border-slate-600 flex-shrink-0">
-        <div className="container mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Training Scenarios
-          </h1>
-          <p className="text-slate-300">
-            Practice critical decision-making with AI-powered multi-character scenarios
-          </p>
+  if (loading && scenarios.length === 0) {
+    return (
+      <div className="min-h-screen bg-slate-900">
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse space-y-8">
+            <div className="h-8 bg-slate-800 rounded w-64"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-64 bg-slate-800 rounded-lg"></div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
+    );
+  }
 
-      {/* Fixed Enhanced Search & Filters */}
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-white mb-2">Something went wrong</h2>
+          <p className="text-slate-400 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 px-6 py-2 rounded-lg font-medium"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const clearFilters = () => {
+    handleFilterChange({
+      search: '',
+      category: 'all',
+      difficulty: '',
+      sortBy: 'popularity'
+    });
+  };
+
+  const hasFilters = filters.search || filters.category !== 'all' || filters.difficulty;
+
+  return (
+    <div className="min-h-screen bg-slate-900 text-white flex flex-col">
+      <div className="container mx-auto px-4 py-8">
+        <PageHeader
+          title="Browse Scenarios"
+          subtitle="Discover and play interactive AI scenarios created by the community"
+          badge={
+            <div className="flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-full">
+              <Gamepad2 className="w-4 h-4 text-cyan-400" />
+              <span className="text-sm font-medium text-slate-300">
+                {pagination.total} scenarios
+              </span>
+            </div>
+          }
+        />
+      </div>
+
       <SearchAndFilters
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-        resultCount={filteredScenarios.length}
+        searchQuery={filters.search}
+        onSearchChange={(query) => handleFilterChange({ search: query })}
+        selectedCategory={filters.category}
+        onCategoryChange={(category) => handleFilterChange({ category })}
+        sortBy={filters.sortBy}
+        onSortChange={(sortBy) => handleFilterChange({ sortBy })}
+        resultCount={scenarios.length}
       />
 
-      {/* Scrollable Scenario Grid */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="container mx-auto px-4 py-6">
-          <ScenarioGrid
-            scenarios={filteredScenarios}
-            onLike={toggleLike}
-            onBookmark={toggleBookmark}
-            onClearFilters={handleClearFilters}
-            hasFilters={hasFilters}
-          />
-        </div>
+      <div className="flex-1 container mx-auto px-4 py-6">
+        <ScenarioGrid
+          scenarios={scenarios}
+          onLike={handleLike}
+          onBookmark={handleBookmark}
+          onClearFilters={clearFilters}
+          hasFilters={hasFilters}
+        />
+
+        {/* Pagination */}
+        {pagination.total > pagination.limit && (
+          <div className="flex justify-center mt-8">
+            <div className="flex gap-2">
+              {Array.from({ length: Math.ceil(pagination.total / pagination.limit) })
+                .map((_, i) => i + 1)
+                .slice(Math.max(0, pagination.page - 3), pagination.page + 2)
+                .map(page => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`px-4 py-2 rounded-lg transition-colors ${
+                      page === pagination.page
+                        ? 'bg-cyan-500 text-slate-900'
+                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -2,30 +2,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { Scenario } from '@/types/scenario';
 import { FilterState, ScenarioStats, PaginationState } from '@/types/my-scenarios';
-
-// Map database scenario to frontend Scenario type
-const mapDatabaseScenario = (dbScenario: any): Scenario => ({
-  id: dbScenario.id,
-  title: dbScenario.title,
-  description: dbScenario.description,
-  category: 'general', // Default category since it's not in DB schema
-  difficulty: 'Intermediate', // Default difficulty since it's not in DB schema
-  estimated_duration: dbScenario.max_turns ? dbScenario.max_turns * 2 : 30, // Estimate based on turns
-  character_count: 0, // Will be populated separately
-  characters: [],
-  objectives: Array.isArray(dbScenario.objectives) ? dbScenario.objectives : [],
-  created_at: dbScenario.created_at,
-  created_by: 'You',
-  play_count: dbScenario.play_count || 0,
-  average_rating: dbScenario.average_score ? Number(dbScenario.average_score) : 0,
-  tags: [],
-  is_liked: false,
-  is_bookmarked: false,
-  is_public: dbScenario.is_public
-});
+import { scenarioService, ScenarioFilters } from '@/services/scenarioService';
 
 export const useMyScenarios = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -60,90 +39,32 @@ export const useMyScenarios = () => {
     setError(null);
     
     try {
-      // Get current user
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
-        throw new Error('Not authenticated');
-      }
+      // Convert FilterState to ScenarioFilters
+      const scenarioFilters: ScenarioFilters = {
+        search: filters.search,
+        category: 'all',
+        difficulty: '',
+        isPublic: filters.status === 'published' ? true : filters.status === 'private' ? false : undefined,
+        sortBy: filters.sortBy
+      };
 
-      // Build query
-      let query = supabase
-        .from('scenarios')
-        .select(`
-          *,
-          scenario_characters(count)
-        `)
-        .eq('creator_id', user.id);
+      const [scenariosResult, statsResult] = await Promise.all([
+        scenarioService.getUserScenarios(scenarioFilters, pagination.page, pagination.limit),
+        scenarioService.getScenarioStats()
+      ]);
 
-      // Apply status filter
-      if (filters.status === 'published') {
-        query = query.eq('is_public', true);
-      } else if (filters.status === 'private') {
-        query = query.eq('is_public', false);
-      }
-      // 'draft' and 'all' don't need additional filtering for now
-
-      // Apply search filter
-      if (filters.search) {
-        query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
-      }
-
-      // Apply sorting
-      switch (filters.sortBy) {
-        case 'created_asc':
-          query = query.order('created_at', { ascending: true });
-          break;
-        case 'title':
-          query = query.order('title', { ascending: true });
-          break;
-        case 'plays_desc':
-          query = query.order('play_count', { ascending: false });
-          break;
-        case 'likes_desc':
-          query = query.order('like_count', { ascending: false });
-          break;
-        default:
-          query = query.order('created_at', { ascending: false });
-      }
-
-      // Apply pagination
-      const from = (pagination.page - 1) * pagination.limit;
-      const to = from + pagination.limit - 1;
-      query = query.range(from, to);
-
-      const { data: scenariosData, error: scenariosError, count } = await supabase
-        .from('scenarios')
-        .select('*, scenario_characters(count)', { count: 'exact' })
-        .eq('creator_id', user.id);
-
-      if (scenariosError) {
-        throw new Error('Failed to fetch scenarios');
-      }
-
-      // Map database scenarios to frontend format
-      const mappedScenarios = (scenariosData || []).map((scenario: any) => ({
-        ...mapDatabaseScenario(scenario),
-        character_count: scenario.scenario_characters?.[0]?.count || 0
-      }));
-
-      // Calculate stats
-      const totalScenarios = mappedScenarios.length;
-      const publishedScenarios = mappedScenarios.filter(s => s.is_public).length;
-      const draftScenarios = totalScenarios - publishedScenarios;
-      const totalPlays = mappedScenarios.reduce((sum, s) => sum + s.play_count, 0);
-      const totalLikes = mappedScenarios.reduce((sum, s) => sum + (s.is_liked ? 1 : 0), 0);
-      const averageRating = mappedScenarios.reduce((sum, s) => sum + s.average_rating, 0) / (totalScenarios || 1);
-
-      setScenarios(mappedScenarios);
+      setScenarios(scenariosResult.scenarios);
+      setPagination(prev => ({ ...prev, total: scenariosResult.total }));
+      
+      // Map stats format
       setScenarioStats({
-        totalScenarios,
-        publishedScenarios,
-        draftScenarios,
-        totalPlays,
-        totalLikes,
-        averageRating
+        totalScenarios: statsResult.totalScenarios,
+        publishedScenarios: statsResult.publicScenarios,
+        draftScenarios: statsResult.privateScenarios,
+        totalPlays: statsResult.totalPlays,
+        totalLikes: statsResult.totalLikes,
+        averageRating: statsResult.averageRating
       });
-      setPagination(prev => ({ ...prev, total: count || 0 }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load scenarios');
       console.error('Scenario fetch error:', err);
@@ -184,14 +105,7 @@ export const useMyScenarios = () => {
     }
     
     try {
-      const { error } = await supabase
-        .from('scenarios')
-        .delete()
-        .eq('id', scenarioId);
-
-      if (error) {
-        throw error;
-      }
+      await scenarioService.deleteScenario(scenarioId);
       
       setScenarios(prev => prev.filter(s => s.id !== scenarioId));
       toast({
@@ -210,44 +124,8 @@ export const useMyScenarios = () => {
 
   const handleDuplicate = async (scenarioId: string) => {
     try {
-      // Get current user
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
-        throw new Error('Not authenticated');
-      }
-
-      // Get original scenario
-      const { data: originalScenario, error: fetchError } = await supabase
-        .from('scenarios')
-        .select('*')
-        .eq('id', scenarioId)
-        .single();
-
-      if (fetchError || !originalScenario) {
-        throw new Error('Failed to fetch original scenario');
-      }
-
-      // Create duplicate
-      const { data: newScenario, error: insertError } = await supabase
-        .from('scenarios')
-        .insert({
-          title: `${originalScenario.title} (Copy)`,
-          description: originalScenario.description,
-          creator_id: user.id,
-          is_public: false, // Always make copies private
-          objectives: originalScenario.objectives,
-          win_conditions: originalScenario.win_conditions,
-          lose_conditions: originalScenario.lose_conditions,
-          max_turns: originalScenario.max_turns,
-          initial_scene_prompt: originalScenario.initial_scene_prompt
-        })
-        .select()
-        .single();
-
-      if (insertError || !newScenario) {
-        throw new Error('Failed to create duplicate');
-      }
-
+      await scenarioService.duplicateScenario(scenarioId);
+      
       // Refresh scenarios list
       await fetchScenarios();
       
@@ -267,14 +145,7 @@ export const useMyScenarios = () => {
 
   const handleTogglePublic = async (scenarioId: string, makePublic: boolean) => {
     try {
-      const { error } = await supabase
-        .from('scenarios')
-        .update({ is_public: makePublic })
-        .eq('id', scenarioId);
-
-      if (error) {
-        throw error;
-      }
+      await scenarioService.toggleScenarioPublic(scenarioId, makePublic);
       
       setScenarios(prev => prev.map(s => 
         s.id === scenarioId ? { ...s, is_public: makePublic } : s
