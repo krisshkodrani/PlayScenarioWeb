@@ -56,8 +56,8 @@ const BrowseScenarios: React.FC = () => {
   const clearFilters = () => {
     handleFilterChange({
       search: '',
-      category: 'all',
-      difficulty: '',
+      category: 'all' as const,
+      difficulty: '' as const,
       sortBy: 'popularity' as const
     });
   };
