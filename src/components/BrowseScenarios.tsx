@@ -7,6 +7,9 @@ import ScenarioGrid from '@/components/browse/ScenarioGrid';
 import { useBrowseScenarios } from '@/hooks/useBrowseScenarios';
 import { ScenarioFilters } from '@/services/scenarioService';
 
+// Define the SortBy type based on your ScenarioFilters type
+type SortBy = "created_desc" | "created_asc" | "title" | "popularity" | "rating";
+
 const BrowseScenarios: React.FC = () => {
   const {
     scenarios,
@@ -55,13 +58,12 @@ const BrowseScenarios: React.FC = () => {
   }
 
   const clearFilters = () => {
-    // TODO: Fix TypeScript type inference for string literals vs union types
     handleFilterChange({
       search: '',
-      category: 'all' as any,
-      difficulty: '' as any,
-      sortBy: 'popularity' as any
-    });
+      category: 'all',
+      difficulty: '',
+      sortBy: 'popularity'
+    } as Partial<ScenarioFilters>);
   };
 
   const hasFilters = Boolean(filters.search || filters.category !== 'all' || filters.difficulty);
@@ -89,7 +91,7 @@ const BrowseScenarios: React.FC = () => {
         selectedCategory={filters.category}
         onCategoryChange={(category) => handleFilterChange({ category })}
         sortBy={filters.sortBy}
-        onSortChange={(sortBy) => handleFilterChange({ sortBy })}
+        onSortChange={(sortBy: SortBy) => handleFilterChange({ sortBy })}
         resultCount={scenarios.length}
       />
 
