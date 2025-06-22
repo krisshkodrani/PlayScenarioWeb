@@ -30,7 +30,7 @@ export const scenarioService = {
       .insert({
         title: scenarioData.title,
         description: scenarioData.description,
-        objectives: scenarioData.objectives,
+        objectives: scenarioData.objectives as any, // Cast to Json type
         win_conditions: scenarioData.win_conditions,
         lose_conditions: scenarioData.lose_conditions,
         max_turns: scenarioData.max_turns,
@@ -235,9 +235,15 @@ export const scenarioService = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
+    // Convert updates to match database schema
+    const dbUpdates: any = { ...updates };
+    if (dbUpdates.objectives) {
+      dbUpdates.objectives = dbUpdates.objectives as any; // Cast to Json type
+    }
+
     const { data, error } = await supabase
       .from('scenarios')
-      .update(updates)
+      .update(dbUpdates)
       .eq('id', scenarioId)
       .eq('creator_id', user.id)
       .select()

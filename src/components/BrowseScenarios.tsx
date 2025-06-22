@@ -58,11 +58,11 @@ const BrowseScenarios: React.FC = () => {
       search: '',
       category: 'all',
       difficulty: '',
-      sortBy: 'popularity'
+      sortBy: 'popularity' as const
     });
   };
 
-  const hasFilters = filters.search || filters.category !== 'all' || filters.difficulty;
+  const hasFilters = Boolean(filters.search || filters.category !== 'all' || filters.difficulty);
 
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col">

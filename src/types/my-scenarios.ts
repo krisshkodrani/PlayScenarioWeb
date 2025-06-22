@@ -2,7 +2,7 @@
 export interface FilterState {
   status: 'all' | 'published' | 'draft' | 'private';
   search: string;
-  sortBy: 'created_desc' | 'created_asc' | 'title' | 'plays_desc' | 'likes_desc';
+  sortBy: 'created_desc' | 'created_asc' | 'title' | 'popularity' | 'rating'; // Align with ScenarioFilters
 }
 
 export interface ScenarioStats {

@@ -2,6 +2,7 @@
 export interface ObjectiveData {
   id: number;
   description: string;
+  [key: string]: any; // Add index signature for JSON compatibility
 }
 
 export interface CharacterData {
