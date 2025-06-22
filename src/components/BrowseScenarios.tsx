@@ -1,6 +1,9 @@
 
 import React from 'react';
-import { Gamepad2 } from 'lucide-react';
+import { Gamepad2, LogIn } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 import PageHeader from '@/components/navigation/PageHeader';
 import SearchAndFilters from '@/components/browse/SearchAndFilters';
 import ScenarioGrid from '@/components/browse/ScenarioGrid';
@@ -11,6 +14,7 @@ import { ScenarioFilters } from '@/services/scenarioService';
 type SortBy = "created_desc" | "created_asc" | "title" | "popularity" | "rating";
 
 const BrowseScenarios: React.FC = () => {
+  const { user, loading: authLoading } = useAuth();
   const {
     scenarios,
     loading,
@@ -22,6 +26,42 @@ const BrowseScenarios: React.FC = () => {
     handleLike,
     handleBookmark,
   } = useBrowseScenarios();
+
+  // Show auth notice for unauthenticated users
+  const authNotice = !authLoading && !user && (
+    <div className="bg-slate-800 border border-cyan-400/20 rounded-lg p-4 mb-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-cyan-400 font-medium mb-1">Join PlayScenarioAI</h3>
+          <p className="text-slate-300 text-sm">Sign up to like scenarios, bookmark favorites, and create your own!</p>
+        </div>
+        <Link to="/register">
+          <Button className="bg-gradient-to-r from-cyan-400 to-violet-400 hover:from-cyan-300 hover:to-violet-300 text-slate-900 font-medium">
+            <LogIn className="w-4 h-4 mr-2" />
+            Sign Up Free
+          </Button>
+        </Link>
+      </div>
+    </div>
+  );
+
+  // Handle auth-protected actions for unauthenticated users
+  const handleAuthenticatedAction = (action: () => void, actionName: string) => {
+    if (!user) {
+      // Could show a toast here, but for now just redirect to login
+      window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+      return;
+    }
+    action();
+  };
+
+  const wrappedHandleLike = (scenarioId: string, isLiked: boolean) => {
+    handleAuthenticatedAction(() => handleLike(scenarioId, isLiked), 'like');
+  };
+
+  const wrappedHandleBookmark = (scenarioId: string, isBookmarked: boolean) => {
+    handleAuthenticatedAction(() => handleBookmark(scenarioId, isBookmarked), 'bookmark');
+  };
 
   if (loading && scenarios.length === 0) {
     return (
@@ -83,6 +123,8 @@ const BrowseScenarios: React.FC = () => {
             </div>
           }
         />
+        
+        {authNotice}
       </div>
 
       <SearchAndFilters
@@ -98,8 +140,8 @@ const BrowseScenarios: React.FC = () => {
       <div className="flex-1 container mx-auto px-4 py-6">
         <ScenarioGrid
           scenarios={scenarios}
-          onLike={handleLike}
-          onBookmark={handleBookmark}
+          onLike={wrappedHandleLike}
+          onBookmark={wrappedHandleBookmark}
           onClearFilters={clearFilters}
           hasFilters={hasFilters}
         />
