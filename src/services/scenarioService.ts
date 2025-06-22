@@ -30,7 +30,7 @@ export const scenarioService = {
       .insert({
         title: scenarioData.title,
         description: scenarioData.description,
-        objectives: scenarioData.objectives as any, // Cast to Json type
+        objectives: scenarioData.objectives as any,
         win_conditions: scenarioData.win_conditions,
         lose_conditions: scenarioData.lose_conditions,
         max_turns: scenarioData.max_turns,
@@ -82,9 +82,14 @@ export const scenarioService = {
       .from('scenarios')
       .select(`
         *,
-        scenario_characters(count),
-        scenario_likes(count),
-        scenario_bookmarks(count)
+        scenario_characters!inner(
+          id,
+          name,
+          role,
+          personality,
+          expertise_keywords
+        ),
+        profiles!scenarios_creator_id_fkey(username)
       `, { count: 'exact' })
       .eq('creator_id', user.id);
 
@@ -109,7 +114,7 @@ export const scenarioService = {
         query = query.order('play_count', { ascending: false });
         break;
       case 'rating':
-        query = query.order('average_score', { ascending: false });
+        query = query.order('average_score', { ascending: false, nullsLast: true });
         break;
       default:
         query = query.order('created_at', { ascending: false });
@@ -123,11 +128,28 @@ export const scenarioService = {
     const { data, error, count } = await query;
 
     if (error) {
-      console.error('Error fetching scenarios:', error);
+      console.error('Error fetching user scenarios:', error);
       throw error;
     }
 
-    const scenarios = (data || []).map(scenario => this.mapDatabaseScenario(scenario));
+    const scenarios = (data || []).map(scenario => {
+      const mappedScenario = this.mapDatabaseScenario(scenario);
+      
+      // Add characters to scenario
+      if (scenario.scenario_characters) {
+        mappedScenario.characters = scenario.scenario_characters.map((char: any) => ({
+          id: char.id,
+          name: char.name,
+          role: char.role,
+          personality: char.personality,
+          expertise_keywords: char.expertise_keywords,
+          avatar_color: this.generateAvatarColor(char.name)
+        }));
+        mappedScenario.character_count = mappedScenario.characters.length;
+      }
+      
+      return mappedScenario;
+    });
 
     return {
       scenarios,
@@ -144,9 +166,13 @@ export const scenarioService = {
       .from('scenarios')
       .select(`
         *,
-        scenario_characters(count),
-        scenario_likes(count),
-        scenario_bookmarks(count),
+        scenario_characters!inner(
+          id,
+          name,
+          role,
+          personality,
+          expertise_keywords
+        ),
         profiles!scenarios_creator_id_fkey(username)
       `, { count: 'exact' })
       .eq('is_public', true);
@@ -154,6 +180,11 @@ export const scenarioService = {
     // Apply filters
     if (filters.search) {
       query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+    }
+
+    if (filters.category && filters.category !== 'all') {
+      // For now, we'll filter by tags or description since we don't have a category column
+      query = query.ilike('description', `%${filters.category}%`);
     }
 
     // Apply sorting
@@ -168,7 +199,7 @@ export const scenarioService = {
         query = query.order('play_count', { ascending: false });
         break;
       case 'rating':
-        query = query.order('average_score', { ascending: false });
+        query = query.order('average_score', { ascending: false, nullsLast: true });
         break;
       default:
         query = query.order('created_at', { ascending: false });
@@ -235,10 +266,9 @@ export const scenarioService = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    // Convert updates to match database schema
     const dbUpdates: any = { ...updates };
     if (dbUpdates.objectives) {
-      dbUpdates.objectives = dbUpdates.objectives as any; // Cast to Json type
+      dbUpdates.objectives = dbUpdates.objectives as any;
     }
 
     const { data, error } = await supabase
@@ -432,7 +462,7 @@ export const scenarioService = {
 
     const { data, error } = await supabase
       .from('scenarios')
-      .select('id, is_public, play_count, average_score')
+      .select('id, is_public, play_count, average_score, like_count')
       .eq('creator_id', user.id);
 
     if (error) {
@@ -444,14 +474,17 @@ export const scenarioService = {
     const publicScenarios = data?.filter(s => s.is_public).length || 0;
     const privateScenarios = totalScenarios - publicScenarios;
     const totalPlays = data?.reduce((sum, s) => sum + (s.play_count || 0), 0) || 0;
-    const averageRating = data?.reduce((sum, s) => sum + (s.average_score || 0), 0) / (totalScenarios || 1);
+    const totalLikes = data?.reduce((sum, s) => sum + (s.like_count || 0), 0) || 0;
+    const averageRating = totalScenarios > 0 
+      ? data?.reduce((sum, s) => sum + (s.average_score || 0), 0) / totalScenarios 
+      : 0;
 
     return {
       totalScenarios,
       publicScenarios,
       privateScenarios,
       totalPlays,
-      totalLikes: 0, // TODO: Get from scenario_likes
+      totalLikes,
       averageRating
     };
   },
@@ -462,8 +495,8 @@ export const scenarioService = {
       id: dbScenario.id,
       title: dbScenario.title,
       description: dbScenario.description,
-      category: 'general', // Default category
-      difficulty: 'Intermediate', // Default difficulty
+      category: 'general', // Default category since we don't have this field yet
+      difficulty: 'Intermediate', // Default difficulty since we don't have this field yet
       estimated_duration: dbScenario.max_turns ? dbScenario.max_turns * 2 : 30,
       character_count: 0, // Will be populated separately
       characters: [],
@@ -472,7 +505,7 @@ export const scenarioService = {
       created_by: dbScenario.profiles?.username || 'Unknown',
       play_count: dbScenario.play_count || 0,
       average_rating: dbScenario.average_score ? Number(dbScenario.average_score) : 0,
-      tags: [],
+      tags: [], // Default empty tags since we don't have this field yet
       is_liked: false,
       is_bookmarked: false,
       is_public: dbScenario.is_public
@@ -483,7 +516,24 @@ export const scenarioService = {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user || scenarios.length === 0) {
-      return scenarios.map(s => this.mapDatabaseScenario(s));
+      return scenarios.map(s => {
+        const mappedScenario = this.mapDatabaseScenario(s);
+        
+        // Add characters to scenario
+        if (s.scenario_characters) {
+          mappedScenario.characters = s.scenario_characters.map((char: any) => ({
+            id: char.id,
+            name: char.name,
+            role: char.role,
+            personality: char.personality,
+            expertise_keywords: char.expertise_keywords,
+            avatar_color: this.generateAvatarColor(char.name)
+          }));
+          mappedScenario.character_count = mappedScenario.characters.length;
+        }
+        
+        return mappedScenario;
+      });
     }
 
     const scenarioIds = scenarios.map(s => s.id);
@@ -505,11 +555,28 @@ export const scenarioService = {
     const likedIds = new Set(likesResult.data?.map(l => l.scenario_id) || []);
     const bookmarkedIds = new Set(bookmarksResult.data?.map(b => b.scenario_id) || []);
 
-    return scenarios.map(scenario => ({
-      ...this.mapDatabaseScenario(scenario),
-      is_liked: likedIds.has(scenario.id),
-      is_bookmarked: bookmarkedIds.has(scenario.id)
-    }));
+    return scenarios.map(scenario => {
+      const mappedScenario = this.mapDatabaseScenario(scenario);
+      
+      // Add characters to scenario
+      if (scenario.scenario_characters) {
+        mappedScenario.characters = scenario.scenario_characters.map((char: any) => ({
+          id: char.id,
+          name: char.name,
+          role: char.role,
+          personality: char.personality,
+          expertise_keywords: char.expertise_keywords,
+          avatar_color: this.generateAvatarColor(char.name)
+        }));
+        mappedScenario.character_count = mappedScenario.characters.length;
+      }
+      
+      return {
+        ...mappedScenario,
+        is_liked: likedIds.has(scenario.id),
+        is_bookmarked: bookmarkedIds.has(scenario.id)
+      };
+    });
   },
 
   generateAvatarColor(name: string): string {
