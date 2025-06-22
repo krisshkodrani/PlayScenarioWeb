@@ -14,7 +14,7 @@ import { Search, Grid3X3, List, X } from 'lucide-react';
 interface FilterState {
   status: 'all' | 'published' | 'draft' | 'private';
   search: string;
-  sortBy: 'created_desc' | 'created_asc' | 'title' | 'plays_desc' | 'likes_desc';
+  sortBy: 'created_desc' | 'created_asc' | 'title' | 'popularity' | 'rating';
 }
 
 interface ScenarioFiltersProps {
@@ -104,8 +104,8 @@ const ScenarioFilters: React.FC<ScenarioFiltersProps> = ({
             <SelectItem value="created_desc" className="text-white hover:bg-slate-600">Newest First</SelectItem>
             <SelectItem value="created_asc" className="text-white hover:bg-slate-600">Oldest First</SelectItem>
             <SelectItem value="title" className="text-white hover:bg-slate-600">Title A-Z</SelectItem>
-            <SelectItem value="plays_desc" className="text-white hover:bg-slate-600">Most Played</SelectItem>
-            <SelectItem value="likes_desc" className="text-white hover:bg-slate-600">Most Liked</SelectItem>
+            <SelectItem value="popularity" className="text-white hover:bg-slate-600">Most Popular</SelectItem>
+            <SelectItem value="rating" className="text-white hover:bg-slate-600">Highest Rated</SelectItem>
           </SelectContent>
         </Select>
 
