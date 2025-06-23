@@ -1,5 +1,5 @@
 
-import CharacterCreationForm from '@/components/CharacterCreationForm';
+import CharacterCreationForm from '@/components/character-creation/CharacterCreationForm';
 
 const CharacterCreationPage = () => {
   return <CharacterCreationForm />;
