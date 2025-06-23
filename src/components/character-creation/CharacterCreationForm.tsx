@@ -1,25 +1,19 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { ChevronRight, Save, Eye, User, Brain, Lightbulb } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { CharacterData, CharacterContext } from '@/types/character';
 import { characterService } from '@/services/characterService';
 import { useToast } from '@/hooks/use-toast';
 import PageHeader from '@/components/navigation/PageHeader';
-import SimplifiedBasicInfo from './character-creation/SimplifiedBasicInfo';
-import EnhancedPersonality from './character-creation/EnhancedPersonality';
-import SimplifiedExpertise from './character-creation/SimplifiedExpertise';
-import SimplifiedPreview from './character-creation/SimplifiedPreview';
-
-const sections = [
-  { id: 'basic', title: 'Basic Information', icon: User },
-  { id: 'personality', title: 'Personality', icon: Brain },
-  { id: 'expertise', title: 'Expertise', icon: Lightbulb },
-];
+import SimplifiedBasicInfo from './SimplifiedBasicInfo';
+import EnhancedPersonality from './EnhancedPersonality';
+import SimplifiedExpertise from './SimplifiedExpertise';
+import SimplifiedPreview from './SimplifiedPreview';
+import CharacterCreationSidebar from './CharacterCreationSidebar';
+import CharacterCreationProgress from './CharacterCreationProgress';
+import CharacterCreationActions from './CharacterCreationActions';
 
 const CharacterCreationForm = () => {
   const navigate = useNavigate();
@@ -145,24 +139,12 @@ const CharacterCreationForm = () => {
   };
 
   const headerActions = (
-    <div className="flex items-center space-x-3">
-      <Button 
-        variant="outline" 
-        onClick={() => setShowPreview(true)}
-        className="border-cyan-400/30 hover:border-cyan-400 text-cyan-400 hover:text-cyan-300"
-      >
-        <Eye className="w-4 h-4 mr-2" />
-        Preview
-      </Button>
-      <Button 
-        onClick={handleSaveCharacter}
-        disabled={saving || getCompletionProgress() < 100}
-        className="bg-gradient-to-r from-cyan-400 to-violet-500 hover:from-cyan-300 hover:to-violet-400 shadow-lg shadow-cyan-400/30"
-      >
-        <Save className="w-4 h-4 mr-2" />
-        {saving ? 'Saving...' : 'Save Character'}
-      </Button>
-    </div>
+    <CharacterCreationActions
+      onPreview={() => setShowPreview(true)}
+      onSave={handleSaveCharacter}
+      saving={saving}
+      completionProgress={getCompletionProgress()}
+    />
   );
 
   if (showPreview) {
@@ -206,60 +188,14 @@ const CharacterCreationForm = () => {
           actions={headerActions}
         />
 
-        {/* Progress */}
-        <div className="mb-8 space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-400">Character Development Progress</span>
-            <span className="text-cyan-400 font-medium">{Math.round(getCompletionProgress())}% Complete</span>
-          </div>
-          <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
-            <div 
-              className="bg-gradient-to-r from-cyan-400 to-violet-500 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${getCompletionProgress()}%` }}
-            />
-          </div>
-        </div>
+        <CharacterCreationProgress completionProgress={getCompletionProgress()} />
 
         <div className="flex gap-8">
-          {/* Sidebar Navigation */}
-          <div className="w-80 shrink-0">
-            <Card className="sticky top-6 bg-gradient-to-br from-slate-800/80 to-slate-700/50 backdrop-blur border border-slate-600">
-              <CardHeader>
-                <CardTitle className="text-lg text-white">Character Sections</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {sections.map((section) => {
-                  const IconComponent = section.icon;
-                  return (
-                    <button
-                      key={section.id}
-                      onClick={() => setActiveSection(section.id)}
-                      className={`w-full text-left p-3 rounded-md transition-colors ${
-                        activeSection === section.id
-                          ? 'bg-cyan-400/20 border border-cyan-400/30'
-                          : 'hover:bg-slate-700/50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <IconComponent className="w-4 h-4 text-cyan-400" />
-                          <span className="font-medium text-sm text-white">{section.title}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {getSectionCompletionStatus(section.id) && (
-                            <Badge variant="secondary" className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
-                              Complete
-                            </Badge>
-                          )}
-                          <ChevronRight className="w-4 h-4 text-slate-400" />
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </CardContent>
-            </Card>
-          </div>
+          <CharacterCreationSidebar
+            activeSection={activeSection}
+            onSectionChange={setActiveSection}
+            getSectionCompletionStatus={getSectionCompletionStatus}
+          />
 
           {/* Main Content */}
           <div className="flex-1 min-w-0">
