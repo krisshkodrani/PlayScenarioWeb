@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Lightbulb } from 'lucide-react';
+import { Plus, ArrowLeft, LayoutDashboard } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/navigation/PageHeader';
 import ScenarioStatsCards from '@/components/my-scenarios/ScenarioStatsCards';
 import ScenarioFilters from '@/components/my-scenarios/ScenarioFilters';
@@ -13,6 +14,7 @@ import { useMyScenarios } from '@/hooks/useMyScenarios';
 import { useMyScenariosActions } from '@/components/my-scenarios/MyScenariosActions';
 
 const MyScenarios: React.FC = () => {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
   const {
@@ -84,16 +86,27 @@ const MyScenarios: React.FC = () => {
       {/* Compact Sticky Header - Single Row */}
       <div className="sticky top-0 z-10 bg-slate-900 border-b border-slate-800">
         <div className="container mx-auto px-4 py-4">
-          {/* Single row with title, stats, and create button */}
+          {/* Single row with dashboard link, title, stats, and create button */}
           <div className="flex items-center justify-between gap-4">
-            {/* Left: Title and badge */}
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-white">My Scenarios</h1>
-              {scenarioStats.totalScenarios > 0 && (
-                <span className="bg-slate-700 text-cyan-400 px-2 py-1 rounded-full text-sm font-medium">
-                  {scenarioStats.totalScenarios}
-                </span>
-              )}
+            {/* Left: Dashboard link and title */}
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/dashboard')}
+                className="text-slate-400 hover:text-cyan-400 hover:bg-slate-800"
+              >
+                <LayoutDashboard className="w-4 h-4 mr-2" />
+                Dashboard
+              </Button>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold text-white">My Scenarios</h1>
+                {scenarioStats.totalScenarios > 0 && (
+                  <span className="bg-slate-700 text-cyan-400 px-2 py-1 rounded-full text-sm font-medium">
+                    {scenarioStats.totalScenarios}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Center: Compact Stats (hidden on mobile) */}
