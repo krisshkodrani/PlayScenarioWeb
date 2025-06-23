@@ -9,6 +9,7 @@ interface CharacterCreationActionsProps {
   saving: boolean;
   completionProgress: number;
   isEditMode?: boolean;
+  isDuplicateMode?: boolean;
 }
 
 const CharacterCreationActions: React.FC<CharacterCreationActionsProps> = ({
@@ -16,10 +17,18 @@ const CharacterCreationActions: React.FC<CharacterCreationActionsProps> = ({
   onSave,
   saving,
   completionProgress,
-  isEditMode = false
+  isEditMode = false,
+  isDuplicateMode = false
 }) => {
-  const buttonText = isEditMode ? 'Update Character' : 'Save Character';
-  const savingText = isEditMode ? 'Updating...' : 'Saving...';
+  const getButtonText = () => {
+    if (isEditMode) return 'Update Character';
+    return 'Save Character'; // Both create new and duplicate use "Save Character"
+  };
+
+  const getSavingText = () => {
+    if (isEditMode) return 'Updating...';
+    return 'Saving...'; // Both create new and duplicate use "Saving..."
+  };
 
   return (
     <div className="flex items-center space-x-3">
@@ -37,7 +46,7 @@ const CharacterCreationActions: React.FC<CharacterCreationActionsProps> = ({
         className="bg-gradient-to-r from-cyan-400 to-violet-500 hover:from-cyan-300 hover:to-violet-400 shadow-lg shadow-cyan-400/30"
       >
         <Save className="w-4 h-4 mr-2" />
-        {saving ? savingText : buttonText}
+        {saving ? getSavingText() : getButtonText()}
       </Button>
     </div>
   );

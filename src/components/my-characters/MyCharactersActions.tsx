@@ -12,8 +12,13 @@ export const useMyCharactersActions = () => {
     navigate(`/create-character?edit=${characterId}`);
   };
 
+  const handleDuplicate = (characterId: string) => {
+    navigate(`/create-character?duplicate=${characterId}`);
+  };
+
   return {
     handleCreateNew,
     handleEdit,
+    handleDuplicate,
   };
 };

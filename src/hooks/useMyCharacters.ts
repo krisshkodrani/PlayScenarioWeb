@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { Character, CharacterStats, CharacterFilters } from '@/types/character';
 import { characterService } from '@/services/characterService';
@@ -18,7 +17,6 @@ interface UseMyCharactersReturn {
   handleFilterChange: (newFilters: Partial<CharacterFilters>) => void;
   handlePageChange: (page: number) => void;
   handleDelete: (characterId: string) => Promise<void>;
-  handleDuplicate: (characterId: string) => Promise<void>;
 }
 
 export const useMyCharacters = (): UseMyCharactersReturn => {
@@ -108,30 +106,6 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
     }
   }, [toast, fetchCharacters]);
 
-  // Handle character duplication
-  const handleDuplicate = useCallback(async (characterId: string) => {
-    try {
-      console.log('Duplicating character:', characterId);
-      
-      await characterService.duplicateCharacter(characterId);
-      
-      toast({
-        title: "Character Duplicated",
-        description: "A copy of the character has been created.",
-      });
-      
-      // Refresh the list
-      await fetchCharacters();
-    } catch (error) {
-      console.error('Error duplicating character:', error);
-      toast({
-        title: "Duplication Failed",
-        description: "Unable to duplicate the character. Please try again.",
-        variant: "destructive",
-      });
-    }
-  }, [toast, fetchCharacters]);
-
   // Initial data fetch
   useEffect(() => {
     fetchCharacters();
@@ -147,6 +121,5 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
     handleFilterChange,
     handlePageChange,
     handleDelete,
-    handleDuplicate,
   };
 };

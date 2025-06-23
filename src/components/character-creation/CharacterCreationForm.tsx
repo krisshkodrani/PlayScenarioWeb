@@ -20,12 +20,14 @@ const CharacterCreationForm = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const editCharacterId = searchParams.get('edit');
+  const duplicateCharacterId = searchParams.get('duplicate');
   const isEditMode = !!editCharacterId;
+  const isDuplicateMode = !!duplicateCharacterId;
   
   const [activeSection, setActiveSection] = useState('basic');
   const [showPreview, setShowPreview] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(isEditMode);
+  const [loading, setLoading] = useState(isEditMode || isDuplicateMode);
   const [characterData, setCharacterData] = useState<CharacterData>({
     name: '',
     personality: '',
@@ -36,12 +38,14 @@ const CharacterCreationForm = () => {
     role: ''
   });
 
-  // Load character data for editing
+  // Load character data for editing or duplicating
   useEffect(() => {
     if (isEditMode && editCharacterId) {
       loadCharacterForEdit(editCharacterId);
+    } else if (isDuplicateMode && duplicateCharacterId) {
+      loadCharacterForDuplicate(duplicateCharacterId);
     }
-  }, [isEditMode, editCharacterId]);
+  }, [isEditMode, editCharacterId, isDuplicateMode, duplicateCharacterId]);
 
   const loadCharacterForEdit = async (characterId: string) => {
     try {
@@ -68,6 +72,42 @@ const CharacterCreationForm = () => {
       }
     } catch (error) {
       console.error('Error loading character for edit:', error);
+      toast({
+        title: "Error Loading Character",
+        description: "Unable to load character data. Please try again.",
+        variant: "destructive",
+      });
+      navigate('/my-characters');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadCharacterForDuplicate = async (characterId: string) => {
+    try {
+      setLoading(true);
+      const character = await characterService.getCharacterById(characterId);
+      
+      if (character) {
+        setCharacterData({
+          name: `${character.name} (Copy)`,
+          personality: character.personality,
+          expertise_keywords: character.expertise_keywords,
+          is_player_character: character.is_player_character
+        });
+        setCharacterContext({
+          role: character.role || ''
+        });
+      } else {
+        toast({
+          title: "Character Not Found",
+          description: "The character you're trying to duplicate could not be found.",
+          variant: "destructive",
+        });
+        navigate('/my-characters');
+      }
+    } catch (error) {
+      console.error('Error loading character for duplicate:', error);
       toast({
         title: "Error Loading Character",
         description: "Unable to load character data. Please try again.",
@@ -133,6 +173,7 @@ const CharacterCreationForm = () => {
           description: `${characterData.name} has been successfully updated!`,
         });
       } else {
+        // For both create new and duplicate modes, create a new character
         await characterService.createCharacter(characterData);
         toast({
           title: "Character Created",
@@ -192,10 +233,11 @@ const CharacterCreationForm = () => {
       saving={saving}
       completionProgress={getCompletionProgress()}
       isEditMode={isEditMode}
+      isDuplicateMode={isDuplicateMode}
     />
   );
 
-  // Loading state for edit mode
+  // Loading state for edit or duplicate mode
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 p-4">
@@ -229,7 +271,12 @@ const CharacterCreationForm = () => {
             customBreadcrumbs={[
               { label: 'Dashboard', href: '/dashboard' },
               { label: 'My Characters', href: '/my-characters' },
-              { label: isEditMode ? characterData.name || 'Edit Character' : 'Create Character', href: isEditMode ? `/create-character?edit=${editCharacterId}` : '/create-character' },
+              { 
+                label: isEditMode ? characterData.name || 'Edit Character' : 
+                       isDuplicateMode ? 'Duplicate Character' : 'Create Character', 
+                href: isEditMode ? `/create-character?edit=${editCharacterId}` : 
+                      isDuplicateMode ? `/create-character?duplicate=${duplicateCharacterId}` : '/create-character' 
+              },
               { label: 'Preview' }
             ]}
             actions={
@@ -249,20 +296,28 @@ const CharacterCreationForm = () => {
     );
   }
 
-  // Use character name as title when editing, otherwise use "Create Character"
+  // Determine page title and subtitle based on mode
   const pageTitle = isEditMode && characterData.name 
     ? characterData.name 
+    : isDuplicateMode 
+    ? 'Duplicate Character'
     : 'Create Character';
   
   const pageSubtitle = isEditMode 
     ? `Editing character details`
+    : isDuplicateMode
+    ? 'Creating a copy of an existing character'
     : 'Design an AI personality for your scenarios';
 
-  // Custom breadcrumbs for edit mode using character name
+  // Custom breadcrumbs for different modes
   const customBreadcrumbs = isEditMode ? [
     { label: 'Dashboard', href: '/dashboard' },
     { label: 'My Characters', href: '/my-characters' },
     { label: characterData.name || 'Edit Character' }
+  ] : isDuplicateMode ? [
+    { label: 'Dashboard', href: '/dashboard' },
+    { label: 'My Characters', href: '/my-characters' },
+    { label: 'Duplicate Character' }
   ] : undefined;
 
   return (

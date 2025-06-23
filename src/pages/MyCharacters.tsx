@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Users } from 'lucide-react';
@@ -24,12 +25,12 @@ const MyCharacters: React.FC = () => {
     handleFilterChange,
     handlePageChange,
     handleDelete,
-    handleDuplicate,
   } = useMyCharacters();
 
   const {
     handleCreateNew,
     handleEdit,
+    handleDuplicate,
   } = useMyCharactersActions();
 
   // Render loading state
