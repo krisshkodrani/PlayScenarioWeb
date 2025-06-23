@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Character, CharacterData, CharacterStats, CharacterFilters } from '@/types/character';
 
@@ -17,6 +16,26 @@ export interface DatabaseCharacter {
 }
 
 export const characterService = {
+  // Get a single character by ID
+  async getCharacterById(characterId: string): Promise<DatabaseCharacter | null> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { data, error } = await supabase
+      .from('scenario_characters')
+      .select('*')
+      .eq('id', characterId)
+      .eq('creator_id', user.id)
+      .single();
+
+    if (error) {
+      console.error('Error fetching character:', error);
+      throw error;
+    }
+
+    return data;
+  },
+
   // Create a new character
   async createCharacter(characterData: CharacterData): Promise<DatabaseCharacter | null> {
     const { data: { user } } = await supabase.auth.getUser();
