@@ -77,57 +77,59 @@ const MyCharacters: React.FC = () => {
   const hasCharacters = characters.length > 0;
   const hasSearchResults = filters.search ? characters.length > 0 : true;
 
-  const headerBadge = characterStats.totalCharacters > 0 ? (
-    <span className="bg-slate-700 text-cyan-400 px-3 py-1 rounded-full text-sm font-medium">
-      {characterStats.totalCharacters}
-    </span>
-  ) : null;
-
-  const subtitle = characterStats.totalCharacters === 0 
-    ? "Create your first AI character to start building interactive scenarios"
-    : `Manage your collection of ${characterStats.totalCharacters} AI character${characterStats.totalCharacters === 1 ? '' : 's'}`;
-
   return (
     <div className="h-screen bg-slate-900 flex flex-col">
-      {/* Header */}
-      <div className="bg-slate-900 border-b border-slate-800">
-        <div className="container mx-auto px-4 py-8">
-          <PageHeader
-            title="My Characters"
-            subtitle={subtitle}
-            badge={headerBadge}
-          />
-
-          {/* Stats Cards positioned between header and action buttons */}
-          <CharacterStatsCards stats={characterStats} />
-
-          {/* Action buttons */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <div>
-              {characterStats.totalCharacters === 0 && (
-                <div className="hidden sm:flex items-center gap-2 text-sm text-slate-400 bg-slate-800 px-3 py-2 rounded-lg border border-slate-700">
-                  <Users className="w-4 h-4 text-cyan-400" />
-                  <span>Start with a simple character role</span>
-                </div>
+      {/* Compact Sticky Header - Single Row */}
+      <div className="sticky top-0 z-10 bg-slate-900 border-b border-slate-800">
+        <div className="container mx-auto px-4 py-4">
+          {/* Single row with title, stats, and create button */}
+          <div className="flex items-center justify-between gap-4">
+            {/* Left: Title and badge */}
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-white">My Characters</h1>
+              {characterStats.totalCharacters > 0 && (
+                <span className="bg-slate-700 text-cyan-400 px-2 py-1 rounded-full text-sm font-medium">
+                  {characterStats.totalCharacters}
+                </span>
               )}
             </div>
-            
+
+            {/* Center: Compact Stats (hidden on mobile) */}
+            <div className="hidden lg:flex items-center gap-4">
+              <div className="flex items-center gap-1 text-sm">
+                <span className="text-slate-400">Total:</span>
+                <span className="text-cyan-400 font-semibold">{characterStats.totalCharacters}</span>
+              </div>
+              <div className="flex items-center gap-1 text-sm">
+                <span className="text-slate-400">Active:</span>
+                <span className="text-emerald-400 font-semibold">{characterStats.activeCharacters}</span>
+              </div>
+              <div className="flex items-center gap-1 text-sm">
+                <span className="text-slate-400">Rating:</span>
+                <span className="text-violet-400 font-semibold">{characterStats.averageRating.toFixed(1)}</span>
+              </div>
+            </div>
+
+            {/* Right: Create button */}
             <Button 
               onClick={handleCreateNew}
               className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-medium"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Create New Character
+              Create Character
             </Button>
           </div>
 
+          {/* Filters row (only when has characters) */}
           {hasCharacters && (
-            <CharacterFilters
-              filters={filters}
-              onFilterChange={handleFilterChange}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-            />
+            <div className="mt-4">
+              <CharacterFilters
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+              />
+            </div>
           )}
         </div>
       </div>
