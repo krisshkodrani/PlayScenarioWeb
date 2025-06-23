@@ -79,64 +79,67 @@ const MyScenarios: React.FC = () => {
   const hasScenarios = scenarios.length > 0;
   const hasSearchResults = filters.search ? scenarios.length > 0 : true;
 
-  const headerBadge = scenarioStats.totalScenarios > 0 ? (
-    <span className="bg-slate-700 text-cyan-400 px-3 py-1 rounded-full text-sm font-medium">
-      {scenarioStats.totalScenarios}
-    </span>
-  ) : null;
-
-  const headerActions = (
-    <>
-      {scenarioStats.totalScenarios === 0 && (
-        <div className="hidden sm:flex items-center gap-2 text-sm text-slate-400 bg-slate-800 px-3 py-2 rounded-lg border border-slate-700">
-          <Lightbulb className="w-4 h-4 text-amber-400" />
-          <span>Start with a simple idea</span>
-        </div>
-      )}
-      
-      <Button 
-        onClick={handleCreateNew}
-        className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-medium"
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Create New Scenario
-      </Button>
-    </>
-  );
-
-  const subtitle = scenarioStats.totalScenarios === 0 
-    ? "Create your first interactive AI scenario to start engaging with users"
-    : `Manage your collection of ${scenarioStats.totalScenarios} scenario${scenarioStats.totalScenarios === 1 ? '' : 's'}`;
-
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col">
-      {/* Sticky Header Section */}
+    <div className="h-screen bg-slate-900 flex flex-col">
+      {/* Compact Sticky Header - Single Row */}
       <div className="sticky top-0 z-10 bg-slate-900 border-b border-slate-800">
-        <div className="container mx-auto px-4 py-8">
-          <PageHeader
-            title="My Scenarios"
-            subtitle={subtitle}
-            badge={headerBadge}
-            actions={headerActions}
-          />
+        <div className="container mx-auto px-4 py-4">
+          {/* Single row with title, stats, and create button */}
+          <div className="flex items-center justify-between gap-4">
+            {/* Left: Title and badge */}
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-white">My Scenarios</h1>
+              {scenarioStats.totalScenarios > 0 && (
+                <span className="bg-slate-700 text-cyan-400 px-2 py-1 rounded-full text-sm font-medium">
+                  {scenarioStats.totalScenarios}
+                </span>
+              )}
+            </div>
 
-          <ScenarioStatsCards stats={scenarioStats} />
+            {/* Center: Compact Stats (hidden on mobile) */}
+            <div className="hidden lg:flex items-center gap-4">
+              <div className="flex items-center gap-1 text-sm">
+                <span className="text-slate-400">Total:</span>
+                <span className="text-cyan-400 font-semibold">{scenarioStats.totalScenarios}</span>
+              </div>
+              <div className="flex items-center gap-1 text-sm">
+                <span className="text-slate-400">Published:</span>
+                <span className="text-emerald-400 font-semibold">{scenarioStats.publishedScenarios}</span>
+              </div>
+              <div className="flex items-center gap-1 text-sm">
+                <span className="text-slate-400">Plays:</span>
+                <span className="text-violet-400 font-semibold">{scenarioStats.totalPlays}</span>
+              </div>
+            </div>
 
+            {/* Right: Create button */}
+            <Button 
+              onClick={handleCreateNew}
+              className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-medium"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Scenario
+            </Button>
+          </div>
+
+          {/* Filters row (only when has scenarios) */}
           {hasScenarios && (
-            <ScenarioFilters
-              filters={filters}
-              onFilterChange={handleFilterChange}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-            />
+            <div className="mt-4">
+              <ScenarioFilters
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+              />
+            </div>
           )}
         </div>
       </div>
 
-      {/* Scrollable Content Section */}
-      <div className="flex-1 overflow-auto">
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto">
         <div className="container mx-auto px-4 py-6">
-          {hasScenarios && hasSearchResults ? (
+          {hasScenarios && hasSearchResults && (
             <>
               <ScenarioList
                 scenarios={scenarios}
@@ -156,12 +159,16 @@ const MyScenarios: React.FC = () => {
                 />
               )}
             </>
-          ) : hasScenarios && !hasSearchResults ? (
+          )}
+
+          {hasScenarios && !hasSearchResults && (
             <NoSearchResults 
               query={filters.search}
               onClearSearch={() => handleFilterChange({ search: '' })}
             />
-          ) : (
+          )}
+
+          {!hasScenarios && !filters.search && (
             <EmptyScenarios onCreateNew={handleCreateNew} />
           )}
         </div>
