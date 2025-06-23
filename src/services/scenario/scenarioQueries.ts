@@ -14,7 +14,7 @@ export const buildScenarioQuery = (isPublic?: boolean) => {
         personality,
         expertise_keywords
       ),
-      profiles!scenarios_creator_id_fkey(username)
+      profiles(username)
     `, { count: 'exact' });
 };
 
