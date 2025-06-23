@@ -13,8 +13,7 @@ export const buildScenarioQuery = (isPublic?: boolean) => {
         role,
         personality,
         expertise_keywords
-      ),
-      profiles(username)
+      )
     `, { count: 'exact' });
 };
 

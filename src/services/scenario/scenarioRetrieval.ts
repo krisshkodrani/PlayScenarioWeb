@@ -66,8 +66,7 @@ export const getScenarioById = async (scenarioId: string): Promise<Scenario | nu
     .from('scenarios')
     .select(`
       *,
-      scenario_characters(*),
-      profiles(username)
+      scenario_characters(*)
     `)
     .eq('id', scenarioId)
     .single();
@@ -77,8 +76,26 @@ export const getScenarioById = async (scenarioId: string): Promise<Scenario | nu
     return null;
   }
 
+  // Get profile separately if needed
+  let profileData = null;
+  if (data.creator_id) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', data.creator_id)
+      .single();
+    profileData = profile;
+  }
+
   const scenario = mapDatabaseScenario(data);
-  return enrichScenarioWithCharacters(scenario, data);
+  const enrichedScenario = enrichScenarioWithCharacters(scenario, data);
+  
+  // Add username if available
+  if (profileData) {
+    enrichedScenario.created_by = profileData.username || 'Unknown';
+  }
+
+  return enrichedScenario;
 };
 
 export const getScenarioStats = async (): Promise<ScenarioStats> => {
@@ -142,9 +159,21 @@ const enrichScenariosWithUserData = async (scenarios: any[]): Promise<Scenario[]
   const likedIds = new Set(likesResult.data?.map(l => l.scenario_id) || []);
   const bookmarkedIds = new Set(bookmarksResult.data?.map(b => b.scenario_id) || []);
 
+  // Get unique creator IDs and fetch their usernames
+  const creatorIds = [...new Set(scenarios.map(s => s.creator_id))];
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, username')
+    .in('id', creatorIds);
+  
+  const profileMap = new Map(profiles?.map(p => [p.id, p.username]) || []);
+
   return scenarios.map(scenario => {
     const mappedScenario = mapDatabaseScenario(scenario);
     const enrichedScenario = enrichScenarioWithCharacters(mappedScenario, scenario);
+    
+    // Add username from profiles
+    enrichedScenario.created_by = profileMap.get(scenario.creator_id) || 'Unknown';
     
     return {
       ...enrichedScenario,
