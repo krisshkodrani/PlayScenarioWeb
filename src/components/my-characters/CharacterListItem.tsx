@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Edit, Copy, Trash2, Plus, Star } from 'lucide-react';
+import { Edit, Copy, Trash2, Star } from 'lucide-react';
 import { Character } from '@/types/character';
 
 interface CharacterListItemProps {
@@ -11,15 +11,13 @@ interface CharacterListItemProps {
   onEdit: (id: string) => void;
   onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
-  onUseInScenario: (id: string) => void;
 }
 
 const CharacterListItem: React.FC<CharacterListItemProps> = ({
   character,
   onEdit,
   onDuplicate,
-  onDelete,
-  onUseInScenario
+  onDelete
 }) => {
   const getInitials = (name: string) => {
     return name
@@ -108,14 +106,6 @@ const CharacterListItem: React.FC<CharacterListItemProps> = ({
             className="text-red-400 hover:text-red-300 hover:bg-red-600/20"
           >
             <Trash2 className="w-4 h-4" />
-          </Button>
-          <Button
-            onClick={() => onUseInScenario(character.id)}
-            className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 ml-2"
-            size="sm"
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Use
           </Button>
         </div>
       </div>

@@ -10,7 +10,6 @@ interface CharacterListProps {
   onEdit: (id: string) => void;
   onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
-  onUseInScenario: (id: string) => void;
 }
 
 const CharacterList: React.FC<CharacterListProps> = ({
@@ -18,8 +17,7 @@ const CharacterList: React.FC<CharacterListProps> = ({
   viewMode,
   onEdit,
   onDuplicate,
-  onDelete,
-  onUseInScenario
+  onDelete
 }) => {
   if (viewMode === 'list') {
     return (
@@ -41,7 +39,6 @@ const CharacterList: React.FC<CharacterListProps> = ({
               onEdit={onEdit}
               onDuplicate={onDuplicate}
               onDelete={onDelete}
-              onUseInScenario={onUseInScenario}
             />
           ))}
         </div>
@@ -58,7 +55,6 @@ const CharacterList: React.FC<CharacterListProps> = ({
           onEdit={onEdit}
           onDuplicate={onDuplicate}
           onDelete={onDelete}
-          onUseInScenario={onUseInScenario}
         />
       ))}
     </div>

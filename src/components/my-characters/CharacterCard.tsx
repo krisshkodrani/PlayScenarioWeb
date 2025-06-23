@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Edit, Copy, Trash2, Plus, Star, Calendar } from 'lucide-react';
+import { Edit, Copy, Trash2, Star, Calendar } from 'lucide-react';
 import { Character } from '@/types/character';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -13,15 +13,13 @@ interface CharacterCardProps {
   onEdit: (id: string) => void;
   onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
-  onUseInScenario: (id: string) => void;
 }
 
 const CharacterCard: React.FC<CharacterCardProps> = ({
   character,
   onEdit,
   onDuplicate,
-  onDelete,
-  onUseInScenario
+  onDelete
 }) => {
   const getInitials = (name: string) => {
     return name
@@ -109,41 +107,31 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="flex gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onEdit(character.id)}
-              className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
-            >
-              <Edit className="w-3 h-3 mr-1" />
-              Edit
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onDuplicate(character.id)}
-              className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
-            >
-              <Copy className="w-3 h-3" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onDelete(character.id)}
-              className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
-            >
-              <Trash2 className="w-3 h-3" />
-            </Button>
-          </div>
+        <div className="flex gap-1">
           <Button
-            onClick={() => onUseInScenario(character.id)}
-            className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-medium"
+            variant="outline"
             size="sm"
+            onClick={() => onEdit(character.id)}
+            className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
           >
-            <Plus className="w-3 h-3 mr-1" />
-            Use
+            <Edit className="w-3 h-3 mr-1" />
+            Edit
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onDuplicate(character.id)}
+            className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
+          >
+            <Copy className="w-3 h-3" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onDelete(character.id)}
+            className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+          >
+            <Trash2 className="w-3 h-3" />
           </Button>
         </div>
       </CardContent>

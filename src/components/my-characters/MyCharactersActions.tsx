@@ -12,14 +12,8 @@ export const useMyCharactersActions = () => {
     navigate(`/create-character?edit=${characterId}`);
   };
 
-  const handleUseInScenario = (characterId: string) => {
-    // Navigate to scenario creation with character pre-selected
-    navigate(`/create-scenario?character=${characterId}`);
-  };
-
   return {
     handleCreateNew,
     handleEdit,
-    handleUseInScenario,
   };
 };

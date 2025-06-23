@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Users } from 'lucide-react';
@@ -31,7 +30,6 @@ const MyCharacters: React.FC = () => {
   const {
     handleCreateNew,
     handleEdit,
-    handleUseInScenario,
   } = useMyCharactersActions();
 
   // Render loading state
@@ -143,7 +141,6 @@ const MyCharacters: React.FC = () => {
                 onEdit={handleEdit}
                 onDuplicate={handleDuplicate}
                 onDelete={handleDelete}
-                onUseInScenario={handleUseInScenario}
               />
 
               {pagination.total > pagination.limit && (
