@@ -64,7 +64,7 @@ const CharacterPagination: React.FC<CharacterPaginationProps> = ({
       </Button>
 
       {pageNumbers.map((page, index) => (
-        <React.Fragment key={index}>
+        <div key={index} className="contents">
           {page === '...' ? (
             <span className="px-3 py-2 text-slate-400">...</span>
           ) : (
@@ -81,7 +81,7 @@ const CharacterPagination: React.FC<CharacterPaginationProps> = ({
               {page}
             </Button>
           )}
-        </React.Fragment>
+        </div>
       ))}
 
       <Button
