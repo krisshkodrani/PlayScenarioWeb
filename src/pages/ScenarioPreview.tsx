@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Scenario, Character } from '@/types/scenario';
+import { scenarioService } from '@/services/scenarioService';
 import PageHeader from '@/components/navigation/PageHeader';
 import ScenarioHero from '@/components/scenario-preview/ScenarioHero';
 import ObjectivesList from '@/components/scenario-preview/ObjectivesList';
@@ -13,7 +14,6 @@ import ScenarioNotFound from '@/components/scenario-preview/ScenarioNotFound';
 
 interface ScenarioPreviewData {
   scenario: Scenario | null;
-  characters: Character[];
   loading: boolean;
   error: string | null;
   userBookmarked: boolean;
@@ -27,7 +27,6 @@ const ScenarioPreview: React.FC = () => {
   
   const [data, setData] = useState<ScenarioPreviewData>({
     scenario: null,
-    characters: [],
     loading: true,
     error: null,
     userBookmarked: false,
@@ -44,88 +43,25 @@ const ScenarioPreview: React.FC = () => {
     try {
       setData(prev => ({ ...prev, loading: true, error: null }));
       
-      // Mock API calls - replace with actual API endpoints when backend is ready
       console.log('Fetching scenario data for ID:', scenarioId);
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const scenario = await scenarioService.getScenarioById(scenarioId);
       
-      // Mock scenario data
-      const mockScenario: Scenario = {
-        id: scenarioId,
-        title: "Corporate Crisis Management",
-        description: "Navigate a high-stakes corporate crisis as the newly appointed crisis management team. Work with key stakeholders to protect the company's reputation, address media scrutiny, and implement damage control strategies while managing internal conflicts and external pressures.",
-        category: "business-training",
-        difficulty: "Advanced",
-        estimated_duration: 45,
-        character_count: 4,
-        characters: [],
-        objectives: [
-          {
-            id: "1",
-            title: "Assess the Crisis",
-            description: "Evaluate the scope and impact of the crisis situation",
-            priority: "critical"
-          },
-          {
-            id: "2", 
-            title: "Stakeholder Communication",
-            description: "Coordinate with all key stakeholders and media",
-            priority: "important"
-          }
-        ],
-        created_at: "2024-01-15",
-        created_by: "Dr. Sarah Chen",
-        play_count: 1247,
-        average_rating: 4.6,
-        tags: ["crisis-management", "leadership", "communication", "business"],
-        is_liked: false,
-        is_bookmarked: false,
-        is_public: true
-      };
-
-      const mockCharacters: Character[] = [
-        {
-          id: "char1",
-          name: "Sarah Martinez",
-          role: "CEO",
-          personality: "Strategic leader under pressure, decisive but seeks input from trusted advisors",
-          expertise_keywords: ["executive-leadership", "strategic-planning", "crisis-response"],
-          avatar_color: "bg-cyan-500"
-        },
-        {
-          id: "char2", 
-          name: "David Kim",
-          role: "Head of PR",
-          personality: "Media-savvy communicator, calm under pressure, focuses on reputation management",
-          expertise_keywords: ["public-relations", "media-strategy", "crisis-communication"],
-          avatar_color: "bg-violet-500"
-        },
-        {
-          id: "char3",
-          name: "Alex Johnson", 
-          role: "Legal Counsel",
-          personality: "Detail-oriented, risk-averse, provides crucial legal perspective",
-          expertise_keywords: ["corporate-law", "risk-assessment", "compliance"],
-          avatar_color: "bg-amber-500"
-        },
-        {
-          id: "char4",
-          name: "Maya Patel",
-          role: "Operations Director", 
-          personality: "Practical problem-solver, focuses on operational continuity",
-          expertise_keywords: ["operations-management", "logistics", "team-coordination"],
-          avatar_color: "bg-emerald-500"
-        }
-      ];
+      if (!scenario) {
+        setData(prev => ({
+          ...prev,
+          loading: false,
+          error: 'Scenario not found'
+        }));
+        return;
+      }
 
       setData({
-        scenario: mockScenario,
-        characters: mockCharacters,
+        scenario,
         loading: false,
         error: null,
-        userBookmarked: mockScenario.is_bookmarked || false,
-        userLiked: mockScenario.is_liked || false
+        userBookmarked: scenario.is_bookmarked || false,
+        userLiked: scenario.is_liked || false
       });
 
     } catch (error) {
@@ -142,10 +78,9 @@ const ScenarioPreview: React.FC = () => {
     if (!data.scenario) return;
     
     try {
-      // TODO: Replace with actual API call when backend is ready
       console.log('Starting scenario play:', data.scenario.id);
       
-      // Mock scenario instance creation
+      // TODO: Replace with actual API call when backend is ready
       const mockInstanceId = `instance_${Date.now()}`;
       
       toast({
@@ -170,15 +105,19 @@ const ScenarioPreview: React.FC = () => {
     try {
       console.log('Toggling like for scenario:', data.scenario.id);
       
+      const newLikedState = !data.userLiked;
+      
       // Optimistic UI update
       setData(prev => ({
         ...prev,
-        userLiked: !prev.userLiked
+        userLiked: newLikedState
       }));
       
+      await scenarioService.toggleScenarioLike(data.scenario.id, newLikedState);
+      
       toast({
-        title: data.userLiked ? "Removed Like" : "Liked Scenario",
-        description: data.userLiked ? "Removed from your liked scenarios" : "Added to your liked scenarios",
+        title: newLikedState ? "Liked Scenario" : "Removed Like",
+        description: newLikedState ? "Added to your liked scenarios" : "Removed from your liked scenarios",
       });
     } catch (error) {
       // Revert optimistic update on error
@@ -201,15 +140,19 @@ const ScenarioPreview: React.FC = () => {
     try {
       console.log('Toggling bookmark for scenario:', data.scenario.id);
       
+      const newBookmarkedState = !data.userBookmarked;
+      
       // Optimistic UI update
       setData(prev => ({
         ...prev,
-        userBookmarked: !prev.userBookmarked
+        userBookmarked: newBookmarkedState
       }));
       
+      await scenarioService.toggleScenarioBookmark(data.scenario.id, newBookmarkedState);
+      
       toast({
-        title: data.userBookmarked ? "Removed Bookmark" : "Bookmarked Scenario",
-        description: data.userBookmarked ? "Removed from your bookmarks" : "Added to your bookmarks",
+        title: newBookmarkedState ? "Bookmarked Scenario" : "Removed Bookmark",
+        description: newBookmarkedState ? "Added to your bookmarks" : "Removed from your bookmarks",
       });
     } catch (error) {
       // Revert optimistic update on error
@@ -255,7 +198,7 @@ const ScenarioPreview: React.FC = () => {
           <div className="lg:col-span-3 space-y-8">
             <ScenarioHero scenario={data.scenario} />
             <ObjectivesList objectives={data.scenario.objectives} />
-            <CharacterShowcase characters={data.characters} />
+            <CharacterShowcase characters={data.scenario.characters} />
           </div>
 
           {/* Action Sidebar */}
@@ -266,7 +209,7 @@ const ScenarioPreview: React.FC = () => {
                 hasPlayed: false,
                 isBookmarked: data.userBookmarked,
                 hasLiked: data.userLiked,
-                userCredits: 100 // Mock user credits
+                userCredits: 100 // TODO: Get from user profile
               }}
               onStartPlaying={handleStartPlaying}
               onBookmark={handleBookmark}
