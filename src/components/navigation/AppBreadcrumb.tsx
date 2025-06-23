@@ -104,7 +104,7 @@ const AppBreadcrumb: React.FC<AppBreadcrumbProps> = ({
         <Breadcrumb>
           <BreadcrumbList>
             {breadcrumbs.map((crumb, index) => (
-              <React.Fragment key={index}>
+              <div key={index} className="contents">
                 <BreadcrumbItem>
                   {crumb.href ? (
                     <BreadcrumbLink 
@@ -121,7 +121,7 @@ const AppBreadcrumb: React.FC<AppBreadcrumbProps> = ({
                   )}
                 </BreadcrumbItem>
                 {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
-              </React.Fragment>
+              </div>
             ))}
           </BreadcrumbList>
         </Breadcrumb>
