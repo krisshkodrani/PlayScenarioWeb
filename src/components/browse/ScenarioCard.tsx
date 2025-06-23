@@ -1,5 +1,5 @@
-
 import { Play, Heart, Bookmark, Users, Clock, Star, Target } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Scenario } from '@/types/scenario';
 import { SCENARIO_CATEGORIES } from '@/data/scenarioCategories';
@@ -11,6 +11,12 @@ interface ScenarioCardProps {
 }
 
 const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario, onLike, onBookmark }) => {
+  const navigate = useNavigate();
+
+  const handleStartScenario = () => {
+    navigate(`/scenario/${scenario.id}`);
+  };
+
   const getDifficultyStyles = (difficulty: string) => {
     switch (difficulty) {
       case 'Beginner': 
@@ -125,7 +131,10 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario, onLike, onBookmar
 
       {/* Full-width Start Button - pushed to bottom */}
       <div className="mt-auto">
-        <button className="w-full bg-gradient-to-r from-cyan-400 to-violet-500 text-white px-4 py-3 rounded-lg font-medium hover:from-cyan-300 hover:to-violet-400 transition-all shadow-lg flex items-center justify-center gap-2">
+        <button 
+          onClick={handleStartScenario}
+          className="w-full bg-gradient-to-r from-cyan-400 to-violet-500 text-white px-4 py-3 rounded-lg font-medium hover:from-cyan-300 hover:to-violet-400 transition-all shadow-lg flex items-center justify-center gap-2"
+        >
           <Play className="w-4 h-4" />
           Start
         </button>
