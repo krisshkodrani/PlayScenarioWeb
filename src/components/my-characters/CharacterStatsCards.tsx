@@ -41,18 +41,18 @@ const CharacterStatsCards: React.FC<CharacterStatsCardsProps> = ({ stats }) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
       {statCards.map((stat, index) => (
         <Card key={index} className="bg-slate-800 border-slate-700">
-          <CardContent className="p-6">
+          <CardContent className="p-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-400 mb-1">{stat.title}</p>
-                <p className="text-2xl font-bold text-white mb-1">{stat.value}</p>
+                <p className="text-lg font-bold text-white mb-1">{stat.value}</p>
                 <p className="text-xs text-slate-500">{stat.description}</p>
               </div>
-              <div className={`p-3 rounded-lg bg-slate-700 ${stat.color}`}>
-                <stat.icon className="w-6 h-6" />
+              <div className={`p-2 rounded-lg bg-slate-700 ${stat.color}`}>
+                <stat.icon className="w-4 h-4" />
               </div>
             </div>
           </CardContent>

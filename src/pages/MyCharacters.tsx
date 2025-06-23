@@ -47,7 +47,7 @@ const MyCharacters: React.FC = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-64 bg-slate-800 rounded-lg"></div>
+                <div key={i} className="h-264 bg-slate-800 rounded-lg"></div>
               ))}
             </div>
           </div>
@@ -83,42 +83,43 @@ const MyCharacters: React.FC = () => {
     </span>
   ) : null;
 
-  const headerActions = (
-    <>
-      {characterStats.totalCharacters === 0 && (
-        <div className="hidden sm:flex items-center gap-2 text-sm text-slate-400 bg-slate-800 px-3 py-2 rounded-lg border border-slate-700">
-          <Users className="w-4 h-4 text-cyan-400" />
-          <span>Start with a simple character role</span>
-        </div>
-      )}
-      
-      <Button 
-        onClick={handleCreateNew}
-        className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-medium"
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Create New Character
-      </Button>
-    </>
-  );
-
   const subtitle = characterStats.totalCharacters === 0 
     ? "Create your first AI character to start building interactive scenarios"
     : `Manage your collection of ${characterStats.totalCharacters} AI character${characterStats.totalCharacters === 1 ? '' : 's'}`;
 
   return (
     <div className="h-screen bg-slate-900 flex flex-col">
-      {/* Sticky Header and Stats */}
-      <div className="sticky top-0 z-10 bg-slate-900 border-b border-slate-800">
+      {/* Header */}
+      <div className="bg-slate-900 border-b border-slate-800">
         <div className="container mx-auto px-4 py-8">
           <PageHeader
             title="My Characters"
             subtitle={subtitle}
             badge={headerBadge}
-            actions={headerActions}
           />
 
+          {/* Stats Cards positioned between header and action buttons */}
           <CharacterStatsCards stats={characterStats} />
+
+          {/* Action buttons */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+              {characterStats.totalCharacters === 0 && (
+                <div className="hidden sm:flex items-center gap-2 text-sm text-slate-400 bg-slate-800 px-3 py-2 rounded-lg border border-slate-700">
+                  <Users className="w-4 h-4 text-cyan-400" />
+                  <span>Start with a simple character role</span>
+                </div>
+              )}
+            </div>
+            
+            <Button 
+              onClick={handleCreateNew}
+              className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-medium"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create New Character
+            </Button>
+          </div>
 
           {hasCharacters && (
             <CharacterFilters
