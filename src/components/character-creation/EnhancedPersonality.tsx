@@ -134,7 +134,7 @@ const EnhancedPersonality: React.FC<EnhancedPersonalityProps> = ({
               placeholder="Describe how your character thinks, speaks, and behaves. Include their professional demeanor, decision-making style, and unique personality traits..."
               rows={8}
               maxLength={2000}
-              className="bg-slate-700/50 backdrop-blur border border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 resize-none pr-12"
+              className="bg-slate-700/50 backdrop-blur border border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none transition-all duration-200 resize-none pr-12"
             />
             
             {/* Character count in corner */}
@@ -166,24 +166,24 @@ const EnhancedPersonality: React.FC<EnhancedPersonalityProps> = ({
             </div>
           )}
 
-          {/* Personality Strength Indicator */}
+          {/* Personality Strength Indicator - Updated to be more encouraging */}
           {characterData.personality.length > 0 && (
             <div className="flex items-center gap-2 text-xs">
               <div className="flex-1 bg-slate-700 rounded-full h-1.5">
                 <div 
                   className={`h-1.5 rounded-full transition-all duration-300 ${
-                    characterData.personality.length < 100 ? 'bg-red-400' :
-                    characterData.personality.length < 200 ? 'bg-amber-400' :
+                    characterData.personality.length < 50 ? 'bg-amber-400' :
+                    characterData.personality.length < 150 ? 'bg-cyan-400' :
                     'bg-emerald-400'
                   }`}
                   style={{ width: `${Math.min((characterData.personality.length / 300) * 100, 100)}%` }}
                 />
               </div>
               <span className="text-slate-400">
-                {characterData.personality.length < 100 ? 'Too brief' :
-                 characterData.personality.length < 200 ? 'Good length' : 'Detailed'}
+                {characterData.personality.length < 50 ? 'Consider adding more detail' :
+                 characterData.personality.length < 150 ? 'Good length' : 'Detailed'}
               </span>
-              {characterData.personality.length >= 200 && (
+              {characterData.personality.length >= 150 && (
                 <CheckCircle className="w-4 h-4 text-emerald-400" />
               )}
             </div>

@@ -79,11 +79,11 @@ const CharacterCreationForm = () => {
     }
   };
 
-  // Enhanced completion progress
+  // Enhanced completion progress - removed 100 character requirement
   const getCompletionProgress = () => {
     const requirements = [
       !!characterData.name.trim(),                    // Name required
-      characterData.personality.length >= 100,       // Minimum personality length
+      characterData.personality.length > 0,          // Any personality content
       characterData.expertise_keywords.length > 0    // At least 1 expertise keyword
     ];
     
@@ -96,7 +96,7 @@ const CharacterCreationForm = () => {
       case 'basic':
         return !!characterData.name.trim();
       case 'personality':
-        return characterData.personality.length >= 100; // Require meaningful content
+        return characterData.personality.length > 0; // Just require any content
       case 'expertise':
         return characterData.expertise_keywords.length > 0;
       default:
@@ -109,15 +109,6 @@ const CharacterCreationForm = () => {
       toast({
         title: "Name Required",
         description: "Please enter a character name.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (characterData.personality.length < 100) {
-      toast({
-        title: "Personality Too Short",
-        description: "Please provide a more detailed personality description (at least 100 characters).",
         variant: "destructive",
       });
       return;
@@ -238,7 +229,7 @@ const CharacterCreationForm = () => {
             customBreadcrumbs={[
               { label: 'Dashboard', href: '/dashboard' },
               { label: 'My Characters', href: '/my-characters' },
-              { label: isEditMode ? 'Edit Character' : 'Create Character', href: isEditMode ? `/create-character?edit=${editCharacterId}` : '/create-character' },
+              { label: isEditMode ? characterData.name || 'Edit Character' : 'Create Character', href: isEditMode ? `/create-character?edit=${editCharacterId}` : '/create-character' },
               { label: 'Preview' }
             ]}
             actions={
@@ -258,10 +249,21 @@ const CharacterCreationForm = () => {
     );
   }
 
-  const pageTitle = isEditMode ? 'Edit Character' : 'Create Character';
+  // Use character name as title when editing, otherwise use "Create Character"
+  const pageTitle = isEditMode && characterData.name 
+    ? characterData.name 
+    : 'Create Character';
+  
   const pageSubtitle = isEditMode 
-    ? `Editing ${characterData.name || 'character'}`
+    ? `Editing character details`
     : 'Design an AI personality for your scenarios';
+
+  // Custom breadcrumbs for edit mode using character name
+  const customBreadcrumbs = isEditMode ? [
+    { label: 'Dashboard', href: '/dashboard' },
+    { label: 'My Characters', href: '/my-characters' },
+    { label: characterData.name || 'Edit Character' }
+  ] : undefined;
 
   return (
     <div className="min-h-screen bg-slate-900">
@@ -270,11 +272,7 @@ const CharacterCreationForm = () => {
           title={pageTitle}
           subtitle={pageSubtitle}
           showBackButton={true}
-          customBreadcrumbs={isEditMode ? [
-            { label: 'Dashboard', href: '/dashboard' },
-            { label: 'My Characters', href: '/my-characters' },
-            { label: 'Edit Character' }
-          ] : undefined}
+          customBreadcrumbs={customBreadcrumbs}
           actions={headerActions}
         />
 
