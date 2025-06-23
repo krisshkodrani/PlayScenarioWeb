@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { CharacterData, CharacterContext } from '@/types/character';
 import { characterService } from '@/services/characterService';
 import { useToast } from '@/hooks/use-toast';
+import PageHeader from '@/components/navigation/PageHeader';
 import SimplifiedBasicInfo from './character-creation/SimplifiedBasicInfo';
 import EnhancedPersonality from './character-creation/EnhancedPersonality';
 import SimplifiedExpertise from './character-creation/SimplifiedExpertise';
@@ -143,27 +144,52 @@ const CharacterCreationForm = () => {
     }
   };
 
+  const headerActions = (
+    <div className="flex items-center space-x-3">
+      <Button 
+        variant="outline" 
+        onClick={() => setShowPreview(true)}
+        className="border-cyan-400/30 hover:border-cyan-400 text-cyan-400 hover:text-cyan-300"
+      >
+        <Eye className="w-4 h-4 mr-2" />
+        Preview
+      </Button>
+      <Button 
+        onClick={handleSaveCharacter}
+        disabled={saving || getCompletionProgress() < 100}
+        className="bg-gradient-to-r from-cyan-400 to-violet-500 hover:from-cyan-300 hover:to-violet-400 shadow-lg shadow-cyan-400/30"
+      >
+        <Save className="w-4 h-4 mr-2" />
+        {saving ? 'Saving...' : 'Save Character'}
+      </Button>
+    </div>
+  );
+
   if (showPreview) {
     return (
       <div className="min-h-screen bg-slate-900 p-4">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <Button 
-              variant="ghost" 
-              onClick={() => setShowPreview(false)}
-              className="text-cyan-400 hover:text-cyan-300"
-            >
-              ← Back to Editor
-            </Button>
-            <Button 
-              onClick={handleSaveCharacter}
-              disabled={saving || getCompletionProgress() < 100}
-              className="bg-gradient-to-r from-cyan-400 to-violet-500 hover:from-cyan-300 hover:to-violet-400 shadow-lg shadow-cyan-400/30"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              {saving ? 'Saving...' : 'Save Character'}
-            </Button>
-          </div>
+          <PageHeader
+            title="Character Preview"
+            subtitle={`Preview of ${characterData.name || 'New Character'}`}
+            showBackButton={true}
+            customBreadcrumbs={[
+              { label: 'Dashboard', href: '/dashboard' },
+              { label: 'My Characters', href: '/my-characters' },
+              { label: 'Create Character', href: '/create-character' },
+              { label: 'Preview' }
+            ]}
+            actions={
+              <Button 
+                onClick={handleSaveCharacter}
+                disabled={saving || getCompletionProgress() < 100}
+                className="bg-gradient-to-r from-cyan-400 to-violet-500 hover:from-cyan-300 hover:to-violet-400 shadow-lg shadow-cyan-400/30"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {saving ? 'Saving...' : 'Save Character'}
+              </Button>
+            }
+          />
           <SimplifiedPreview characterData={characterData} />
         </div>
       </div>
@@ -173,47 +199,24 @@ const CharacterCreationForm = () => {
   return (
     <div className="min-h-screen bg-slate-900">
       <div className="container mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-white">Create Character</h1>
-              <p className="text-slate-400 mt-1">
-                Design an AI personality for your scenarios
-              </p>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowPreview(true)}
-                className="border-cyan-400/30 hover:border-cyan-400 text-cyan-400 hover:text-cyan-300"
-              >
-                <Eye className="w-4 h-4 mr-2" />
-                Preview
-              </Button>
-              <Button 
-                onClick={handleSaveCharacter}
-                disabled={saving || getCompletionProgress() < 100}
-                className="bg-gradient-to-r from-cyan-400 to-violet-500 hover:from-cyan-300 hover:to-violet-400 shadow-lg shadow-cyan-400/30"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                {saving ? 'Saving...' : 'Save Character'}
-              </Button>
-            </div>
+        <PageHeader
+          title="Create Character"
+          subtitle="Design an AI personality for your scenarios"
+          showBackButton={true}
+          actions={headerActions}
+        />
+
+        {/* Progress */}
+        <div className="mb-8 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-slate-400">Character Development Progress</span>
+            <span className="text-cyan-400 font-medium">{Math.round(getCompletionProgress())}% Complete</span>
           </div>
-          
-          {/* Progress */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-400">Character Development Progress</span>
-              <span className="text-cyan-400 font-medium">{Math.round(getCompletionProgress())}% Complete</span>
-            </div>
-            <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
-              <div 
-                className="bg-gradient-to-r from-cyan-400 to-violet-500 h-2 rounded-full transition-all duration-500"
-                style={{ width: `${getCompletionProgress()}%` }}
-              />
-            </div>
+          <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+            <div 
+              className="bg-gradient-to-r from-cyan-400 to-violet-500 h-2 rounded-full transition-all duration-500"
+              style={{ width: `${getCompletionProgress()}%` }}
+            />
           </div>
         </div>
 

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Scenario, Character } from '@/types/scenario';
+import PageHeader from '@/components/navigation/PageHeader';
 import ScenarioHero from '@/components/scenario-preview/ScenarioHero';
 import ObjectivesList from '@/components/scenario-preview/ObjectivesList';
 import CharacterShowcase from '@/components/scenario-preview/CharacterShowcase';
@@ -233,22 +234,20 @@ const ScenarioPreview: React.FC = () => {
     return <ScenarioNotFound scenarioId={id || ''} error={data.error} />;
   }
 
+  const customBreadcrumbs = [
+    { label: 'Browse Scenarios', href: '/browse' },
+    { label: data.scenario.title }
+  ];
+
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       <div className="container mx-auto px-4 py-8">
-        {/* Breadcrumb Navigation */}
-        <nav className="mb-8">
-          <div className="flex items-center gap-2 text-sm text-slate-400">
-            <button 
-              onClick={() => navigate('/browse')}
-              className="hover:text-cyan-400 transition-colors"
-            >
-              Browse Scenarios
-            </button>
-            <span>/</span>
-            <span className="text-white">{data.scenario.title}</span>
-          </div>
-        </nav>
+        <PageHeader
+          title={data.scenario.title}
+          subtitle={`${data.scenario.category} • ${data.scenario.difficulty} • ${data.scenario.estimated_duration} minutes`}
+          showBackButton={true}
+          customBreadcrumbs={customBreadcrumbs}
+        />
 
         {/* Main Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">

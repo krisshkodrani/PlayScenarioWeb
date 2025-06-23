@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -28,6 +29,9 @@ const BREADCRUMB_CONFIG: BreadcrumbConfig = {
   '/credits/purchase': { label: 'Purchase Credits', parent: '/dashboard' },
   '/browse': { label: 'Browse Scenarios' },
   '/profile': { label: 'Profile', parent: '/dashboard' },
+  '/core-chat': { label: 'Scenario Play', parent: '/browse' },
+  '/login': { label: 'Login' },
+  '/register': { label: 'Register' },
 };
 
 interface AppBreadcrumbProps {
