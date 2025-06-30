@@ -135,17 +135,41 @@ export const useScenarioCreation = () => {
     setIsLoading(true);
     
     try {
-      const errors = validateScenario();
-      if (errors.length > 0 && publish) {
-        toast({
-          title: "Validation Failed",
-          description: errors.join(', '),
-          variant: "destructive",
-        });
-        return false;
+      console.log('Saving scenario with data:', scenarioData);
+      console.log('Characters to save:', scenarioData.characters);
+      
+      // For draft saves, don't validate everything - allow partial saves
+      if (publish) {
+        const errors = validateScenario();
+        if (errors.length > 0) {
+          toast({
+            title: "Validation Failed",
+            description: errors.join(', '),
+            variant: "destructive",
+          });
+          return false;
+        }
+      } else {
+        // For drafts, only check for basic requirements
+        if (!scenarioData.title.trim()) {
+          toast({
+            title: "Title Required",
+            description: "Please provide a title for your scenario before saving.",
+            variant: "destructive",
+          });
+          return false;
+        }
       }
 
-      const dataToSave = { ...scenarioData, is_public: publish };
+      const dataToSave = { 
+        ...scenarioData, 
+        is_public: publish,
+        // Ensure characters are included in the save data
+        characters: scenarioData.characters || []
+      };
+      
+      console.log('Final data being saved:', dataToSave);
+      
       const result = await scenarioService.createScenario(dataToSave);
       
       if (result) {

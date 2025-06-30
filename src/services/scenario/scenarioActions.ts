@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ScenarioData, Scenario } from '@/types/scenario';
 import { mapDatabaseScenario, enrichScenarioWithCharacters } from './scenarioTransforms';
@@ -6,6 +5,9 @@ import { mapDatabaseScenario, enrichScenarioWithCharacters } from './scenarioTra
 export const createScenario = async (scenarioData: ScenarioData): Promise<Scenario | null> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
+
+  console.log('Creating scenario with data:', scenarioData);
+  console.log('Characters in scenario data:', scenarioData.characters);
 
   const { data, error } = await supabase
     .from('scenarios')
@@ -28,8 +30,12 @@ export const createScenario = async (scenarioData: ScenarioData): Promise<Scenar
     throw error;
   }
 
-  // Create associated characters
+  console.log('Scenario created successfully:', data);
+
+  // Create associated characters if they exist
   if (scenarioData.characters && scenarioData.characters.length > 0) {
+    console.log('Creating characters for scenario:', data.id);
+    
     const charactersToInsert = scenarioData.characters.map(char => ({
       scenario_id: data.id,
       name: char.name,
@@ -40,13 +46,22 @@ export const createScenario = async (scenarioData: ScenarioData): Promise<Scenar
       role: 'Team Member'
     }));
 
-    const { error: charactersError } = await supabase
+    console.log('Characters to insert:', charactersToInsert);
+
+    const { error: charactersError, data: charactersData } = await supabase
       .from('scenario_characters')
-      .insert(charactersToInsert);
+      .insert(charactersToInsert)
+      .select();
 
     if (charactersError) {
       console.error('Error creating scenario characters:', charactersError);
+      // Don't throw error here, let the scenario save succeed even if characters fail
+      // We can retry character creation later
+    } else {
+      console.log('Characters created successfully:', charactersData);
     }
+  } else {
+    console.log('No characters to create for this scenario');
   }
 
   return mapDatabaseScenario(data);
