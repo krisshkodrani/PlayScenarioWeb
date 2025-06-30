@@ -3,14 +3,10 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
 import PageHeader from '@/components/navigation/PageHeader';
-import SimplifiedBasicInfo from './SimplifiedBasicInfo';
-import EnhancedPersonality from './EnhancedPersonality';
-import SimplifiedExpertise from './SimplifiedExpertise';
 import SimplifiedPreview from './SimplifiedPreview';
-import CharacterCreationSidebar from './CharacterCreationSidebar';
-import CharacterCreationProgress from './CharacterCreationProgress';
-import CharacterCreationActions from './CharacterCreationActions';
-import CharacterCreationActionsBar from './CharacterCreationActionsBar';
+import CharacterFormTabs from './CharacterFormTabs';
+import CharacterProgressHeader from './CharacterProgressHeader';
+import CharacterSidebar from './CharacterSidebar';
 import AIAssistanceModal from './AIAssistanceModal';
 import { CharacterData, CharacterContext } from '@/types/character';
 import { useToast } from '@/hooks/use-toast';
@@ -41,7 +37,7 @@ const CharacterFormLayout: React.FC<CharacterFormLayoutProps> = ({
   duplicateCharacterId
 }) => {
   const { toast } = useToast();
-  const [activeSection, setActiveSection] = useState('basic');
+  const [activeTab, setActiveTab] = useState('basic');
   const [showPreview, setShowPreview] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
 
@@ -56,19 +52,6 @@ const CharacterFormLayout: React.FC<CharacterFormLayoutProps> = ({
     return (completed / requirements.length) * 100;
   };
 
-  const getSectionCompletionStatus = (sectionId: string) => {
-    switch (sectionId) {
-      case 'basic':
-        return !!characterData.name.trim();
-      case 'personality':
-        return characterData.personality.length > 0;
-      case 'expertise':
-        return characterData.expertise_keywords.length > 0;
-      default:
-        return false;
-    }
-  };
-
   const handleUseAI = () => {
     setShowAIModal(true);
   };
@@ -81,47 +64,8 @@ const CharacterFormLayout: React.FC<CharacterFormLayoutProps> = ({
     });
   };
 
-  const renderActiveComponent = () => {
-    switch (activeSection) {
-      case 'basic':
-        return (
-          <SimplifiedBasicInfo
-            characterData={characterData}
-            characterContext={characterContext}
-            setCharacterData={setCharacterData}
-            setCharacterContext={setCharacterContext}
-          />
-        );
-      case 'personality':
-        return (
-          <EnhancedPersonality
-            characterData={characterData}
-            characterContext={characterContext}
-            setCharacterData={setCharacterData}
-          />
-        );
-      case 'expertise':
-        return (
-          <SimplifiedExpertise
-            characterData={characterData}
-            setCharacterData={setCharacterData}
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
-  const headerActions = (
-    <CharacterCreationActions
-      onPreview={() => setShowPreview(true)}
-      onSave={onSave}
-      saving={saving}
-      completionProgress={getCompletionProgress()}
-      isEditMode={isEditMode}
-      isDuplicateMode={isDuplicateMode}
-    />
-  );
+  const progress = getCompletionProgress();
+  const isComplete = progress >= 100;
 
   if (showPreview) {
     return (
@@ -145,7 +89,7 @@ const CharacterFormLayout: React.FC<CharacterFormLayoutProps> = ({
             actions={
               <Button 
                 onClick={onSave}
-                disabled={saving || getCompletionProgress() < 100}
+                disabled={saving || !isComplete}
                 className="bg-gradient-to-r from-cyan-400 to-violet-500 hover:from-cyan-300 hover:to-violet-400 shadow-lg shadow-cyan-400/30"
               >
                 <Save className="w-4 h-4 mr-2" />
@@ -182,36 +126,38 @@ const CharacterFormLayout: React.FC<CharacterFormLayoutProps> = ({
   ] : undefined;
 
   return (
-    <div className="min-h-screen bg-slate-900">
-      <div className="container mx-auto px-4 py-6">
+    <div className="min-h-screen bg-slate-900 text-white">
+      <div className="container mx-auto px-4 py-8">
         <PageHeader
           title={pageTitle}
           subtitle={pageSubtitle}
           showBackButton={true}
           customBreadcrumbs={customBreadcrumbs}
-          actions={headerActions}
         />
 
-        <CharacterCreationProgress completionProgress={getCompletionProgress()} />
+        <CharacterProgressHeader 
+          progress={progress} 
+          isComplete={isComplete}
+          characterData={characterData}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-1">
-            <CharacterCreationSidebar
-              activeSection={activeSection}
-              onSectionChange={setActiveSection}
-              getSectionCompletionStatus={getSectionCompletionStatus}
+          <div className="lg:col-span-3">
+            <CharacterFormTabs
+              characterData={characterData}
+              characterContext={characterContext}
+              setCharacterData={setCharacterData}
+              setCharacterContext={setCharacterContext}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
             />
           </div>
 
-          <div className="lg:col-span-2 min-w-0">
-            {renderActiveComponent()}
-          </div>
-
-          <div className="lg:col-span-1">
-            <CharacterCreationActionsBar
+          <div>
+            <CharacterSidebar
               characterData={characterData}
-              completionProgress={getCompletionProgress()}
-              saving={saving}
+              isComplete={isComplete}
+              isLoading={saving}
               onSave={onSave}
               onUseAI={handleUseAI}
               isEditMode={isEditMode}
