@@ -36,8 +36,8 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
   };
 
   return (
-    <Card className="bg-slate-800 border-slate-700 hover:border-slate-600 transition-all duration-200 group">
-      <CardContent className="p-6">
+    <Card className="bg-slate-800 border-slate-700 hover:border-slate-600 transition-all duration-200 group h-full flex flex-col">
+      <CardContent className="p-6 flex flex-col h-full">
         {/* Header with Avatar and Name */}
         <div className="flex items-start gap-4 mb-4">
           <Avatar className="w-12 h-12">
@@ -106,33 +106,35 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
           <span>Created {formatDistanceToNow(new Date(character.created_at), { addSuffix: true })}</span>
         </div>
 
-        {/* Action Buttons - Aligned horizontally at the end */}
-        <div className="flex items-center gap-2 justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onEdit(character.id)}
-            className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
-          >
-            <Edit className="w-3 h-3 mr-1" />
-            Edit
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onDuplicate(character.id)}
-            className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
-          >
-            <Copy className="w-3 h-3" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onDelete(character.id)}
-            className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
-          >
-            <Trash2 className="w-3 h-3" />
-          </Button>
+        {/* Action Buttons - Full width and pushed to bottom */}
+        <div className="mt-auto">
+          <div className="grid grid-cols-3 gap-2 w-full">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onEdit(character.id)}
+              className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
+            >
+              <Edit className="w-3 h-3 mr-1" />
+              Edit
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onDuplicate(character.id)}
+              className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
+            >
+              <Copy className="w-3 h-3" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onDelete(character.id)}
+              className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+            >
+              <Trash2 className="w-3 h-3" />
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
