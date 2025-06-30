@@ -29,8 +29,8 @@ interface SearchAndFiltersProps {
 const sortOptions = [
   { value: 'popularity', label: 'Most Popular' },
   { value: 'rating', label: 'Highest Rated' },
-  { value: 'newest', label: 'Newest' },
-  { value: 'difficulty', label: 'Difficulty' }
+  { value: 'created_desc', label: 'Newest' },
+  { value: 'title', label: 'Title (A-Z)' }
 ];
 
 const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
