@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -9,7 +8,7 @@ import {
   BreadcrumbSeparator,
   BreadcrumbPage,
 } from '@/components/ui/breadcrumb';
-import { ChevronLeft, Home } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface BreadcrumbConfig {
@@ -111,7 +110,6 @@ const AppBreadcrumb: React.FC<AppBreadcrumbProps> = ({
                       onClick={() => navigate(crumb.href!)}
                       className="cursor-pointer text-slate-400 hover:text-cyan-400"
                     >
-                      {index === 0 && <Home className="w-4 h-4 mr-1" />}
                       {crumb.label}
                     </BreadcrumbLink>
                   ) : (
