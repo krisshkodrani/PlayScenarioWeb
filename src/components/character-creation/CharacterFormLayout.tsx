@@ -10,7 +10,10 @@ import SimplifiedPreview from './SimplifiedPreview';
 import CharacterCreationSidebar from './CharacterCreationSidebar';
 import CharacterCreationProgress from './CharacterCreationProgress';
 import CharacterCreationActions from './CharacterCreationActions';
+import CharacterCreationActionsBar from './CharacterCreationActionsBar';
+import AIAssistanceModal from './AIAssistanceModal';
 import { CharacterData, CharacterContext } from '@/types/character';
+import { useToast } from '@/hooks/use-toast';
 
 interface CharacterFormLayoutProps {
   characterData: CharacterData;
@@ -37,8 +40,10 @@ const CharacterFormLayout: React.FC<CharacterFormLayoutProps> = ({
   editCharacterId,
   duplicateCharacterId
 }) => {
+  const { toast } = useToast();
   const [activeSection, setActiveSection] = useState('basic');
   const [showPreview, setShowPreview] = useState(false);
+  const [showAIModal, setShowAIModal] = useState(false);
 
   const getCompletionProgress = () => {
     const requirements = [
@@ -62,6 +67,18 @@ const CharacterFormLayout: React.FC<CharacterFormLayoutProps> = ({
       default:
         return false;
     }
+  };
+
+  const handleUseAI = () => {
+    setShowAIModal(true);
+  };
+
+  const handleApplyAIChanges = (updates: Partial<CharacterData>) => {
+    setCharacterData(prev => ({ ...prev, ...updates }));
+    toast({
+      title: "AI Enhancement Applied",
+      description: "Your character has been enhanced with AI-generated content.",
+    });
   };
 
   const renderActiveComponent = () => {
@@ -177,18 +194,39 @@ const CharacterFormLayout: React.FC<CharacterFormLayoutProps> = ({
 
         <CharacterCreationProgress completionProgress={getCompletionProgress()} />
 
-        <div className="flex gap-8">
-          <CharacterCreationSidebar
-            activeSection={activeSection}
-            onSectionChange={setActiveSection}
-            getSectionCompletionStatus={getSectionCompletionStatus}
-          />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="lg:col-span-1">
+            <CharacterCreationSidebar
+              activeSection={activeSection}
+              onSectionChange={setActiveSection}
+              getSectionCompletionStatus={getSectionCompletionStatus}
+            />
+          </div>
 
-          <div className="flex-1 min-w-0">
+          <div className="lg:col-span-2 min-w-0">
             {renderActiveComponent()}
+          </div>
+
+          <div className="lg:col-span-1">
+            <CharacterCreationActionsBar
+              characterData={characterData}
+              completionProgress={getCompletionProgress()}
+              saving={saving}
+              onSave={onSave}
+              onUseAI={handleUseAI}
+              isEditMode={isEditMode}
+            />
           </div>
         </div>
       </div>
+
+      <AIAssistanceModal
+        isOpen={showAIModal}
+        onClose={() => setShowAIModal(false)}
+        characterData={characterData}
+        characterContext={characterContext}
+        onApplyChanges={handleApplyAIChanges}
+      />
     </div>
   );
 };
