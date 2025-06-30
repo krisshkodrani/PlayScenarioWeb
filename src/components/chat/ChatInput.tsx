@@ -1,6 +1,6 @@
 
 import React, { KeyboardEvent } from 'react';
-import { Send } from 'lucide-react';
+import { Send, MessageCircle } from 'lucide-react';
 
 interface ChatInputProps {
   value: string;
@@ -22,6 +22,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
+  const handleChatClick = () => {
+    // Placeholder for chat functionality - could open chat history, settings, etc.
+    console.log('Chat button clicked');
+  };
+
   return (
     <div className="bg-gradient-to-r from-slate-800/80 to-slate-700/50 backdrop-blur border-t border-slate-600 p-4">
       <div className="flex gap-3 items-end">
@@ -34,6 +39,17 @@ const ChatInput: React.FC<ChatInputProps> = ({
           className="flex-1 bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed"
           placeholder="Type your response..."
         />
+        
+        {/* Chat Button */}
+        <button 
+          onClick={handleChatClick}
+          className="bg-slate-700/80 backdrop-blur border border-slate-600 text-slate-400 hover:text-cyan-400 hover:border-cyan-400/50 p-3 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center transition-all duration-200 hover:shadow-lg hover:shadow-cyan-400/20 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-800"
+          aria-label="Chat options"
+        >
+          <MessageCircle className="w-5 h-5" />
+        </button>
+        
+        {/* Send Button */}
         <button 
           onClick={onSend}
           disabled={disabled || !value.trim()}
