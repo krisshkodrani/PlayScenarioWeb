@@ -54,7 +54,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
   ];
 
   return (
-    <Card className="bg-slate-800 border-slate-700 h-[320px] flex flex-col">
+    <Card className="bg-slate-800 border-slate-700 h-[224px] flex flex-col">
       <CardHeader>
         <CardTitle className="text-white">Quick Actions</CardTitle>
       </CardHeader>
