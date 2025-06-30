@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { FileText, Target, Clock } from 'lucide-react';
+import { FileText, Clock } from 'lucide-react';
 import { ScenarioData } from '@/types/scenario';
 
 interface SimplifiedBasicInfoProps {
@@ -63,40 +63,6 @@ const SimplifiedBasicInfo: React.FC<SimplifiedBasicInfoProps> = ({ data, onChang
               maxLength={300}
             />
             <p className="text-xs text-slate-400">{data.initial_scene_prompt.length}/300 characters</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-slate-800 border-slate-700">
-        <CardHeader>
-          <CardTitle className="text-cyan-400 flex items-center gap-2">
-            <Target className="w-5 h-5" />
-            Success & Failure Conditions
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="win-conditions" className="text-white">Win Conditions</Label>
-            <Textarea
-              id="win-conditions"
-              value={data.win_conditions}
-              onChange={(e) => onChange({ win_conditions: e.target.value })}
-              placeholder="Define what constitutes success in this scenario..."
-              rows={2}
-              className="bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 resize-none"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="lose-conditions" className="text-white">Lose Conditions</Label>
-            <Textarea
-              id="lose-conditions"
-              value={data.lose_conditions}
-              onChange={(e) => onChange({ lose_conditions: e.target.value })}
-              placeholder="Define what constitutes failure in this scenario..."
-              rows={2}
-              className="bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 resize-none"
-            />
           </div>
         </CardContent>
       </Card>

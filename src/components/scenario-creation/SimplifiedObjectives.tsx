@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Target } from 'lucide-react';
+import { Plus, Trash2, Target, Trophy } from 'lucide-react';
 import { ScenarioData, ObjectiveData } from '@/types/scenario';
 
 interface SimplifiedObjectivesProps {
@@ -114,6 +115,40 @@ const SimplifiedObjectives: React.FC<SimplifiedObjectivesProps> = ({ data, onCha
               <p className="text-slate-500 text-xs">Add objectives to help guide the scenario experience</p>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      <Card className="bg-slate-800 border-slate-700">
+        <CardHeader>
+          <CardTitle className="text-cyan-400 flex items-center gap-2">
+            <Trophy className="w-5 h-5" />
+            Success & Failure Conditions
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="win-conditions" className="text-white">Win Conditions</Label>
+            <Textarea
+              id="win-conditions"
+              value={data.win_conditions}
+              onChange={(e) => onChange({ win_conditions: e.target.value })}
+              placeholder="Define what constitutes success in this scenario..."
+              rows={2}
+              className="bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 resize-none"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="lose-conditions" className="text-white">Lose Conditions</Label>
+            <Textarea
+              id="lose-conditions"
+              value={data.lose_conditions}
+              onChange={(e) => onChange({ lose_conditions: e.target.value })}
+              placeholder="Define what constitutes failure in this scenario..."
+              rows={2}
+              className="bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 resize-none"
+            />
+          </div>
         </CardContent>
       </Card>
 
