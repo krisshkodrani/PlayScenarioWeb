@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Minus, User, Edit, X, Users, Library } from 'lucide-react';
+import { Plus, Minus, User, X, Users, Library } from 'lucide-react';
 import { ScenarioData, CharacterData } from '@/types/scenario';
 import CharacterBrowserModal from './CharacterBrowserModal';
 
@@ -306,15 +306,7 @@ const SimplifiedCharacters: React.FC<SimplifiedCharactersProps> = ({ data, onCha
                             </div>
                           )}
                         </div>
-                        <div className="flex gap-2 ml-4">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => editCharacter(index)}
-                            className="text-slate-400 hover:text-white h-8 w-8 p-0"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
+                        <div className="ml-4">
                           <Button
                             variant="ghost"
                             size="sm"
