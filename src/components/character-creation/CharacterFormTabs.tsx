@@ -60,7 +60,6 @@ const CharacterFormTabs: React.FC<CharacterFormTabsProps> = ({
           characterData={characterData}
           characterContext={characterContext}
           setCharacterData={setCharacterData}
-          setCharacterContext={setCharacterContext}
         />
       </TabsContent>
 
