@@ -15,7 +15,6 @@ export const characterMutations = {
       expertise_keywords: characterData.expertise_keywords,
       is_player_character: characterData.is_player_character,
       role: 'Character', // Use simplified default role
-      guidelines: characterData.guidelines,
     };
 
     const { data, error } = await supabase
@@ -47,7 +46,6 @@ export const characterMutations = {
     if (updates.personality) updateData.personality = updates.personality;
     if (updates.expertise_keywords) updateData.expertise_keywords = updates.expertise_keywords;
     if (updates.is_player_character !== undefined) updateData.is_player_character = updates.is_player_character;
-    if (updates.guidelines !== undefined) updateData.guidelines = updates.guidelines;
 
     const { data, error } = await supabase
       .from('scenario_characters')
@@ -111,7 +109,6 @@ export const characterMutations = {
       expertise_keywords: original.expertise_keywords,
       is_player_character: original.is_player_character,
       role: original.role,
-      guidelines: original.guidelines,
     };
 
     const { data, error } = await supabase
