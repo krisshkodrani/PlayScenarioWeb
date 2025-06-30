@@ -13,7 +13,7 @@ export const getUserScenarios = async (
   if (!user) throw new Error('User not authenticated');
 
   let query = buildScenarioQuery().eq('creator_id', user.id);
-  query = applyScenarioFilters(query, filters, user.id);
+  query = await applyScenarioFilters(query, filters, user.id);
   query = applySorting(query, filters.sortBy);
   query = applyPagination(query, page, limit);
 
@@ -43,7 +43,7 @@ export const getPublicScenarios = async (
   const { data: { user } } = await supabase.auth.getUser();
   
   let query = buildScenarioQuery().eq('is_public', true);
-  query = applyScenarioFilters(query, filters, user?.id);
+  query = await applyScenarioFilters(query, filters, user?.id);
   query = applySorting(query, filters.sortBy);
   query = applyPagination(query, page, limit);
 

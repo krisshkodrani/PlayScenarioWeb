@@ -17,7 +17,7 @@ export const buildScenarioQuery = (isPublic?: boolean) => {
     `, { count: 'exact' });
 };
 
-export const applyScenarioFilters = (query: any, filters: ScenarioFilters, userId?: string) => {
+export const applyScenarioFilters = async (query: any, filters: ScenarioFilters, userId?: string) => {
   // Apply search filter
   if (filters.search) {
     query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
@@ -35,22 +35,34 @@ export const applyScenarioFilters = (query: any, filters: ScenarioFilters, userI
 
   // Apply liked filter - only if user is authenticated
   if (filters.showLikedOnly && userId) {
-    query = query.in('id', 
-      supabase
-        .from('scenario_likes')
-        .select('scenario_id')
-        .eq('user_id', userId)
-    );
+    const { data: likedScenarios } = await supabase
+      .from('scenario_likes')
+      .select('scenario_id')
+      .eq('user_id', userId);
+    
+    const likedIds = likedScenarios?.map(item => item.scenario_id) || [];
+    if (likedIds.length > 0) {
+      query = query.in('id', likedIds);
+    } else {
+      // If no liked scenarios, return empty result
+      query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+    }
   }
 
   // Apply bookmarked filter - only if user is authenticated
   if (filters.showBookmarkedOnly && userId) {
-    query = query.in('id',
-      supabase
-        .from('scenario_bookmarks')
-        .select('scenario_id')
-        .eq('user_id', userId)
-    );
+    const { data: bookmarkedScenarios } = await supabase
+      .from('scenario_bookmarks')
+      .select('scenario_id')
+      .eq('user_id', userId);
+    
+    const bookmarkedIds = bookmarkedScenarios?.map(item => item.scenario_id) || [];
+    if (bookmarkedIds.length > 0) {
+      query = query.in('id', bookmarkedIds);
+    } else {
+      // If no bookmarked scenarios, return empty result
+      query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+    }
   }
 
   return query;
