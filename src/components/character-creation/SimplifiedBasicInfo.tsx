@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { User } from 'lucide-react';
 import { CharacterData, CharacterContext } from '@/types/character';
@@ -53,6 +54,20 @@ const SimplifiedBasicInfo: React.FC<SimplifiedBasicInfoProps> = ({
           <p className="text-xs text-slate-400">
             Helps provide better personality and expertise suggestions
           </p>
+        </div>
+
+        {/* General Guidelines */}
+        <div className="space-y-2">
+          <Label className="text-white">General Guidelines</Label>
+          <Textarea
+            value={characterData.guidelines || ''}
+            onChange={(e) => setCharacterData(prev => ({ ...prev, guidelines: e.target.value }))}
+            placeholder="Describe general guidelines for how your character should behave, respond, and interact in scenarios..."
+            rows={4}
+            className="bg-slate-700/50 backdrop-blur border border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 resize-none"
+            maxLength={2000}
+          />
+          <p className="text-xs text-slate-400">{(characterData.guidelines || '').length}/2000 characters</p>
         </div>
       </CardContent>
     </Card>

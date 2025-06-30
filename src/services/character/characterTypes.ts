@@ -10,6 +10,7 @@ export interface DatabaseCharacter {
   backstory?: string;
   motivations?: string;
   speech_patterns?: string;
+  guidelines?: string;
   is_player_character: boolean;
 }
 
@@ -22,6 +23,7 @@ export interface CharacterCreateData {
   backstory?: string;
   motivations?: string;
   speech_patterns?: string;
+  guidelines?: string;
 }
 
 export interface CharacterUpdateData {
@@ -33,4 +35,5 @@ export interface CharacterUpdateData {
   backstory?: string;
   motivations?: string;
   speech_patterns?: string;
+  guidelines?: string;
 }
