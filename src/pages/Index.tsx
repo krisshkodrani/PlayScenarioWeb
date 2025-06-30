@@ -48,7 +48,12 @@ const Index = () => {
           </div>
           
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-muted-foreground hover:text-foreground"
+              onClick={() => navigate('/login')}
+            >
               <User className="w-4 h-4 mr-2" />
               Sign In
             </Button>
