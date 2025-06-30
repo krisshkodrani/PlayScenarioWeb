@@ -78,7 +78,7 @@ const SimplifiedBasicInfo: React.FC<SimplifiedBasicInfoProps> = ({
                         <p className="font-medium text-amber-400">GLOBAL RULES</p>
                         <ul className="list-disc list-inside space-y-1 text-xs ml-2">
                           <li>Speak in first-person as {characterData.name || '{{CHAR_NAME}}'}.</li>
-                          <li>The user is <strong>{{USER_NAME}}</strong>; address them directly.</li>
+                          <li>The user is <strong>{'{{USER_NAME}}'}</strong>; address them directly.</li>
                           <li>Refer to other characters only indirectly ("Team reported...").</li>
                           <li>No meta-talk about AI or prompts. Output plain text, 60-120 words.</li>
                         </ul>
