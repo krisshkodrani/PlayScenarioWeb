@@ -35,33 +35,43 @@ export const applyScenarioFilters = async (query: any, filters: ScenarioFilters,
 
   // Apply liked filter - only if user is authenticated
   if (filters.showLikedOnly && userId) {
-    const { data: likedScenarios } = await supabase
-      .from('scenario_likes')
-      .select('scenario_id')
-      .eq('user_id', userId);
-    
-    const likedIds = likedScenarios?.map(item => item.scenario_id) || [];
-    if (likedIds.length > 0) {
-      query = query.in('id', likedIds);
-    } else {
-      // If no liked scenarios, return empty result
-      query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+    try {
+      const { data: likedScenarios } = await supabase
+        .from('scenario_likes')
+        .select('scenario_id')
+        .eq('user_id', userId);
+      
+      const likedIds = likedScenarios?.map(item => item.scenario_id) || [];
+      if (likedIds.length > 0) {
+        query = query.in('id', likedIds);
+      } else {
+        // Return empty query by filtering on impossible condition
+        query = query.limit(0);
+      }
+    } catch (error) {
+      console.error('Error fetching liked scenarios:', error);
+      // If there's an error, don't apply the filter
     }
   }
 
   // Apply bookmarked filter - only if user is authenticated
   if (filters.showBookmarkedOnly && userId) {
-    const { data: bookmarkedScenarios } = await supabase
-      .from('scenario_bookmarks')
-      .select('scenario_id')
-      .eq('user_id', userId);
-    
-    const bookmarkedIds = bookmarkedScenarios?.map(item => item.scenario_id) || [];
-    if (bookmarkedIds.length > 0) {
-      query = query.in('id', bookmarkedIds);
-    } else {
-      // If no bookmarked scenarios, return empty result
-      query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+    try {
+      const { data: bookmarkedScenarios } = await supabase
+        .from('scenario_bookmarks')
+        .select('scenario_id')
+        .eq('user_id', userId);
+      
+      const bookmarkedIds = bookmarkedScenarios?.map(item => item.scenario_id) || [];
+      if (bookmarkedIds.length > 0) {
+        query = query.in('id', bookmarkedIds);
+      } else {
+        // Return empty query by filtering on impossible condition
+        query = query.limit(0);
+      }
+    } catch (error) {
+      console.error('Error fetching bookmarked scenarios:', error);
+      // If there's an error, don't apply the filter
     }
   }
 
@@ -72,6 +82,8 @@ export const applySorting = (query: any, sortBy: string) => {
   switch (sortBy) {
     case 'created_asc':
       return query.order('created_at', { ascending: true });
+    case 'created_desc':
+      return query.order('created_at', { ascending: false });
     case 'title':
       return query.order('title', { ascending: true });
     case 'popularity':

@@ -40,26 +40,31 @@ export const getPublicScenarios = async (
   page = 1, 
   limit = 12
 ): Promise<ScenarioPaginationResult<Scenario>> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  let query = buildScenarioQuery().eq('is_public', true);
-  query = await applyScenarioFilters(query, filters, user?.id);
-  query = applySorting(query, filters.sortBy);
-  query = applyPagination(query, page, limit);
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    let query = buildScenarioQuery().eq('is_public', true);
+    query = await applyScenarioFilters(query, filters, user?.id);
+    query = applySorting(query, filters.sortBy);
+    query = applyPagination(query, page, limit);
 
-  const { data, error, count } = await query;
+    const { data, error, count } = await query;
 
-  if (error) {
-    console.error('Error fetching public scenarios:', error);
+    if (error) {
+      console.error('Error fetching public scenarios:', error);
+      throw error;
+    }
+
+    const scenarios = await enrichScenariosWithUserData(data || []);
+
+    return {
+      scenarios,
+      total: count || 0
+    };
+  } catch (error) {
+    console.error('getPublicScenarios error:', error);
     throw error;
   }
-
-  const scenarios = await enrichScenariosWithUserData(data || []);
-
-  return {
-    scenarios,
-    total: count || 0
-  };
 };
 
 export const getScenarioById = async (scenarioId: string): Promise<Scenario | null> => {
