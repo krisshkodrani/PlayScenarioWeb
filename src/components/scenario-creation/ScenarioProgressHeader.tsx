@@ -48,26 +48,6 @@ const ScenarioProgressHeader: React.FC<ScenarioProgressHeaderProps> = ({
 
   return (
     <div className="mb-8">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Create Scenario</h1>
-          <p className="text-slate-400 mt-1">
-            Design an interactive AI scenario for training or entertainment
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge 
-            variant={isComplete ? "default" : "secondary"} 
-            className={isComplete 
-              ? "bg-emerald-500 text-white hover:bg-emerald-600" 
-              : "bg-amber-500 text-slate-900 hover:bg-amber-600"
-            }
-          >
-            {isComplete ? "Ready to Publish" : "In Development"}
-          </Badge>
-        </div>
-      </div>
-      
       <Card className="bg-slate-800 border-slate-700">
         <CardContent className="pt-6">
           <div className="flex items-center justify-between mb-4">
