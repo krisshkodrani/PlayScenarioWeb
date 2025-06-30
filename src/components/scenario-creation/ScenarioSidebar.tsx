@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Save, Upload } from 'lucide-react';
+import { Save, Upload, Wand2 } from 'lucide-react';
 import { ScenarioData } from '@/types/scenario';
 
 interface ScenarioSidebarProps {
@@ -11,6 +11,7 @@ interface ScenarioSidebarProps {
   isLoading: boolean;
   onSave: () => void;
   onPublish: () => void;
+  onUseAI: () => void;
 }
 
 const ScenarioSidebar: React.FC<ScenarioSidebarProps> = ({
@@ -18,7 +19,8 @@ const ScenarioSidebar: React.FC<ScenarioSidebarProps> = ({
   isComplete,
   isLoading,
   onSave,
-  onPublish
+  onPublish,
+  onUseAI
 }) => {
   return (
     <div className="space-y-6">
@@ -27,6 +29,13 @@ const ScenarioSidebar: React.FC<ScenarioSidebarProps> = ({
           <CardTitle className="text-sm text-slate-400">Quick Actions</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          <Button 
+            onClick={onUseAI}
+            className="w-full bg-violet-500 hover:bg-violet-600 text-white"
+          >
+            <Wand2 className="w-4 h-4 mr-2" />
+            Use AI
+          </Button>
           <Button 
             onClick={onSave} 
             variant="outline" 
@@ -42,7 +51,7 @@ const ScenarioSidebar: React.FC<ScenarioSidebarProps> = ({
             disabled={!isComplete || isLoading}
           >
             <Upload className="w-4 h-4 mr-2" />
-            {isLoading ? 'Publishing...' : isComplete ? 'Publish Scenario' : 'Complete Required Fields'}
+            {isLoading ? 'Publishing...' : isComplete ? 'Publish Scenario' : 'Complete to Publish'}
           </Button>
         </CardContent>
       </Card>

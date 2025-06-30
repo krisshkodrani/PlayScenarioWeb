@@ -5,16 +5,21 @@ import { LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScenarioCreation } from '@/hooks/useScenarioCreation';
+import { useToast } from '@/hooks/use-toast';
 import PageHeader from '@/components/navigation/PageHeader';
 import ScenarioProgressHeader from './scenario-creation/ScenarioProgressHeader';
 import ScenarioFormTabs from './scenario-creation/ScenarioFormTabs';
 import ScenarioSidebar from './scenario-creation/ScenarioSidebar';
 import CreationTips from './scenario-creation/CreationTips';
+import AIAssistanceModal from './scenario-creation/AIAssistanceModal';
+import { ScenarioData } from '@/types/scenario';
 
 const ScenarioCreationForm: React.FC = () => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('basic');
+  const [showAIModal, setShowAIModal] = useState(false);
   
   const {
     scenarioData,
@@ -28,6 +33,18 @@ const ScenarioCreationForm: React.FC = () => {
   const handleLogout = async () => {
     await signOut();
     navigate('/');
+  };
+
+  const handleUseAI = () => {
+    setShowAIModal(true);
+  };
+
+  const handleApplyAIChanges = (updates: Partial<ScenarioData>) => {
+    updateScenarioData(updates);
+    toast({
+      title: "AI Enhancement Applied",
+      description: "Your scenario has been enhanced with AI-generated content.",
+    });
   };
 
   const headerActions = (
@@ -73,11 +90,19 @@ const ScenarioCreationForm: React.FC = () => {
               isLoading={isLoading}
               onSave={() => handleSave(false)}
               onPublish={handlePublish}
+              onUseAI={handleUseAI}
             />
             <CreationTips />
           </div>
         </div>
       </div>
+
+      <AIAssistanceModal
+        isOpen={showAIModal}
+        onClose={() => setShowAIModal(false)}
+        scenarioData={scenarioData}
+        onApplyChanges={handleApplyAIChanges}
+      />
     </div>
   );
 };
