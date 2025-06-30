@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,8 +6,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Trash2, User, Edit, X } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Trash2, User, Edit, X, Users, Library } from 'lucide-react';
 import { ScenarioData, CharacterData } from '@/types/scenario';
+import CharacterBrowserModal from './CharacterBrowserModal';
 
 interface SimplifiedCharactersProps {
   data: ScenarioData;
@@ -25,6 +26,7 @@ const SimplifiedCharacters: React.FC<SimplifiedCharactersProps> = ({ data, onCha
     is_player_character: false
   });
   const [newKeyword, setNewKeyword] = useState('');
+  const [showCharacterBrowser, setShowCharacterBrowser] = useState(false);
 
   const resetForm = () => {
     setFormData({
@@ -80,6 +82,15 @@ const SimplifiedCharacters: React.FC<SimplifiedCharactersProps> = ({ data, onCha
     });
   };
 
+  const handleAddFromLibrary = (selectedCharacters: CharacterData[]) => {
+    onChange({ 
+      characters: [...data.characters, ...selectedCharacters] 
+    });
+  };
+
+  // Get character names that are already in the scenario to exclude from browser
+  const existingCharacterNames = data.characters.map(char => char.name.toLowerCase());
+
   return (
     <div className="space-y-6">
       <Card className="bg-slate-800 border-slate-700">
@@ -89,139 +100,176 @@ const SimplifiedCharacters: React.FC<SimplifiedCharactersProps> = ({ data, onCha
               <User className="w-5 h-5" />
               Scenario Characters
             </CardTitle>
-            {!showForm && (
-              <Button
-                onClick={() => setShowForm(true)}
-                className="bg-cyan-500 hover:bg-cyan-600 text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Character
-              </Button>
-            )}
           </div>
           <p className="text-slate-400 text-sm">
             Create AI characters that will participate in the scenario
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
-          {showForm && (
-            <Card className="bg-slate-700/50 border-slate-600">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-white text-lg">
-                    {editingIndex !== null ? 'Edit Character' : 'Create New Character'}
-                  </CardTitle>
+          {/* Character Management Options */}
+          <Tabs defaultValue="create" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 bg-slate-700">
+              <TabsTrigger value="create" className="data-[state=active]:bg-slate-600">
+                <Plus className="w-4 h-4 mr-2" />
+                Create New
+              </TabsTrigger>
+              <TabsTrigger value="browse" className="data-[state=active]:bg-slate-600">
+                <Library className="w-4 h-4 mr-2" />
+                Browse Library
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="create" className="space-y-4 mt-6">
+              {!showForm && (
+                <div className="text-center py-6 border-2 border-dashed border-slate-600 rounded-lg">
+                  <User className="w-8 h-8 text-slate-500 mx-auto mb-2" />
+                  <p className="text-slate-400 mb-3">Create a new character for this scenario</p>
                   <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={resetForm}
-                    className="text-slate-400 hover:text-white"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="char-name" className="text-white">Character Name *</Label>
-                  <Input
-                    id="char-name"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Enter character name"
-                    className="bg-slate-600 border-slate-500 text-white placeholder-slate-400 focus:border-cyan-400"
-                    maxLength={50}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="char-personality" className="text-white">Personality *</Label>
-                  <Textarea
-                    id="char-personality"
-                    value={formData.personality}
-                    onChange={(e) => setFormData(prev => ({ ...prev, personality: e.target.value }))}
-                    placeholder="Describe the character's personality, behavior, and speaking style..."
-                    rows={4}
-                    className="bg-slate-600 border-slate-500 text-white placeholder-slate-400 focus:border-cyan-400 resize-none"
-                    maxLength={500}
-                  />
-                  <p className="text-xs text-slate-400">{formData.personality.length}/500 characters</p>
-                </div>
-
-                <div className="space-y-3">
-                  <Label className="text-white">Expertise Keywords</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={newKeyword}
-                      onChange={(e) => setNewKeyword(e.target.value)}
-                      placeholder="Add expertise..."
-                      className="bg-slate-600 border-slate-500 text-white placeholder-slate-400 focus:border-cyan-400"
-                      onKeyPress={(e) => e.key === 'Enter' && addKeyword()}
-                    />
-                    <Button
-                      onClick={addKeyword}
-                      disabled={!newKeyword.trim()}
-                      variant="outline"
-                      className="border-slate-500 text-slate-300 hover:text-white"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  
-                  {formData.expertise_keywords.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {formData.expertise_keywords.map((keyword, index) => (
-                        <Badge key={index} variant="secondary" className="flex items-center gap-1 bg-slate-600 text-slate-200">
-                          {keyword}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-auto p-0 ml-1 hover:text-red-400"
-                            onClick={() => removeKeyword(index)}
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="is-player"
-                    checked={formData.is_player_character}
-                    onCheckedChange={(checked) => setFormData(prev => ({ 
-                      ...prev, 
-                      is_player_character: !!checked 
-                    }))}
-                  />
-                  <Label htmlFor="is-player" className="text-slate-300">
-                    This is a player character (controlled by user)
-                  </Label>
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <Button
-                    onClick={saveCharacter}
-                    disabled={!formData.name.trim() || !formData.personality.trim()}
+                    onClick={() => setShowForm(true)}
                     className="bg-cyan-500 hover:bg-cyan-600 text-white"
                   >
-                    {editingIndex !== null ? 'Update Character' : 'Add Character'}
-                  </Button>
-                  <Button
-                    onClick={resetForm}
-                    variant="outline"
-                    className="border-slate-500 text-slate-300 hover:text-white"
-                  >
-                    Cancel
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Character
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
 
-          {data.characters.length > 0 ? (
+              {/* Character Creation Form */}
+              {showForm && (
+                <Card className="bg-slate-700/50 border-slate-600">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-white text-lg">
+                        {editingIndex !== null ? 'Edit Character' : 'Create New Character'}
+                      </CardTitle>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={resetForm}
+                        className="text-slate-400 hover:text-white"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="char-name" className="text-white">Character Name *</Label>
+                      <Input
+                        id="char-name"
+                        value={formData.name}
+                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="Enter character name"
+                        className="bg-slate-600 border-slate-500 text-white placeholder-slate-400 focus:border-cyan-400"
+                        maxLength={50}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="char-personality" className="text-white">Personality *</Label>
+                      <Textarea
+                        id="char-personality"
+                        value={formData.personality}
+                        onChange={(e) => setFormData(prev => ({ ...prev, personality: e.target.value }))}
+                        placeholder="Describe the character's personality, behavior, and speaking style..."
+                        rows={4}
+                        className="bg-slate-600 border-slate-500 text-white placeholder-slate-400 focus:border-cyan-400 resize-none"
+                        maxLength={500}
+                      />
+                      <p className="text-xs text-slate-400">{formData.personality.length}/500 characters</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="text-white">Expertise Keywords</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          value={newKeyword}
+                          onChange={(e) => setNewKeyword(e.target.value)}
+                          placeholder="Add expertise..."
+                          className="bg-slate-600 border-slate-500 text-white placeholder-slate-400 focus:border-cyan-400"
+                          onKeyPress={(e) => e.key === 'Enter' && addKeyword()}
+                        />
+                        <Button
+                          onClick={addKeyword}
+                          disabled={!newKeyword.trim()}
+                          variant="outline"
+                          className="border-slate-500 text-slate-300 hover:text-white"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      
+                      {formData.expertise_keywords.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {formData.expertise_keywords.map((keyword, index) => (
+                            <Badge key={index} variant="secondary" className="flex items-center gap-1 bg-slate-600 text-slate-200">
+                              {keyword}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-auto p-0 ml-1 hover:text-red-400"
+                                onClick={() => removeKeyword(index)}
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="is-player"
+                        checked={formData.is_player_character}
+                        onCheckedChange={(checked) => setFormData(prev => ({ 
+                          ...prev, 
+                          is_player_character: !!checked 
+                        }))}
+                      />
+                      <Label htmlFor="is-player" className="text-slate-300">
+                        This is a player character (controlled by user)
+                      </Label>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                      <Button
+                        onClick={saveCharacter}
+                        disabled={!formData.name.trim() || !formData.personality.trim()}
+                        className="bg-cyan-500 hover:bg-cyan-600 text-white"
+                      >
+                        {editingIndex !== null ? 'Update Character' : 'Add Character'}
+                      </Button>
+                      <Button
+                        onClick={resetForm}
+                        variant="outline"
+                        className="border-slate-500 text-slate-300 hover:text-white"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+
+            <TabsContent value="browse" className="space-y-4 mt-6">
+              <div className="text-center py-6 border-2 border-dashed border-slate-600 rounded-lg">
+                <Users className="w-8 h-8 text-slate-500 mx-auto mb-2" />
+                <p className="text-slate-400 mb-3">Browse and select from your existing characters</p>
+                <Button
+                  onClick={() => setShowCharacterBrowser(true)}
+                  className="bg-violet-500 hover:bg-violet-600 text-white"
+                >
+                  <Library className="w-4 h-4 mr-2" />
+                  Browse My Characters
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          {/* Existing Characters Display */}
+          {data.characters.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h4 className="text-white font-medium">Characters in Scenario</h4>
@@ -282,7 +330,9 @@ const SimplifiedCharacters: React.FC<SimplifiedCharactersProps> = ({ data, onCha
                 ))}
               </div>
             </div>
-          ) : (
+          )}
+
+          {data.characters.length === 0 && (
             <div className="text-center py-8">
               <User className="w-12 h-12 text-slate-600 mx-auto mb-3" />
               <p className="text-slate-400 text-sm">No characters created yet</p>
@@ -291,6 +341,14 @@ const SimplifiedCharacters: React.FC<SimplifiedCharactersProps> = ({ data, onCha
           )}
         </CardContent>
       </Card>
+
+      {/* Character Browser Modal */}
+      <CharacterBrowserModal
+        isOpen={showCharacterBrowser}
+        onClose={() => setShowCharacterBrowser(false)}
+        onSelectCharacters={handleAddFromLibrary}
+        excludeCharacterIds={[]} // We'll use name matching instead for simplicity
+      />
     </div>
   );
 };
