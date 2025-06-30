@@ -23,39 +23,53 @@ const CharacterFormTabs: React.FC<CharacterFormTabsProps> = ({
   activeTab,
   onTabChange
 }) => {
-  const tabs = [
-    { id: 'basic', label: 'Basic Info', component: SimplifiedBasicInfo },
-    { id: 'personality', label: 'Personality', component: EnhancedPersonality },
-    { id: 'expertise', label: 'Expertise', component: SimplifiedExpertise }
-  ];
-
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="space-y-6">
       <TabsList className="grid grid-cols-3 bg-slate-800 p-1">
-        {tabs.map((tab) => (
-          <TabsTrigger
-            key={tab.id}
-            value={tab.id}
-            className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white text-xs"
-          >
-            {tab.label}
-          </TabsTrigger>
-        ))}
+        <TabsTrigger
+          value="basic"
+          className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white text-xs"
+        >
+          Basic Info
+        </TabsTrigger>
+        <TabsTrigger
+          value="personality"
+          className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white text-xs"
+        >
+          Personality
+        </TabsTrigger>
+        <TabsTrigger
+          value="expertise"
+          className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white text-xs"
+        >
+          Expertise
+        </TabsTrigger>
       </TabsList>
 
-      {tabs.map((tab) => {
-        const Component = tab.component;
-        return (
-          <TabsContent key={tab.id} value={tab.id}>
-            <Component
-              characterData={characterData}
-              characterContext={characterContext}
-              setCharacterData={setCharacterData}
-              setCharacterContext={setCharacterContext}
-            />
-          </TabsContent>
-        );
-      })}
+      <TabsContent value="basic">
+        <SimplifiedBasicInfo
+          characterData={characterData}
+          characterContext={characterContext}
+          setCharacterData={setCharacterData}
+          setCharacterContext={setCharacterContext}
+        />
+      </TabsContent>
+
+      <TabsContent value="personality">
+        <EnhancedPersonality
+          characterData={characterData}
+          characterContext={characterContext}
+          setCharacterData={setCharacterData}
+          setCharacterContext={setCharacterContext}
+        />
+      </TabsContent>
+
+      <TabsContent value="expertise">
+        <SimplifiedExpertise
+          characterData={characterData}
+          setCharacterData={setCharacterData}
+        />
+      </TabsContent>
     </Tabs>
   );
 };
