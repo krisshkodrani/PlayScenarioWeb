@@ -298,49 +298,37 @@ export type Database = {
       }
       scenario_characters: {
         Row: {
-          backstory: string | null
           created_at: string
           creator_id: string
           expertise_keywords: string[]
           id: string
           is_player_character: boolean
-          motivations: string | null
           name: string
           personality: string
-          relationships: Json
           role: string
           scenario_id: string
-          speech_patterns: string | null
         }
         Insert: {
-          backstory?: string | null
           created_at?: string
           creator_id: string
           expertise_keywords?: string[]
           id?: string
           is_player_character?: boolean
-          motivations?: string | null
           name: string
           personality: string
-          relationships?: Json
           role?: string
           scenario_id: string
-          speech_patterns?: string | null
         }
         Update: {
-          backstory?: string | null
           created_at?: string
           creator_id?: string
           expertise_keywords?: string[]
           id?: string
           is_player_character?: boolean
-          motivations?: string | null
           name?: string
           personality?: string
-          relationships?: Json
           role?: string
           scenario_id?: string
-          speech_patterns?: string | null
         }
         Relationships: [
           {
