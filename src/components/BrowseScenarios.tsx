@@ -1,7 +1,6 @@
 
-
 import React from 'react';
-import { Gamepad2, LogIn } from 'lucide-react';
+import { Gamepad2, LogIn, LayoutDashboard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -122,18 +121,32 @@ const BrowseScenarios: React.FC = () => {
       {/* Sticky Header Section */}
       <div className="sticky top-0 z-10 bg-slate-900 border-b border-slate-800">
         <div className="container mx-auto px-4 py-3">
-          <PageHeader
-            title="Browse Scenarios"
-            subtitle="Discover and play interactive AI scenarios created by the community"
-            badge={
-              <div className="flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-full">
-                <Gamepad2 className="w-4 h-4 text-cyan-400" />
-                <span className="text-sm font-medium text-slate-300">
-                  {pagination.total} scenarios
-                </span>
-              </div>
-            }
-          />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex-1">
+              <PageHeader
+                title="Browse Scenarios"
+                subtitle="Discover and play interactive AI scenarios created by the community"
+                badge={
+                  <div className="flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-full">
+                    <Gamepad2 className="w-4 h-4 text-cyan-400" />
+                    <span className="text-sm font-medium text-slate-300">
+                      {pagination.total} scenarios
+                    </span>
+                  </div>
+                }
+              />
+            </div>
+            
+            {/* Dashboard Button - only show for authenticated users */}
+            {!authLoading && user && (
+              <Link to="/dashboard">
+                <Button className="bg-gradient-to-r from-violet-400 to-cyan-400 hover:from-violet-300 hover:to-cyan-300 text-slate-900 font-medium">
+                  <LayoutDashboard className="w-4 h-4 mr-2" />
+                  Dashboard
+                </Button>
+              </Link>
+            )}
+          </div>
           
           {authNotice}
         </div>
@@ -194,4 +207,3 @@ const BrowseScenarios: React.FC = () => {
 };
 
 export default BrowseScenarios;
-
