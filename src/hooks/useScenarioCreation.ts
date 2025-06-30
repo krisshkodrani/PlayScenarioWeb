@@ -25,31 +25,74 @@ export const useScenarioCreation = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const updateScenarioData = useCallback((updates: Partial<ScenarioData>) => {
-    setScenarioData(prev => ({ ...prev, ...updates }));
+    setScenarioData(prev => {
+      const updated = { ...prev, ...updates };
+      console.log('Scenario data updated:', updated);
+      return updated;
+    });
   }, []);
 
   const calculateProgress = useCallback(() => {
-    const requiredFields = [
-      scenarioData.title.trim(),
-      scenarioData.description.trim(),
-      scenarioData.initial_scene_prompt.trim(),
-      scenarioData.objectives.length > 0,
-      scenarioData.characters.length > 0
+    console.log('Calculating progress for:', scenarioData);
+    
+    // Define required fields with better validation
+    const requirements = [
+      {
+        name: 'title',
+        valid: scenarioData.title.trim().length >= 3
+      },
+      {
+        name: 'description', 
+        valid: scenarioData.description.trim().length >= 10
+      },
+      {
+        name: 'initial_scene_prompt',
+        valid: scenarioData.initial_scene_prompt.trim().length >= 10
+      },
+      {
+        name: 'objectives',
+        valid: scenarioData.objectives.length > 0
+      },
+      {
+        name: 'characters',
+        valid: scenarioData.characters.length > 0
+      }
     ];
     
-    const completedFields = requiredFields.filter(Boolean).length;
-    return (completedFields / requiredFields.length) * 100;
+    const completedRequirements = requirements.filter(req => req.valid);
+    const progress = (completedRequirements.length / requirements.length) * 100;
+    
+    console.log('Progress calculation:', {
+      requirements: requirements.map(r => ({ name: r.name, valid: r.valid })),
+      completed: completedRequirements.length,
+      total: requirements.length,
+      progress: Math.round(progress)
+    });
+    
+    return progress;
   }, [scenarioData]);
 
   const validateScenario = useCallback(() => {
     const errors: string[] = [];
     
-    if (!scenarioData.title.trim()) errors.push('Title is required');
-    if (!scenarioData.description.trim()) errors.push('Description is required');
-    if (!scenarioData.initial_scene_prompt.trim()) errors.push('Initial scene prompt is required');
-    if (scenarioData.objectives.length === 0) errors.push('At least one objective is required');
-    if (scenarioData.characters.length === 0) errors.push('At least one character is required');
-    if (scenarioData.max_turns < 5) errors.push('Minimum 5 turns required');
+    if (scenarioData.title.trim().length < 3) {
+      errors.push('Title must be at least 3 characters');
+    }
+    if (scenarioData.description.trim().length < 10) {
+      errors.push('Description must be at least 10 characters');
+    }
+    if (scenarioData.initial_scene_prompt.trim().length < 10) {
+      errors.push('Initial scene prompt must be at least 10 characters');
+    }
+    if (scenarioData.objectives.length === 0) {
+      errors.push('At least one objective is required');
+    }
+    if (scenarioData.characters.length === 0) {
+      errors.push('At least one character is required');
+    }
+    if (scenarioData.max_turns < 5) {
+      errors.push('Minimum 5 turns required');
+    }
     
     return errors;
   }, [scenarioData]);

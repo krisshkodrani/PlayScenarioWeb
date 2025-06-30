@@ -58,8 +58,8 @@ const ScenarioCreationForm: React.FC = () => {
     </Button>
   );
 
-  const isComplete = calculateProgress() >= 100;
   const progress = calculateProgress();
+  const isComplete = progress >= 100;
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
@@ -71,7 +71,11 @@ const ScenarioCreationForm: React.FC = () => {
           actions={headerActions}
         />
 
-        <ScenarioProgressHeader progress={progress} isComplete={isComplete} />
+        <ScenarioProgressHeader 
+          progress={progress} 
+          isComplete={isComplete}
+          scenarioData={scenarioData}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-3">
