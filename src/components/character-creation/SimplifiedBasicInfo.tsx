@@ -3,7 +3,6 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { User } from 'lucide-react';
 import { CharacterData, CharacterContext } from '@/types/character';
 
@@ -53,27 +52,6 @@ const SimplifiedBasicInfo: React.FC<SimplifiedBasicInfoProps> = ({
           />
           <p className="text-xs text-slate-400">
             Helps provide better personality and expertise suggestions
-          </p>
-        </div>
-
-        {/* Character Type Toggle */}
-        <div className="space-y-3">
-          <Label className="text-white">Character Type</Label>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="is-player-character"
-              checked={characterData.is_player_character}
-              onCheckedChange={(checked) => setCharacterData(prev => ({ 
-                ...prev, 
-                is_player_character: !!checked 
-              }))}
-            />
-            <Label htmlFor="is-player-character" className="text-slate-300">
-              This is a player character (controlled by user)
-            </Label>
-          </div>
-          <p className="text-xs text-slate-400">
-            AI characters respond automatically, player characters are controlled by users
           </p>
         </div>
       </CardContent>
