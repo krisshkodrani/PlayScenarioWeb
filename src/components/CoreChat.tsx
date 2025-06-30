@@ -4,8 +4,10 @@ import { Send } from 'lucide-react';
 import MessageBubble from './chat/MessageBubble';
 import CharacterAvatar from './chat/CharacterAvatar';
 import ProgressRing from './chat/ProgressRing';
+import CharactersButton from './chat/CharactersButton';
 import ChatInput from './chat/ChatInput';
 import ObjectiveDrawer from './chat/ObjectiveDrawer';
+import CharacterDrawer from './chat/CharacterDrawer';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
@@ -111,10 +113,11 @@ const CoreChatInner: React.FC = () => {
   const { user } = useAuth();
   const [inputValue, setInputValue] = useState('');
   const [progressPercentage, setProgressPercentage] = useState(15);
-  const [credits, setCredits] = useState(95);
   const [showObjectiveDrawer, setShowObjectiveDrawer] = useState(false);
+  const [showCharacterDrawer, setShowCharacterDrawer] = useState(false);
   const [objectives, setObjectives] = useState(OBJECTIVE_DATA);
   const [hasObjectiveUpdates, setHasObjectiveUpdates] = useState(false);
+  const [hasCharacterUpdates, setHasCharacterUpdates] = useState(false);
   const [messages, setMessages] = useState<MockMessage[]>(MOCK_MESSAGES);
   const [currentTurn, setCurrentTurn] = useState(3);
   const [isTyping, setIsTyping] = useState(false);
@@ -148,7 +151,6 @@ const CoreChatInner: React.FC = () => {
     };
     
     setMessages(prev => [...prev, userMessage]);
-    setCredits(prev => Math.max(prev - 1, 0));
     setCurrentTurn(prev => prev + 1);
     
     // Simulate AI response
@@ -174,8 +176,23 @@ const CoreChatInner: React.FC = () => {
 
   const toggleObjectiveDrawer = () => {
     setShowObjectiveDrawer(!showObjectiveDrawer);
+    // Close character drawer if it's open
+    if (showCharacterDrawer) {
+      setShowCharacterDrawer(false);
+    }
     if (!showObjectiveDrawer) {
       setHasObjectiveUpdates(false);
+    }
+  };
+
+  const toggleCharacterDrawer = () => {
+    setShowCharacterDrawer(!showCharacterDrawer);
+    // Close objective drawer if it's open
+    if (showObjectiveDrawer) {
+      setShowObjectiveDrawer(false);
+    }
+    if (!showCharacterDrawer) {
+      setHasCharacterUpdates(false);
     }
   };
 
@@ -188,11 +205,17 @@ const CoreChatInner: React.FC = () => {
         hasUpdates={hasObjectiveUpdates}
       />
       
+      {/* Floating Characters Button */}
+      <CharactersButton 
+        onClick={toggleCharacterDrawer}
+        hasUpdates={hasCharacterUpdates}
+      />
+      
       {/* Chat Header */}
       <div className="bg-gradient-to-r from-slate-800/80 to-slate-700/50 backdrop-blur border-b border-slate-600 p-4">
         <h1 className="text-lg font-semibold text-cyan-400">Kobayashi Maru Simulation</h1>
         <p className="text-sm text-slate-400">
-          Turn {currentTurn} • {credits} Credits
+          Turn {currentTurn}
         </p>
       </div>
       
@@ -236,6 +259,13 @@ const CoreChatInner: React.FC = () => {
         isOpen={showObjectiveDrawer}
         onClose={() => setShowObjectiveDrawer(false)}
         objectives={objectives}
+      />
+
+      {/* Character Drawer */}
+      <CharacterDrawer
+        isOpen={showCharacterDrawer}
+        onClose={() => setShowCharacterDrawer(false)}
+        characters={CHARACTERS}
       />
     </div>
   );
