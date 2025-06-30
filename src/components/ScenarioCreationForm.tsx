@@ -1,8 +1,6 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScenarioCreation } from '@/hooks/useScenarioCreation';
 import { useToast } from '@/hooks/use-toast';
@@ -16,7 +14,6 @@ import { ScenarioData } from '@/types/scenario';
 
 const ScenarioCreationForm: React.FC = () => {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('basic');
   const [showAIModal, setShowAIModal] = useState(false);
@@ -30,11 +27,6 @@ const ScenarioCreationForm: React.FC = () => {
     isLoading
   } = useScenarioCreation();
 
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/');
-  };
-
   const handleUseAI = () => {
     setShowAIModal(true);
   };
@@ -47,17 +39,6 @@ const ScenarioCreationForm: React.FC = () => {
     });
   };
 
-  const headerActions = (
-    <Button
-      variant="outline"
-      onClick={handleLogout}
-      className="border-red-500 text-red-400 hover:bg-red-500/10 hover:text-red-300"
-    >
-      <LogOut className="w-4 h-4 mr-2" />
-      Logout
-    </Button>
-  );
-
   const progress = calculateProgress();
   const isComplete = progress >= 100;
 
@@ -68,7 +49,6 @@ const ScenarioCreationForm: React.FC = () => {
           title="Create Scenario"
           subtitle="Build an interactive AI-powered scenario"
           showBackButton={true}
-          actions={headerActions}
         />
 
         <ScenarioProgressHeader 
