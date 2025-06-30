@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -80,6 +81,17 @@ const SimplifiedCharacters: React.FC<SimplifiedCharactersProps> = ({
   const removeCharacter = (index: number) => {
     onChange({
       characters: data.characters.filter((_, i) => i !== index)
+    });
+  };
+
+  const togglePlayerCharacter = (index: number) => {
+    const updatedCharacters = [...data.characters];
+    updatedCharacters[index] = {
+      ...updatedCharacters[index],
+      is_player_character: !updatedCharacters[index].is_player_character
+    };
+    onChange({
+      characters: updatedCharacters
     });
   };
 
@@ -303,6 +315,17 @@ const SimplifiedCharacters: React.FC<SimplifiedCharactersProps> = ({
                               )}
                             </div>
                           )}
+                          
+                          <div className="flex items-center space-x-2 pt-2">
+                            <Checkbox
+                              id={`player-${index}`}
+                              checked={character.is_player_character}
+                              onCheckedChange={() => togglePlayerCharacter(index)}
+                            />
+                            <Label htmlFor={`player-${index}`} className="text-xs text-slate-400">
+                              This is a player character (controlled by user)
+                            </Label>
+                          </div>
                         </div>
                         <div className="flex gap-2 ml-4">
                           <Button
