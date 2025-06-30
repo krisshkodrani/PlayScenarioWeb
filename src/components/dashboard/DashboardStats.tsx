@@ -1,24 +1,18 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, GamepadIcon, FileText, Coins, Trophy, Heart } from 'lucide-react';
+import { GamepadIcon, FileText, Users } from 'lucide-react';
 
 interface DashboardStatsProps {
   totalGamesPlayed: number;
   scenariosCreated: number;
-  creditsRemaining: number;
-  winRate: number;
-  totalLikesReceived?: number;
-  totalBookmarksReceived?: number;
+  charactersCreated: number;
 }
 
 const DashboardStats: React.FC<DashboardStatsProps> = ({
   totalGamesPlayed,
   scenariosCreated,
-  creditsRemaining,
-  winRate,
-  totalLikesReceived = 0,
-  totalBookmarksReceived = 0
+  charactersCreated
 }) => {
   const stats = [
     {
@@ -36,23 +30,16 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
       bgColor: 'bg-violet-400/10'
     },
     {
-      title: 'Credits',
-      value: creditsRemaining,
-      icon: Coins,
-      color: creditsRemaining < 10 ? 'text-amber-400' : 'text-emerald-400',
-      bgColor: creditsRemaining < 10 ? 'bg-amber-400/10' : 'bg-emerald-400/10'
-    },
-    {
-      title: 'Win Rate',
-      value: `${winRate}%`,
-      icon: Trophy,
-      color: winRate >= 60 ? 'text-emerald-400' : winRate >= 40 ? 'text-amber-400' : 'text-slate-400',
-      bgColor: winRate >= 60 ? 'bg-emerald-400/10' : winRate >= 40 ? 'bg-amber-400/10' : 'bg-slate-400/10'
+      title: 'Characters Created',
+      value: charactersCreated,
+      icon: Users,
+      color: 'text-emerald-400',
+      bgColor: 'bg-emerald-400/10'
     }
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {stats.map((stat, index) => (
         <Card key={index} className="bg-slate-800 border-slate-700 hover:bg-slate-800/80 transition-colors">
           <CardHeader className="pb-2">

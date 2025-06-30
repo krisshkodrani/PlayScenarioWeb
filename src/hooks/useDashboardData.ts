@@ -139,6 +139,17 @@ export const useDashboardData = () => {
           console.error('Failed to fetch scenarios:', scenariosError);
         }
 
+        // Fetch characters created by user
+        const { data: characters, error: charactersError } = await supabase
+          .from('scenario_characters')
+          .select('*')
+          .eq('creator_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (charactersError) {
+          console.error('Failed to fetch characters:', charactersError);
+        }
+
         // Fetch game instances for user
         const { data: gameInstances, error: instancesError } = await supabase
           .from('scenario_instances')
@@ -176,6 +187,7 @@ export const useDashboardData = () => {
           })),
           scenarios: scenarios || [],
           gameInstances: gameInstances || [],
+          characters: characters || [],
           gameStats,
           scenarioStats,
           activityFeed

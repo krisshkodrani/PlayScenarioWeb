@@ -108,10 +108,7 @@ const Dashboard: React.FC = () => {
             <DashboardStats 
               totalGamesPlayed={data.gameStats.total}
               scenariosCreated={data.scenarioStats.total}
-              creditsRemaining={data.credits.credits}
-              winRate={data.gameStats.winRate}
-              totalLikesReceived={data.scenarioStats.totalLikes}
-              totalBookmarksReceived={data.scenarioStats.totalBookmarks}
+              charactersCreated={data.characters?.length || 0}
             />
             <QuickActions 
               onCreateScenario={() => navigate('/create-scenario')}

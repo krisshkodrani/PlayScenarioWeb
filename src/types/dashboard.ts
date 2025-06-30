@@ -49,6 +49,7 @@ export interface DashboardData {
   recentTransactions: Transaction[];
   scenarios: any[];
   gameInstances: any[];
+  characters: any[];
   gameStats: GameStats;
   scenarioStats: ScenarioStats;
   activityFeed: ActivityItem[];
