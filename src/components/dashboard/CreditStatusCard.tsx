@@ -2,9 +2,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Transaction } from '@/types/dashboard';
-import { Coins, TrendingUp, AlertTriangle, Plus } from 'lucide-react';
+import { Coins, Plus } from 'lucide-react';
 
 interface CreditStatusCardProps {
   balance: number;
@@ -45,15 +44,6 @@ const CreditStatusCard: React.FC<CreditStatusCardProps> = ({
           </div>
           <p className="text-slate-400 text-sm">Credits remaining</p>
         </div>
-
-        {isLowCredit && (
-          <Alert className="border-amber-400 bg-amber-500/10 mb-4">
-            <AlertTriangle className="h-4 w-4 text-amber-400" />
-            <AlertDescription className="text-amber-300 text-sm">
-              You have {balance} credits remaining. Consider purchasing more to continue playing.
-            </AlertDescription>
-          </Alert>
-        )}
 
         <Button 
           onClick={onPurchaseCredits}
