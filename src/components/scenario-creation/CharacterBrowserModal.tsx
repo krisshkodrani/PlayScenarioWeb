@@ -26,7 +26,7 @@ const CharacterBrowserModal: React.FC<CharacterBrowserModalProps> = ({
 }) => {
   const [selectedCharacterIds, setSelectedCharacterIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
 
   const {
     characters,
@@ -40,7 +40,7 @@ const CharacterBrowserModal: React.FC<CharacterBrowserModalProps> = ({
   useEffect(() => {
     handleFilterChange({
       search: searchTerm,
-      role: roleFilter,
+      role: roleFilter === 'all' ? '' : roleFilter,
       sortBy: 'created'
     });
   }, [searchTerm, roleFilter, handleFilterChange]);
@@ -88,7 +88,7 @@ const CharacterBrowserModal: React.FC<CharacterBrowserModalProps> = ({
   const handleClose = () => {
     setSelectedCharacterIds([]);
     setSearchTerm('');
-    setRoleFilter('');
+    setRoleFilter('all');
     onClose();
   };
 
@@ -124,7 +124,7 @@ const CharacterBrowserModal: React.FC<CharacterBrowserModalProps> = ({
               <SelectValue placeholder="Filter by role" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Roles</SelectItem>
+              <SelectItem value="all">All Roles</SelectItem>
               {uniqueRoles.map(role => (
                 <SelectItem key={role} value={role}>{role}</SelectItem>
               ))}
