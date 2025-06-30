@@ -54,7 +54,7 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
 
   return (
     <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-b border-slate-600 flex-shrink-0">
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-3">
         {/* Top Row - Search */}
         <div className="mb-4">
           <div className="relative">
@@ -69,93 +69,99 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
           </div>
         </div>
 
-        {/* Bottom Row - Filters */}
-        <div className="flex flex-col lg:flex-row gap-4 mb-4">
-          {/* Quick Filters for authenticated users */}
-          {user && (
+        {/* Bottom Row - Results Summary and Filters */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          {/* Left side - Results Summary */}
+          <div>
+            <p className="text-sm text-slate-400">
+              Showing {resultCount} scenarios
+              {selectedCategory !== 'all' && ` in ${getCategoryInfo(selectedCategory).name}`}
+              {searchQuery && ` matching "${searchQuery}"`}
+              {showLikedOnly && ` from your liked scenarios`}
+              {showBookmarkedOnly && ` from your bookmarked scenarios`}
+            </p>
+          </div>
+
+          {/* Right side - Filters */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            {/* Quick Filters for authenticated users */}
+            {user && (
+              <div className="flex gap-2">
+                <Button
+                  variant={showLikedOnly ? "default" : "outline"}
+                  onClick={() => onLikedFilterChange?.(!showLikedOnly)}
+                  className={`${
+                    showLikedOnly 
+                      ? 'bg-red-500 text-white hover:bg-red-600' 
+                      : 'bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50'
+                  }`}
+                >
+                  <Heart className={`w-4 h-4 mr-2 ${showLikedOnly ? 'fill-current' : ''}`} />
+                  Liked
+                </Button>
+                <Button
+                  variant={showBookmarkedOnly ? "default" : "outline"}
+                  onClick={() => onBookmarkedFilterChange?.(!showBookmarkedOnly)}
+                  className={`${
+                    showBookmarkedOnly 
+                      ? 'bg-amber-500 text-white hover:bg-amber-600' 
+                      : 'bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50'
+                  }`}
+                >
+                  <Bookmark className={`w-4 h-4 mr-2 ${showBookmarkedOnly ? 'fill-current' : ''}`} />
+                  Bookmarked
+                </Button>
+              </div>
+            )}
+
+            {/* Category and Sort Filters */}
             <div className="flex gap-2">
-              <Button
-                variant={showLikedOnly ? "default" : "outline"}
-                onClick={() => onLikedFilterChange?.(!showLikedOnly)}
-                className={`${
-                  showLikedOnly 
-                    ? 'bg-red-500 text-white hover:bg-red-600' 
-                    : 'bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50'
-                }`}
-              >
-                <Heart className={`w-4 h-4 mr-2 ${showLikedOnly ? 'fill-current' : ''}`} />
-                Liked
-              </Button>
-              <Button
-                variant={showBookmarkedOnly ? "default" : "outline"}
-                onClick={() => onBookmarkedFilterChange?.(!showBookmarkedOnly)}
-                className={`${
-                  showBookmarkedOnly 
-                    ? 'bg-amber-500 text-white hover:bg-amber-600' 
-                    : 'bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50'
-                }`}
-              >
-                <Bookmark className={`w-4 h-4 mr-2 ${showBookmarkedOnly ? 'fill-current' : ''}`} />
-                Bookmarked
-              </Button>
+              {/* Category Filter */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="min-w-[180px] justify-between bg-slate-700/50 backdrop-blur border-slate-600 text-white hover:bg-slate-600/50">
+                    <div className="flex items-center gap-2">
+                      <Filter className="w-4 h-4" />
+                      <span className="text-sm">{getCategoryInfo(selectedCategory).icon}</span>
+                      <span>{getCategoryInfo(selectedCategory).name}</span>
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-slate-800 border-slate-600">
+                  {SCENARIO_CATEGORIES.map(category => (
+                    <DropdownMenuItem 
+                      key={category.id}
+                      onClick={() => onCategoryChange(category.id)}
+                      className={`text-white hover:bg-slate-700 ${selectedCategory === category.id ? 'bg-slate-700' : ''}`}
+                    >
+                      <span className="mr-2">{category.icon}</span>
+                      {category.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Sort Filter */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="min-w-[160px] justify-between bg-slate-700/50 backdrop-blur border-slate-600 text-white hover:bg-slate-600/50">
+                    Sort: {sortOptions.find(opt => opt.value === sortBy)?.label}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-slate-800 border-slate-600">
+                  {sortOptions.map(option => (
+                    <DropdownMenuItem 
+                      key={option.value}
+                      onClick={() => onSortChange(option.value)}
+                      className={`text-white hover:bg-slate-700 ${sortBy === option.value ? 'bg-slate-700' : ''}`}
+                    >
+                      {option.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-          )}
-
-          {/* Category Filter */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="min-w-[180px] justify-between bg-slate-700/50 backdrop-blur border-slate-600 text-white hover:bg-slate-600/50">
-                <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4" />
-                  <span className="text-sm">{getCategoryInfo(selectedCategory).icon}</span>
-                  <span>{getCategoryInfo(selectedCategory).name}</span>
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-slate-800 border-slate-600">
-              {SCENARIO_CATEGORIES.map(category => (
-                <DropdownMenuItem 
-                  key={category.id}
-                  onClick={() => onCategoryChange(category.id)}
-                  className={`text-white hover:bg-slate-700 ${selectedCategory === category.id ? 'bg-slate-700' : ''}`}
-                >
-                  <span className="mr-2">{category.icon}</span>
-                  {category.name}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Sort Filter */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="min-w-[160px] justify-between bg-slate-700/50 backdrop-blur border-slate-600 text-white hover:bg-slate-600/50">
-                Sort: {sortOptions.find(opt => opt.value === sortBy)?.label}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-slate-800 border-slate-600">
-              {sortOptions.map(option => (
-                <DropdownMenuItem 
-                  key={option.value}
-                  onClick={() => onSortChange(option.value)}
-                  className={`text-white hover:bg-slate-700 ${sortBy === option.value ? 'bg-slate-700' : ''}`}
-                >
-                  {option.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {/* Results Summary */}
-        <div>
-          <p className="text-sm text-slate-400">
-            Showing {resultCount} scenarios
-            {selectedCategory !== 'all' && ` in ${getCategoryInfo(selectedCategory).name}`}
-            {searchQuery && ` matching "${searchQuery}"`}
-            {showLikedOnly && ` from your liked scenarios`}
-            {showBookmarkedOnly && ` from your bookmarked scenarios`}
-          </p>
+          </div>
         </div>
       </div>
     </div>
