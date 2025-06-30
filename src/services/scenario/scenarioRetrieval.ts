@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Scenario } from '@/types/scenario';
 import { ScenarioFilters, ScenarioPaginationResult, ScenarioStats } from './scenarioTypes';

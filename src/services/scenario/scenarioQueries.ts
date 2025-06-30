@@ -18,6 +18,12 @@ export const buildScenarioQuery = (isPublic?: boolean) => {
 };
 
 export const applyScenarioFilters = async (query: any, filters: ScenarioFilters, userId?: string) => {
+  // Validate that we have a proper query object
+  if (!query || typeof query.or !== 'function') {
+    console.error('Invalid query object passed to applyScenarioFilters:', query);
+    return query;
+  }
+
   // Apply search filter
   if (filters.search) {
     query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
