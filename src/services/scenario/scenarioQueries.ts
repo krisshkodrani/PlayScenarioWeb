@@ -45,8 +45,8 @@ export const applyScenarioFilters = async (query: any, filters: ScenarioFilters,
       if (likedIds.length > 0) {
         query = query.in('id', likedIds);
       } else {
-        // Return a query that will return no results
-        return buildScenarioQuery().eq('id', '00000000-0000-0000-0000-000000000000');
+        // Filter by impossible ID to return no results while maintaining query chain
+        query = query.eq('id', '00000000-0000-0000-0000-000000000000');
       }
     } catch (error) {
       console.error('Error fetching liked scenarios:', error);
@@ -66,8 +66,8 @@ export const applyScenarioFilters = async (query: any, filters: ScenarioFilters,
       if (bookmarkedIds.length > 0) {
         query = query.in('id', bookmarkedIds);
       } else {
-        // Return a query that will return no results
-        return buildScenarioQuery().eq('id', '00000000-0000-0000-0000-000000000000');
+        // Filter by impossible ID to return no results while maintaining query chain
+        query = query.eq('id', '00000000-0000-0000-0000-000000000000');
       }
     } catch (error) {
       console.error('Error fetching bookmarked scenarios:', error);
