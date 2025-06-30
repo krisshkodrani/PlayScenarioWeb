@@ -32,6 +32,35 @@ export const useScenarioCreation = () => {
     });
   }, []);
 
+  const validateCharacters = useCallback((characters: any[]) => {
+    const playerCharacters = characters.filter(char => char.is_player_character);
+    const aiCharacters = characters.filter(char => !char.is_player_character);
+    
+    const errors: string[] = [];
+    
+    if (playerCharacters.length === 0) {
+      errors.push('At least one player character is required');
+    }
+    
+    if (playerCharacters.length > 1) {
+      errors.push('Maximum one player character is allowed');
+    }
+    
+    if (aiCharacters.length === 0) {
+      errors.push('At least one AI character is required');
+    }
+    
+    if (aiCharacters.length > 5) {
+      errors.push('Maximum 5 AI characters are allowed');
+    }
+    
+    if (characters.length > 6) {
+      errors.push('Maximum 6 characters total (1 player + 5 AI)');
+    }
+    
+    return errors;
+  }, []);
+
   const calculateProgress = useCallback(() => {
     console.log('Calculating progress for:', scenarioData);
     
@@ -55,7 +84,7 @@ export const useScenarioCreation = () => {
       },
       {
         name: 'characters',
-        valid: scenarioData.characters.length > 0
+        valid: scenarioData.characters.length > 0 && validateCharacters(scenarioData.characters).length === 0
       }
     ];
     
@@ -70,7 +99,7 @@ export const useScenarioCreation = () => {
     });
     
     return progress;
-  }, [scenarioData]);
+  }, [scenarioData, validateCharacters]);
 
   const validateScenario = useCallback(() => {
     const errors: string[] = [];
@@ -90,12 +119,17 @@ export const useScenarioCreation = () => {
     if (scenarioData.characters.length === 0) {
       errors.push('At least one character is required');
     }
+    
+    // Add character validation
+    const characterErrors = validateCharacters(scenarioData.characters);
+    errors.push(...characterErrors);
+    
     if (scenarioData.max_turns < 5) {
       errors.push('Minimum 5 turns required');
     }
     
     return errors;
-  }, [scenarioData]);
+  }, [scenarioData, validateCharacters]);
 
   const handleSave = useCallback(async (publish = false) => {
     setIsLoading(true);
@@ -151,6 +185,7 @@ export const useScenarioCreation = () => {
     updateScenarioData,
     calculateProgress,
     validateScenario,
+    validateCharacters,
     handleSave,
     handlePublish,
     resetScenario,
