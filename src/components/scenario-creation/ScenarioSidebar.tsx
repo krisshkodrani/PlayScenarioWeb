@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Save, Upload, Wand2 } from 'lucide-react';
+import { Save, Wand2 } from 'lucide-react';
 import { ScenarioData } from '@/types/scenario';
 
 interface ScenarioSidebarProps {
@@ -44,14 +44,6 @@ const ScenarioSidebar: React.FC<ScenarioSidebarProps> = ({
           >
             <Save className="w-4 h-4 mr-2" />
             {isLoading ? 'Saving...' : 'Save Draft'}
-          </Button>
-          <Button 
-            onClick={onPublish} 
-            className="w-full bg-cyan-500 hover:bg-cyan-600"
-            disabled={!isComplete || isLoading}
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            {isLoading ? 'Publishing...' : isComplete ? 'Publish Scenario' : 'Complete to Publish'}
           </Button>
         </CardContent>
       </Card>
