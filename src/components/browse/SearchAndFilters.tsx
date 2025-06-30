@@ -55,9 +55,9 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
   return (
     <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-b border-slate-600 flex-shrink-0">
       <div className="container mx-auto px-4 py-6">
-        <div className="flex flex-col lg:flex-row gap-4 mb-4">
-          {/* Search with gradient focus */}
-          <div className="relative flex-1">
+        {/* Top Row - Search */}
+        <div className="mb-4">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
             <input
               type="text"
@@ -67,7 +67,10 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
               placeholder="Search scenarios, characters, or skills..."
             />
           </div>
+        </div>
 
+        {/* Bottom Row - Filters */}
+        <div className="flex flex-col lg:flex-row gap-4 mb-4">
           {/* Quick Filters for authenticated users */}
           {user && (
             <div className="flex gap-2">
