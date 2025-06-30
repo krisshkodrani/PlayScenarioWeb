@@ -52,32 +52,6 @@ const CreditStatusCard: React.FC<CreditStatusCardProps> = ({
           <Plus className="w-4 h-4 mr-2" />
           Purchase Credits
         </Button>
-
-        {recentTransactions.length > 0 && (
-          <div className="flex-1 min-h-0">
-            <h4 className="text-sm font-medium text-slate-300 mb-3">Recent Transactions</h4>
-            <div className="space-y-2 overflow-y-auto max-h-full">
-              {recentTransactions.slice(0, 3).map((transaction) => {
-                const formatted = formatTransaction(transaction);
-                return (
-                  <div key={transaction.id} className="flex items-center justify-between p-2 rounded bg-slate-700/50">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-slate-300 truncate">{transaction.reason}</p>
-                      <p className="text-xs text-slate-500">
-                        {new Date(transaction.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className={`text-sm font-medium ${
-                      formatted.isPositive ? 'text-emerald-400' : 'text-slate-400'
-                    }`}>
-                      {formatted.displayChange}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
