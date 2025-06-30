@@ -81,8 +81,8 @@ const CharacterListItem: React.FC<CharacterListItemProps> = ({
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="col-span-2 lg:col-span-2 flex items-center gap-1 justify-end">
+        {/* Actions - Aligned horizontally at the end */}
+        <div className="col-span-2 lg:col-span-2 flex items-center gap-2 justify-end">
           <Button
             variant="ghost"
             size="sm"
@@ -100,7 +100,7 @@ const CharacterListItem: React.FC<CharacterListItemProps> = ({
             <Copy className="w-4 h-4" />
           </Button>
           <Button
-            variant="ghost"
+            variant="ghost" 
             size="sm"
             onClick={() => onDelete(character.id)}
             className="text-red-400 hover:text-red-300 hover:bg-red-600/20"

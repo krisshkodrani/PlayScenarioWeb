@@ -106,13 +106,13 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
           <span>Created {formatDistanceToNow(new Date(character.created_at), { addSuffix: true })}</span>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-1">
+        {/* Action Buttons - Aligned horizontally at the end */}
+        <div className="flex items-center gap-2 justify-end">
           <Button
             variant="outline"
             size="sm"
             onClick={() => onEdit(character.id)}
-            className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
+            className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
           >
             <Edit className="w-3 h-3 mr-1" />
             Edit
