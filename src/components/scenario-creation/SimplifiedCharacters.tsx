@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Trash2, User, Edit, X, Users, Library } from 'lucide-react';
+import { Plus, Minus, User, Edit, X, Users, Library } from 'lucide-react';
 import { ScenarioData, CharacterData } from '@/types/scenario';
 import CharacterBrowserModal from './CharacterBrowserModal';
 
@@ -321,7 +321,7 @@ const SimplifiedCharacters: React.FC<SimplifiedCharactersProps> = ({ data, onCha
                             onClick={() => removeCharacter(index)}
                             className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-8 w-8 p-0"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Minus className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>
