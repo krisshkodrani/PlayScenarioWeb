@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Gamepad2, LogIn } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -94,7 +95,7 @@ const BrowseScenarios: React.FC = () => {
         </div>
       </div>
     );
-  }
+  };
 
   const clearFilters = () => {
     handleFilterChange({
@@ -117,7 +118,7 @@ const BrowseScenarios: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col">
-      <div className="container mx-auto px-4 py-4">
+      <div className="container mx-auto px-4 py-3">
         <PageHeader
           title="Browse Scenarios"
           subtitle="Discover and play interactive AI scenarios created by the community"
