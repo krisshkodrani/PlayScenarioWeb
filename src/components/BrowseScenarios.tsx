@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Gamepad2, LogIn } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -101,11 +102,19 @@ const BrowseScenarios: React.FC = () => {
       search: '',
       category: 'all',
       difficulty: '',
-      sortBy: 'popularity'
+      sortBy: 'popularity',
+      showLikedOnly: false,
+      showBookmarkedOnly: false
     } as Partial<ScenarioFilters>);
   };
 
-  const hasFilters = Boolean(filters.search || filters.category !== 'all' || filters.difficulty);
+  const hasFilters = Boolean(
+    filters.search || 
+    filters.category !== 'all' || 
+    filters.difficulty ||
+    filters.showLikedOnly ||
+    filters.showBookmarkedOnly
+  );
 
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col">
@@ -134,6 +143,10 @@ const BrowseScenarios: React.FC = () => {
         sortBy={filters.sortBy}
         onSortChange={(sortBy: SortBy) => handleFilterChange({ sortBy })}
         resultCount={scenarios.length}
+        showLikedOnly={filters.showLikedOnly}
+        showBookmarkedOnly={filters.showBookmarkedOnly}
+        onLikedFilterChange={(show) => handleFilterChange({ showLikedOnly: show })}
+        onBookmarkedFilterChange={(show) => handleFilterChange({ showBookmarkedOnly: show })}
       />
 
       <div className="flex-1 container mx-auto px-4 py-6">

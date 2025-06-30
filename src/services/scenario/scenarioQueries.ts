@@ -17,7 +17,7 @@ export const buildScenarioQuery = (isPublic?: boolean) => {
     `, { count: 'exact' });
 };
 
-export const applyScenarioFilters = (query: any, filters: ScenarioFilters) => {
+export const applyScenarioFilters = (query: any, filters: ScenarioFilters, userId?: string) => {
   // Apply search filter
   if (filters.search) {
     query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
@@ -31,6 +31,26 @@ export const applyScenarioFilters = (query: any, filters: ScenarioFilters) => {
   // Apply public/private filter
   if (filters.isPublic !== undefined) {
     query = query.eq('is_public', filters.isPublic);
+  }
+
+  // Apply liked filter - only if user is authenticated
+  if (filters.showLikedOnly && userId) {
+    query = query.in('id', 
+      supabase
+        .from('scenario_likes')
+        .select('scenario_id')
+        .eq('user_id', userId)
+    );
+  }
+
+  // Apply bookmarked filter - only if user is authenticated
+  if (filters.showBookmarkedOnly && userId) {
+    query = query.in('id',
+      supabase
+        .from('scenario_bookmarks')
+        .select('scenario_id')
+        .eq('user_id', userId)
+    );
   }
 
   return query;

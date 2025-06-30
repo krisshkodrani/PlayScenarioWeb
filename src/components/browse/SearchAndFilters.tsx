@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Heart, Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SCENARIO_CATEGORIES } from '@/data/scenarioCategories';
 import { ScenarioCategory } from '@/types/scenario';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SearchAndFiltersProps {
   searchQuery: string;
@@ -19,6 +20,10 @@ interface SearchAndFiltersProps {
   sortBy: string;
   onSortChange: (sort: string) => void;
   resultCount: number;
+  showLikedOnly?: boolean;
+  showBookmarkedOnly?: boolean;
+  onLikedFilterChange?: (show: boolean) => void;
+  onBookmarkedFilterChange?: (show: boolean) => void;
 }
 
 const sortOptions = [
@@ -35,8 +40,14 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
   onCategoryChange,
   sortBy,
   onSortChange,
-  resultCount
+  resultCount,
+  showLikedOnly = false,
+  showBookmarkedOnly = false,
+  onLikedFilterChange,
+  onBookmarkedFilterChange
 }) => {
+  const { user } = useAuth();
+
   const getCategoryInfo = (categoryId: string): ScenarioCategory => {
     return SCENARIO_CATEGORIES.find(cat => cat.id === categoryId) || SCENARIO_CATEGORIES[0];
   };
@@ -56,6 +67,36 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
               placeholder="Search scenarios, characters, or skills..."
             />
           </div>
+
+          {/* Quick Filters for authenticated users */}
+          {user && (
+            <div className="flex gap-2">
+              <Button
+                variant={showLikedOnly ? "default" : "outline"}
+                onClick={() => onLikedFilterChange?.(!showLikedOnly)}
+                className={`${
+                  showLikedOnly 
+                    ? 'bg-red-500 text-white hover:bg-red-600' 
+                    : 'bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50'
+                }`}
+              >
+                <Heart className={`w-4 h-4 mr-2 ${showLikedOnly ? 'fill-current' : ''}`} />
+                Liked
+              </Button>
+              <Button
+                variant={showBookmarkedOnly ? "default" : "outline"}
+                onClick={() => onBookmarkedFilterChange?.(!showBookmarkedOnly)}
+                className={`${
+                  showBookmarkedOnly 
+                    ? 'bg-amber-500 text-white hover:bg-amber-600' 
+                    : 'bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50'
+                }`}
+              >
+                <Bookmark className={`w-4 h-4 mr-2 ${showBookmarkedOnly ? 'fill-current' : ''}`} />
+                Bookmarked
+              </Button>
+            </div>
+          )}
 
           {/* Category Filter */}
           <DropdownMenu>
@@ -109,6 +150,8 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
             Showing {resultCount} scenarios
             {selectedCategory !== 'all' && ` in ${getCategoryInfo(selectedCategory).name}`}
             {searchQuery && ` matching "${searchQuery}"`}
+            {showLikedOnly && ` from your liked scenarios`}
+            {showBookmarkedOnly && ` from your bookmarked scenarios`}
           </p>
         </div>
       </div>

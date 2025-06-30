@@ -5,6 +5,8 @@ export interface ScenarioFilters {
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced' | '';
   isPublic?: boolean;
   sortBy: 'created_desc' | 'created_asc' | 'title' | 'popularity' | 'rating';
+  showLikedOnly?: boolean;
+  showBookmarkedOnly?: boolean;
 }
 
 export interface ScenarioStats {

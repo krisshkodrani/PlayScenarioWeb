@@ -33,7 +33,9 @@ export const useBrowseScenarios = () => {
     search: searchParams.get('search') || '',
     category: searchParams.get('category') || 'all',
     difficulty: parseDifficulty(searchParams.get('difficulty')),
-    sortBy: parseSortBy(searchParams.get('sortBy'))
+    sortBy: parseSortBy(searchParams.get('sortBy')),
+    showLikedOnly: searchParams.get('liked') === 'true',
+    showBookmarkedOnly: searchParams.get('bookmarked') === 'true'
   });
 
   const [pagination, setPagination] = useState({
@@ -66,6 +68,8 @@ export const useBrowseScenarios = () => {
     if (filters.category !== 'all') params.set('category', filters.category);
     if (filters.difficulty) params.set('difficulty', filters.difficulty);
     if (filters.sortBy !== 'popularity') params.set('sortBy', filters.sortBy);
+    if (filters.showLikedOnly) params.set('liked', 'true');
+    if (filters.showBookmarkedOnly) params.set('bookmarked', 'true');
     if (pagination.page !== 1) params.set('page', pagination.page.toString());
     
     setSearchParams(params, { replace: true });
