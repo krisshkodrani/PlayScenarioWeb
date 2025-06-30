@@ -5,6 +5,7 @@ import MessageBubble from './chat/MessageBubble';
 import CharacterAvatar from './chat/CharacterAvatar';
 import ProgressRing from './chat/ProgressRing';
 import CharactersButton from './chat/CharactersButton';
+import TurnsIndicator from './chat/TurnsIndicator';
 import ChatInput from './chat/ChatInput';
 import ObjectiveDrawer from './chat/ObjectiveDrawer';
 import CharacterDrawer from './chat/CharacterDrawer';
@@ -120,6 +121,7 @@ const CoreChatInner: React.FC = () => {
   const [hasCharacterUpdates, setHasCharacterUpdates] = useState(false);
   const [messages, setMessages] = useState<MockMessage[]>(MOCK_MESSAGES);
   const [currentTurn, setCurrentTurn] = useState(3);
+  const [maxTurns] = useState(10);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -198,11 +200,10 @@ const CoreChatInner: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-      {/* Floating Progress Ring */}
-      <ProgressRing 
-        percentage={progressPercentage} 
-        onClick={toggleObjectiveDrawer}
-        hasUpdates={hasObjectiveUpdates}
+      {/* Floating Turns Indicator */}
+      <TurnsIndicator 
+        currentTurn={currentTurn}
+        maxTurns={maxTurns}
       />
       
       {/* Floating Characters Button */}
@@ -211,12 +212,16 @@ const CoreChatInner: React.FC = () => {
         hasUpdates={hasCharacterUpdates}
       />
       
+      {/* Floating Progress Ring */}
+      <ProgressRing 
+        percentage={progressPercentage} 
+        onClick={toggleObjectiveDrawer}
+        hasUpdates={hasObjectiveUpdates}
+      />
+      
       {/* Chat Header */}
       <div className="bg-gradient-to-r from-slate-800/80 to-slate-700/50 backdrop-blur border-b border-slate-600 p-4">
         <h1 className="text-lg font-semibold text-cyan-400">Kobayashi Maru Simulation</h1>
-        <p className="text-sm text-slate-400">
-          Turn {currentTurn}
-        </p>
       </div>
       
       {/* Message List */}
