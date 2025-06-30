@@ -6,7 +6,6 @@ import CharacterAvatar from './chat/CharacterAvatar';
 import ProgressRing from './chat/ProgressRing';
 import ChatInput from './chat/ChatInput';
 import ObjectiveDrawer from './chat/ObjectiveDrawer';
-import { useRealtimeChat } from '@/hooks/useRealtimeChat';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
@@ -16,6 +15,14 @@ interface Character {
   role: string;
   avatar_color: string;
   personality: string;
+}
+
+interface MockMessage {
+  id: string;
+  sender_name: string;
+  message: string;
+  message_type: 'user' | 'ai';
+  timestamp: Date;
 }
 
 const CHARACTERS: Character[] = [
@@ -75,8 +82,30 @@ const OBJECTIVE_DATA = [
   }
 ];
 
-// Mock scenario ID - in a real app, this would come from routing
-const SCENARIO_ID = "kobayashi-maru-scenario";
+// Mock conversation data
+const MOCK_MESSAGES: MockMessage[] = [
+  {
+    id: "1",
+    sender_name: "Commander Spock",
+    message: "Captain, we are receiving a distress signal from the Kobayashi Maru. The vessel appears to be disabled in the Klingon Neutral Zone. Logic dictates we must consider our options carefully.",
+    message_type: "ai",
+    timestamp: new Date(Date.now() - 300000) // 5 minutes ago
+  },
+  {
+    id: "2", 
+    sender_name: "You",
+    message: "What's the tactical situation, Spock? How many Klingon ships are in the area?",
+    message_type: "user",
+    timestamp: new Date(Date.now() - 240000) // 4 minutes ago
+  },
+  {
+    id: "3",
+    sender_name: "Commander Spock", 
+    message: "Sensors detect three Klingon D7 battle cruisers patrolling the sector. Their weaponry is sufficient to destroy both the Enterprise and the disabled vessel. However, I calculate a 23.7% probability of successful rescue if we approach from the asteroid field to mask our sensor signature.",
+    message_type: "ai",
+    timestamp: new Date(Date.now() - 180000) // 3 minutes ago
+  }
+];
 
 const CoreChatInner: React.FC = () => {
   const { user } = useAuth();
@@ -86,16 +115,10 @@ const CoreChatInner: React.FC = () => {
   const [showObjectiveDrawer, setShowObjectiveDrawer] = useState(false);
   const [objectives, setObjectives] = useState(OBJECTIVE_DATA);
   const [hasObjectiveUpdates, setHasObjectiveUpdates] = useState(false);
+  const [messages, setMessages] = useState<MockMessage[]>(MOCK_MESSAGES);
+  const [currentTurn, setCurrentTurn] = useState(3);
+  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const {
-    messages,
-    instance,
-    loading,
-    error,
-    isTyping,
-    sendMessage
-  } = useRealtimeChat({ scenarioId: SCENARIO_ID });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -115,17 +138,38 @@ const CoreChatInner: React.FC = () => {
     const messageContent = inputValue;
     setInputValue('');
     
-    try {
-      await sendMessage(messageContent);
-      setCredits(prev => Math.max(prev - 1, 0));
+    // Add user message
+    const userMessage: MockMessage = {
+      id: Date.now().toString(),
+      sender_name: "You", 
+      message: messageContent,
+      message_type: "user",
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    setCredits(prev => Math.max(prev - 1, 0));
+    setCurrentTurn(prev => prev + 1);
+    
+    // Simulate AI response
+    setIsTyping(true);
+    setTimeout(() => {
+      const aiMessage: MockMessage = {
+        id: (Date.now() + 1).toString(),
+        sender_name: "Commander Spock",
+        message: "Fascinating. Your strategic thinking demonstrates both courage and prudence. I shall analyze the implications of this approach and provide tactical recommendations.",
+        message_type: "ai", 
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+      setIsTyping(false);
       setProgressPercentage(prev => Math.min(prev + 5, 100));
       
       // Simulate objective updates
       setHasObjectiveUpdates(true);
       setTimeout(() => setHasObjectiveUpdates(false), 3000);
-    } catch (error) {
-      console.error('Failed to send message:', error);
-    }
+    }, 2000);
   };
 
   const toggleObjectiveDrawer = () => {
@@ -134,37 +178,6 @@ const CoreChatInner: React.FC = () => {
       setHasObjectiveUpdates(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex flex-col h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400 mx-auto mb-4"></div>
-            <p className="text-slate-400">Loading conversation...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-red-400 mb-4">Error: {error}</p>
-            <button 
-              onClick={() => window.location.reload()}
-              className="bg-cyan-400 text-slate-900 px-4 py-2 rounded-lg font-medium"
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
@@ -179,7 +192,7 @@ const CoreChatInner: React.FC = () => {
       <div className="bg-gradient-to-r from-slate-800/80 to-slate-700/50 backdrop-blur border-b border-slate-600 p-4">
         <h1 className="text-lg font-semibold text-cyan-400">Kobayashi Maru Simulation</h1>
         <p className="text-sm text-slate-400">
-          Turn {instance?.current_turn || 0} • {credits} Credits
+          Turn {currentTurn} • {credits} Credits
         </p>
       </div>
       
@@ -188,13 +201,7 @@ const CoreChatInner: React.FC = () => {
         {messages.map((message) => (
           <MessageBubble 
             key={message.id}
-            message={{
-              id: message.id,
-              sender_name: message.sender_name,
-              message: message.message,
-              message_type: message.message_type as 'user' | 'ai',
-              timestamp: new Date(message.timestamp)
-            }}
+            message={message}
             character={message.message_type === 'ai' ? getCharacterById('spock') : undefined}
           />
         ))}
