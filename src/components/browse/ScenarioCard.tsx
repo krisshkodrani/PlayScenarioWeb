@@ -1,3 +1,4 @@
+
 import { Play, Heart, Bookmark, Users, Clock, Star, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -50,9 +51,6 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario, onLike, onBookmar
           <h3 className="text-xl font-bold text-white mb-2 group-hover:text-cyan-400 transition-colors">
             {scenario.title}
           </h3>
-          <p className="text-sm text-slate-300 leading-relaxed">
-            {scenario.description}
-          </p>
         </div>
         <div className="flex gap-1 ml-2">
           <Button
