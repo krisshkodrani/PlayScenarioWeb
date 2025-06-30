@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Gamepad2, LogIn } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -65,7 +66,7 @@ const BrowseScenarios: React.FC = () => {
 
   if (loading && scenarios.length === 0) {
     return (
-      <div className="min-h-screen bg-slate-900">
+      <div className="h-screen bg-slate-900 flex flex-col">
         <div className="container mx-auto px-4 py-8">
           <div className="animate-pulse space-y-8">
             <div className="h-8 bg-slate-800 rounded w-64"></div>
@@ -82,7 +83,7 @@ const BrowseScenarios: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="h-screen bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-white mb-2">Something went wrong</h2>
           <p className="text-slate-400 mb-4">{error}</p>
@@ -117,73 +118,80 @@ const BrowseScenarios: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex flex-col">
-      <div className="container mx-auto px-4 py-3">
-        <PageHeader
-          title="Browse Scenarios"
-          subtitle="Discover and play interactive AI scenarios created by the community"
-          badge={
-            <div className="flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-full">
-              <Gamepad2 className="w-4 h-4 text-cyan-400" />
-              <span className="text-sm font-medium text-slate-300">
-                {pagination.total} scenarios
-              </span>
-            </div>
-          }
+    <div className="h-screen bg-slate-900 text-white flex flex-col">
+      {/* Sticky Header Section */}
+      <div className="sticky top-0 z-10 bg-slate-900 border-b border-slate-800">
+        <div className="container mx-auto px-4 py-3">
+          <PageHeader
+            title="Browse Scenarios"
+            subtitle="Discover and play interactive AI scenarios created by the community"
+            badge={
+              <div className="flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-full">
+                <Gamepad2 className="w-4 h-4 text-cyan-400" />
+                <span className="text-sm font-medium text-slate-300">
+                  {pagination.total} scenarios
+                </span>
+              </div>
+            }
+          />
+          
+          {authNotice}
+        </div>
+
+        <SearchAndFilters
+          searchQuery={filters.search}
+          onSearchChange={(query) => handleFilterChange({ search: query })}
+          selectedCategory={filters.category}
+          onCategoryChange={(category) => handleFilterChange({ category })}
+          sortBy={filters.sortBy}
+          onSortChange={(sortBy: SortBy) => handleFilterChange({ sortBy })}
+          resultCount={scenarios.length}
+          showLikedOnly={filters.showLikedOnly}
+          showBookmarkedOnly={filters.showBookmarkedOnly}
+          onLikedFilterChange={(show) => handleFilterChange({ showLikedOnly: show })}
+          onBookmarkedFilterChange={(show) => handleFilterChange({ showBookmarkedOnly: show })}
         />
-        
-        {authNotice}
       </div>
 
-      <SearchAndFilters
-        searchQuery={filters.search}
-        onSearchChange={(query) => handleFilterChange({ search: query })}
-        selectedCategory={filters.category}
-        onCategoryChange={(category) => handleFilterChange({ category })}
-        sortBy={filters.sortBy}
-        onSortChange={(sortBy: SortBy) => handleFilterChange({ sortBy })}
-        resultCount={scenarios.length}
-        showLikedOnly={filters.showLikedOnly}
-        showBookmarkedOnly={filters.showBookmarkedOnly}
-        onLikedFilterChange={(show) => handleFilterChange({ showLikedOnly: show })}
-        onBookmarkedFilterChange={(show) => handleFilterChange({ showBookmarkedOnly: show })}
-      />
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="container mx-auto px-4 py-6">
+          <ScenarioGrid
+            scenarios={scenarios}
+            onLike={wrappedHandleLike}
+            onBookmark={wrappedHandleBookmark}
+            onClearFilters={clearFilters}
+            hasFilters={hasFilters}
+          />
 
-      <div className="flex-1 container mx-auto px-4 py-6">
-        <ScenarioGrid
-          scenarios={scenarios}
-          onLike={wrappedHandleLike}
-          onBookmark={wrappedHandleBookmark}
-          onClearFilters={clearFilters}
-          hasFilters={hasFilters}
-        />
-
-        {/* Pagination */}
-        {pagination.total > pagination.limit && (
-          <div className="flex justify-center mt-8">
-            <div className="flex gap-2">
-              {Array.from({ length: Math.ceil(pagination.total / pagination.limit) })
-                .map((_, i) => i + 1)
-                .slice(Math.max(0, pagination.page - 3), pagination.page + 2)
-                .map(page => (
-                  <button
-                    key={page}
-                    onClick={() => handlePageChange(page)}
-                    className={`px-4 py-2 rounded-lg transition-colors ${
-                      page === pagination.page
-                        ? 'bg-cyan-500 text-slate-900'
-                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
+          {/* Pagination */}
+          {pagination.total > pagination.limit && (
+            <div className="flex justify-center mt-8">
+              <div className="flex gap-2">
+                {Array.from({ length: Math.ceil(pagination.total / pagination.limit) })
+                  .map((_, i) => i + 1)
+                  .slice(Math.max(0, pagination.page - 3), pagination.page + 2)
+                  .map(page => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`px-4 py-2 rounded-lg transition-colors ${
+                        page === pagination.page
+                          ? 'bg-cyan-500 text-slate-900'
+                          : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
 export default BrowseScenarios;
+
