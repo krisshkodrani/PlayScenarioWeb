@@ -133,17 +133,15 @@ const MyCharacters: React.FC = () => {
             </Button>
           </div>
 
-          {/* Filters row (only when has characters) */}
-          {hasCharacters && (
-            <div className="mt-4">
-              <CharacterFilters
-                filters={filters}
-                onFilterChange={handleFilterChange}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-              />
-            </div>
-          )}
+          {/* Filters row (always visible) */}
+          <div className="mt-4">
+            <CharacterFilters
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+            />
+          </div>
         </div>
       </div>
 

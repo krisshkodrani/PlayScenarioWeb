@@ -135,17 +135,15 @@ const MyScenarios: React.FC = () => {
             </Button>
           </div>
 
-          {/* Filters row (only when has scenarios) */}
-          {hasScenarios && (
-            <div className="mt-4">
-              <ScenarioFilters
-                filters={filters}
-                onFilterChange={handleFilterChange}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-              />
-            </div>
-          )}
+          {/* Filters row (always visible) */}
+          <div className="mt-4">
+            <ScenarioFilters
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+            />
+          </div>
         </div>
       </div>
 
