@@ -244,7 +244,10 @@ export const useScenarioCreation = () => {
               : "Your scenario has been saved as a draft."),
         });
         
-        navigate('/my-scenarios');
+        // Only navigate away when creating new scenarios, not when editing
+        if (!isEditMode) {
+          navigate('/my-scenarios');
+        }
         return true;
       }
       
