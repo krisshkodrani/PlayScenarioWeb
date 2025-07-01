@@ -59,17 +59,31 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({
     private: 'bg-slate-500/20 text-slate-400 border-slate-500'
   };
 
+  // Check if we should show difficulty and get the proper difficulty value
+  const shouldShowDifficulty = (scenario as any).show_difficulty !== false; // Default to true if not set
+  const scenarioDifficulty = (scenario as any).difficulty || scenario.difficulty;
+
   return (
     <Card className="bg-slate-800 border-slate-700 hover:bg-slate-700/50 transition-all duration-200 group">
       <CardContent className="p-4">
         {/* Header with Status and Menu */}
         <div className="flex items-start justify-between mb-3">
-          <Badge 
-            variant="outline" 
-            className={statusColors[status]}
-          >
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge 
+              variant="outline" 
+              className={statusColors[status]}
+            >
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </Badge>
+            {shouldShowDifficulty && scenarioDifficulty && (
+              <Badge 
+                variant="outline" 
+                className={difficultyColors[scenarioDifficulty as keyof typeof difficultyColors] || 'bg-slate-500/20 text-slate-400 border-slate-500'}
+              >
+                {scenarioDifficulty.charAt(0).toUpperCase() + scenarioDifficulty.slice(1)}
+              </Badge>
+            )}
+          </div>
           <ScenarioActionMenu
             scenario={scenario}
             onEdit={() => onEdit(scenario.id)}
@@ -88,16 +102,6 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({
           <p className="text-sm text-slate-400 line-clamp-3">
             {scenario.description}
           </p>
-        </div>
-
-        {/* Difficulty Badge */}
-        <div className="mb-4">
-          <Badge 
-            variant="outline" 
-            className={difficultyColors[scenario.difficulty]}
-          >
-            {scenario.difficulty}
-          </Badge>
         </div>
 
         {/* Stats Grid */}

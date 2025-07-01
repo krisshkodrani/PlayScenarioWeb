@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { X, Plus } from 'lucide-react';
 
 interface BasicScenarioInfoProps {
@@ -39,7 +40,7 @@ const maturityRatings = [
 const BasicScenarioInfo: React.FC<BasicScenarioInfoProps> = ({ data, onChange }) => {
   const [newTag, setNewTag] = React.useState('');
 
-  const handleInputChange = (field: string, value: string | number) => {
+  const handleInputChange = (field: string, value: string | number | boolean) => {
     onChange({ [field]: value });
   };
 
@@ -142,27 +143,50 @@ const BasicScenarioInfo: React.FC<BasicScenarioInfoProps> = ({ data, onChange })
         </div>
       </div>
 
-      {/* Difficulty and Duration */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Difficulty Level</Label>
-          <Select value={data.difficulty || 'beginner'} onValueChange={(value) => handleInputChange('difficulty', value)}>
-            <SelectTrigger className="bg-slate-700 border-slate-600">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {difficultyLevels.map((level) => (
-                <SelectItem key={level.value} value={level.value}>
-                  <div>
-                    <div className="font-medium">{level.label}</div>
-                    <div className="text-xs text-slate-400">{level.description}</div>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* Difficulty Settings */}
+      <div className="space-y-4 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <Label className="text-base font-medium">Difficulty Settings</Label>
+            <p className="text-sm text-slate-400">Configure how difficulty is displayed for your scenario</p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="show-difficulty"
+              checked={data.show_difficulty ?? true}
+              onCheckedChange={(checked) => handleInputChange('show_difficulty', checked)}
+            />
+            <Label htmlFor="show-difficulty" className="text-sm">Show difficulty</Label>
+          </div>
         </div>
 
+        {(data.show_difficulty ?? true) && (
+          <div className="space-y-2">
+            <Label>Difficulty Level</Label>
+            <Select 
+              value={data.difficulty || 'beginner'} 
+              onValueChange={(value) => handleInputChange('difficulty', value)}
+            >
+              <SelectTrigger className="bg-slate-700 border-slate-600">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {difficultyLevels.map((level) => (
+                  <SelectItem key={level.value} value={level.value}>
+                    <div>
+                      <div className="font-medium">{level.label}</div>
+                      <div className="text-xs text-slate-400">{level.description}</div>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
+
+      {/* Duration and Maturity */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="estimated-time">Estimated Duration (minutes)</Label>
           <Input
@@ -175,26 +199,25 @@ const BasicScenarioInfo: React.FC<BasicScenarioInfoProps> = ({ data, onChange })
             className="bg-slate-700 border-slate-600"
           />
         </div>
-      </div>
 
-      {/* Maturity Rating */}
-      <div className="space-y-2">
-        <Label>Maturity Rating</Label>
-        <Select value={data.maturityRating || 'general'} onValueChange={(value) => handleInputChange('maturityRating', value)}>
-          <SelectTrigger className="bg-slate-700 border-slate-600">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {maturityRatings.map((rating) => (
-              <SelectItem key={rating.value} value={rating.value}>
-                <div>
-                  <div className="font-medium">{rating.label}</div>
-                  <div className="text-xs text-slate-400">{rating.description}</div>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="space-y-2">
+          <Label>Maturity Rating</Label>
+          <Select value={data.maturityRating || 'general'} onValueChange={(value) => handleInputChange('maturityRating', value)}>
+            <SelectTrigger className="bg-slate-700 border-slate-600">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {maturityRatings.map((rating) => (
+                <SelectItem key={rating.value} value={rating.value}>
+                  <div>
+                    <div className="font-medium">{rating.label}</div>
+                    <div className="text-xs text-slate-400">{rating.description}</div>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
     </div>
   );

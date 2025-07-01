@@ -23,6 +23,10 @@ export interface ScenarioData {
   initial_scene_prompt: string;
   is_public: boolean;
   
+  // New difficulty settings
+  difficulty?: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  show_difficulty?: boolean;
+  
   // Characters for this scenario
   characters: CharacterData[];
 }

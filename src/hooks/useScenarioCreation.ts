@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -14,6 +13,8 @@ const defaultScenarioData: ScenarioData = {
   max_turns: 20,
   initial_scene_prompt: '',
   is_public: false,
+  difficulty: 'beginner',
+  show_difficulty: true,
   characters: []
 };
 
@@ -42,6 +43,9 @@ export const useScenarioCreation = () => {
       try {
         const scenario = await scenarioService.getScenarioById(scenarioId);
         if (scenario) {
+          // Extract difficulty settings from scenario metadata
+          const difficultyMeta = scenario.objectives?.find((obj: any) => obj._difficulty);
+          
           const loadedData: ScenarioData = {
             title: isDuplicateMode ? `${scenario.title} (Copy)` : scenario.title,
             description: scenario.description,
@@ -54,6 +58,8 @@ export const useScenarioCreation = () => {
             max_turns: 20, // Default value
             initial_scene_prompt: '', // This isn't in the Scenario type, keeping empty
             is_public: isDuplicateMode ? false : scenario.is_public,
+            difficulty: (difficultyMeta?._difficulty || 'beginner') as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+            show_difficulty: difficultyMeta?._show_difficulty ?? true,
             characters: scenario.characters.map(char => ({
               name: char.name,
               personality: char.personality,

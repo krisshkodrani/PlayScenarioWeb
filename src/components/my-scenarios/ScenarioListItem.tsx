@@ -59,6 +59,10 @@ const ScenarioListItem: React.FC<ScenarioListItemProps> = ({
     private: 'bg-slate-500/20 text-slate-400 border-slate-500'
   };
 
+  // Check if we should show difficulty and get the proper difficulty value
+  const shouldShowDifficulty = (scenario as any).show_difficulty !== false; // Default to true if not set
+  const scenarioDifficulty = (scenario as any).difficulty || scenario.difficulty;
+
   return (
     <Card className="bg-slate-800 border-slate-700 hover:bg-slate-700/50 transition-colors">
       <CardContent className="p-4">
@@ -75,12 +79,14 @@ const ScenarioListItem: React.FC<ScenarioListItemProps> = ({
               >
                 {status.charAt(0).toUpperCase() + status.slice(1)}
               </Badge>
-              <Badge 
-                variant="outline" 
-                className={difficultyColors[scenario.difficulty]}
-              >
-                {scenario.difficulty}
-              </Badge>
+              {shouldShowDifficulty && scenarioDifficulty && (
+                <Badge 
+                  variant="outline" 
+                  className={difficultyColors[scenarioDifficulty as keyof typeof difficultyColors] || 'bg-slate-500/20 text-slate-400 border-slate-500'}
+                >
+                  {scenarioDifficulty.charAt(0).toUpperCase() + scenarioDifficulty.slice(1)}
+                </Badge>
+              )}
             </div>
             <p className="text-sm text-slate-400 line-clamp-2 mb-3">
               {scenario.description}

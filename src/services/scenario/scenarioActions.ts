@@ -9,19 +9,29 @@ export const createScenario = async (scenarioData: ScenarioData): Promise<Scenar
   console.log('Creating scenario with data:', scenarioData);
   console.log('Characters in scenario data:', scenarioData.characters);
 
+  // Prepare scenario data with difficulty settings
+  const scenarioPayload = {
+    title: scenarioData.title,
+    description: scenarioData.description,
+    objectives: scenarioData.objectives as any,
+    win_conditions: scenarioData.win_conditions,
+    lose_conditions: scenarioData.lose_conditions,
+    max_turns: scenarioData.max_turns,
+    initial_scene_prompt: scenarioData.initial_scene_prompt,
+    is_public: scenarioData.is_public,
+    creator_id: user.id,
+    // Add difficulty and show_difficulty as metadata in objectives
+    ...(scenarioData.difficulty && {
+      objectives: [...(scenarioData.objectives as any), {
+        _difficulty: scenarioData.difficulty,
+        _show_difficulty: scenarioData.show_difficulty ?? true
+      }]
+    })
+  };
+
   const { data, error } = await supabase
     .from('scenarios')
-    .insert({
-      title: scenarioData.title,
-      description: scenarioData.description,
-      objectives: scenarioData.objectives as any,
-      win_conditions: scenarioData.win_conditions,
-      lose_conditions: scenarioData.lose_conditions,
-      max_turns: scenarioData.max_turns,
-      initial_scene_prompt: scenarioData.initial_scene_prompt,
-      is_public: scenarioData.is_public,
-      creator_id: user.id
-    })
+    .insert(scenarioPayload)
     .select()
     .single();
 
@@ -74,10 +84,24 @@ export const updateScenario = async (scenarioId: string, updates: Partial<Scenar
   console.log('Updating scenario:', scenarioId, 'with data:', updates);
 
   // Prepare scenario updates (excluding characters)
-  const { characters, ...scenarioUpdates } = updates;
+  const { characters, difficulty, show_difficulty, ...scenarioUpdates } = updates;
   
   const dbUpdates: any = { ...scenarioUpdates };
   if (dbUpdates.objectives) {
+    // If difficulty settings are provided, embed them in objectives
+    if (difficulty !== undefined || show_difficulty !== undefined) {
+      const objectives = [...(dbUpdates.objectives as any)];
+      // Remove any existing difficulty metadata
+      const filteredObjectives = objectives.filter(obj => !obj._difficulty && !obj._show_difficulty);
+      // Add new difficulty metadata if provided
+      if (difficulty) {
+        filteredObjectives.push({
+          _difficulty: difficulty,
+          _show_difficulty: show_difficulty ?? true
+        });
+      }
+      dbUpdates.objectives = filteredObjectives;
+    }
     dbUpdates.objectives = dbUpdates.objectives as any;
   }
 
