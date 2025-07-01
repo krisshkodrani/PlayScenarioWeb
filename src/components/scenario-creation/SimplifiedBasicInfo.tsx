@@ -5,13 +5,22 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { FileText, Clock } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { FileText, Clock, Settings } from 'lucide-react';
 import { ScenarioData } from '@/types/scenario';
 
 interface SimplifiedBasicInfoProps {
   data: ScenarioData;
   onChange: (updates: Partial<ScenarioData>) => void;
 }
+
+const difficultyLevels = [
+  { value: 'beginner', label: 'Beginner', description: 'Simple concepts, clear guidance' },
+  { value: 'intermediate', label: 'Intermediate', description: 'Moderate complexity, some autonomy' },
+  { value: 'advanced', label: 'Advanced', description: 'Complex scenarios, minimal guidance' },
+  { value: 'expert', label: 'Expert', description: 'Highly complex, specialized knowledge required' }
+];
 
 const SimplifiedBasicInfo: React.FC<SimplifiedBasicInfoProps> = ({ data, onChange }) => {
   return (
@@ -64,6 +73,55 @@ const SimplifiedBasicInfo: React.FC<SimplifiedBasicInfoProps> = ({ data, onChang
             />
             <p className="text-xs text-slate-400">{data.initial_scene_prompt.length}/300 characters</p>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-slate-800 border-slate-700">
+        <CardHeader>
+          <CardTitle className="text-cyan-400 flex items-center gap-2">
+            <Settings className="w-5 h-5" />
+            Difficulty Settings
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label className="text-white font-medium">Show Difficulty Level</Label>
+              <p className="text-sm text-slate-400">Display difficulty badge in scenario listings</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="show-difficulty"
+                checked={data.show_difficulty ?? true}
+                onCheckedChange={(checked) => onChange({ show_difficulty: checked })}
+              />
+              <Label htmlFor="show-difficulty" className="text-sm text-white">Enable</Label>
+            </div>
+          </div>
+
+          {(data.show_difficulty ?? true) && (
+            <div className="space-y-2">
+              <Label className="text-white">Difficulty Level</Label>
+              <Select 
+                value={data.difficulty || 'beginner'} 
+                onValueChange={(value) => onChange({ difficulty: value as 'beginner' | 'intermediate' | 'advanced' | 'expert' })}
+              >
+                <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {difficultyLevels.map((level) => (
+                    <SelectItem key={level.value} value={level.value}>
+                      <div>
+                        <div className="font-medium">{level.label}</div>
+                        <div className="text-xs text-slate-400">{level.description}</div>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </CardContent>
       </Card>
 
