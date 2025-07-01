@@ -79,11 +79,11 @@ const ScenarioCreationForm: React.FC = () => {
     ];
 
     if (isEditMode) {
-      baseBreadcrumbs.push({ label: scenarioData.title || 'Edit Scenario' });
+      baseBreadcrumbs.push({ label: scenarioData.title || 'Edit Scenario', href: '' });
     } else if (isDuplicateMode) {
-      baseBreadcrumbs.push({ label: 'Duplicate Scenario' });
+      baseBreadcrumbs.push({ label: 'Duplicate Scenario', href: '' });
     } else {
-      baseBreadcrumbs.push({ label: 'Create Scenario' });
+      baseBreadcrumbs.push({ label: 'Create Scenario', href: '' });
     }
 
     return baseBreadcrumbs;
