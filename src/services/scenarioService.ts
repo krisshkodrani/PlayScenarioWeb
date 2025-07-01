@@ -26,7 +26,7 @@ import {
   toggleScenarioBookmark
 } from './scenario/scenarioInteractions';
 
-import { mapDatabaseScenario, generateAvatarColor } from './scenario/scenarioTransforms';
+import { mapDatabaseScenario } from './scenario/scenarioTransforms';
 
 export const scenarioService = {
   // Create and modify scenarios
@@ -47,6 +47,5 @@ export const scenarioService = {
   toggleScenarioBookmark,
   
   // Helper functions
-  mapDatabaseScenario,
-  generateAvatarColor
+  mapDatabaseScenario
 };

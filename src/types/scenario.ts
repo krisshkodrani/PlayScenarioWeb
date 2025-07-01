@@ -45,6 +45,10 @@ export interface Objective {
   title: string;
   description: string;
   priority: 'critical' | 'important' | 'optional';
+  // Allow metadata properties for difficulty settings
+  _difficulty?: string;
+  _show_difficulty?: boolean;
+  [key: string]: any;
 }
 
 export interface Scenario {

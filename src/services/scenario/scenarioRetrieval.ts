@@ -27,7 +27,7 @@ export const getUserScenarios = async (
 
   const scenarios = (data || []).map(scenario => {
     const mappedScenario = mapDatabaseScenario(scenario);
-    return enrichScenarioWithCharacters(mappedScenario, scenario);
+    return enrichScenarioWithCharacters(mappedScenario, scenario.scenario_characters || []);
   });
 
   return {
@@ -95,7 +95,7 @@ export const getScenarioById = async (scenarioId: string): Promise<Scenario | nu
   }
 
   const scenario = mapDatabaseScenario(data);
-  const enrichedScenario = enrichScenarioWithCharacters(scenario, data);
+  const enrichedScenario = enrichScenarioWithCharacters(scenario, data.scenario_characters || []);
   
   // Add username if available
   if (profileData) {
@@ -144,7 +144,7 @@ const enrichScenariosWithUserData = async (scenarios: any[]): Promise<Scenario[]
   if (!user || scenarios.length === 0) {
     return scenarios.map(s => {
       const mappedScenario = mapDatabaseScenario(s);
-      return enrichScenarioWithCharacters(mappedScenario, s);
+      return enrichScenarioWithCharacters(mappedScenario, s.scenario_characters || []);
     });
   }
 
@@ -177,7 +177,7 @@ const enrichScenariosWithUserData = async (scenarios: any[]): Promise<Scenario[]
 
   return scenarios.map(scenario => {
     const mappedScenario = mapDatabaseScenario(scenario);
-    const enrichedScenario = enrichScenarioWithCharacters(mappedScenario, scenario);
+    const enrichedScenario = enrichScenarioWithCharacters(mappedScenario, scenario.scenario_characters || []);
     
     // Add username from profiles
     enrichedScenario.created_by = profileMap.get(scenario.creator_id) || 'Unknown';
