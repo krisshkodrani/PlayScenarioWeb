@@ -8,7 +8,6 @@ import PageHeader from '@/components/navigation/PageHeader';
 import ScenarioProgressHeader from './scenario-creation/ScenarioProgressHeader';
 import ScenarioFormTabs from './scenario-creation/ScenarioFormTabs';
 import ScenarioSidebar from './scenario-creation/ScenarioSidebar';
-import CreationTips from './scenario-creation/CreationTips';
 import AIAssistanceModal from './scenario-creation/AIAssistanceModal';
 import { ScenarioData } from '@/types/scenario';
 
@@ -125,7 +124,6 @@ const ScenarioCreationForm: React.FC = () => {
               onUseAI={handleUseAI}
               isEditMode={isEditMode}
             />
-            <CreationTips />
           </div>
         </div>
       </div>
