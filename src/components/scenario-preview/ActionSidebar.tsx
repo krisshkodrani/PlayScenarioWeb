@@ -17,6 +17,9 @@ interface ActionSidebarProps {
   onStartPlaying: () => void;
   onBookmark: () => void;
   onLike: () => void;
+  startLoading?: boolean;
+  hasEnoughCredits?: boolean;
+  requiredCredits?: number;
 }
 
 const ActionSidebar: React.FC<ActionSidebarProps> = ({
@@ -24,10 +27,11 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
   userStats,
   onStartPlaying,
   onBookmark,
-  onLike
+  onLike,
+  startLoading = false,
+  hasEnoughCredits = true,
+  requiredCredits = 0
 }) => {
-  const creditCost = 5; // Mock credit cost
-
   const handleShare = async () => {
     try {
       await navigator.share({
@@ -49,23 +53,23 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
           <Button 
             onClick={onStartPlaying}
             className="w-full bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-semibold py-3 h-auto"
-            disabled={userStats.userCredits < creditCost}
+            disabled={!hasEnoughCredits || startLoading}
           >
             <Play className="w-5 h-5 mr-2" />
-            Start Playing
+            {startLoading ? 'Starting...' : 'Start Playing'}
           </Button>
           
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2 text-slate-400">
               <Coins className="w-4 h-4 text-amber-400" />
-              <span>Cost: {creditCost} credits</span>
+              <span>Cost: {requiredCredits} credits</span>
             </div>
             <div className="flex items-center gap-2 text-slate-400">
               <span>You have: {userStats.userCredits}</span>
             </div>
           </div>
           
-          {userStats.userCredits < creditCost && (
+          {!hasEnoughCredits && (
             <p className="text-sm text-red-400 text-center">
               Insufficient credits to play this scenario
             </p>

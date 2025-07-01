@@ -25,7 +25,7 @@ export const useScenarioStart = (): ScenarioStartHook => {
 
       // Calculate credits needed
       const characterCount = scenario.characters?.length || 1;
-      const estimatedTurns = scenario.max_turns || scenario.estimated_duration || 10;
+      const estimatedTurns = scenario.estimated_duration || 10;
       const creditsNeeded = estimatedTurns * characterCount;
 
       console.log(`Credits calculation: ${estimatedTurns} turns × ${characterCount} characters = ${creditsNeeded} credits`);
