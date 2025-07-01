@@ -235,6 +235,12 @@ export const useScenarioCreation = () => {
       }
       
       if (result) {
+        // Update local state to reflect the saved changes, including publication status
+        setScenarioData(prev => ({
+          ...prev,
+          is_public: publish
+        }));
+
         toast({
           title: isEditMode ? "Scenario Updated" : (publish ? "Scenario Published" : "Scenario Saved"),
           description: isEditMode 
