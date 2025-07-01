@@ -1,5 +1,8 @@
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useStripePayment } from './useStripePayment';
+import { useToast } from '@/hooks/use-toast';
 
 export interface CreditPackage {
   id: string;
@@ -103,61 +106,97 @@ const CREDIT_PACKAGES: CreditPackage[] = [
   }
 ];
 
-const mockTransactions: Transaction[] = [
-  {
-    id: 'txn_001',
-    credits: 100,
-    amount: 14.99,
-    type: 'purchase',
-    status: 'completed',
-    paymentMethod: '•••• 4242',
-    createdAt: '2024-01-15T10:30:00Z'
-  },
-  {
-    id: 'txn_002',
-    credits: -25,
-    amount: 0,
-    type: 'usage',
-    status: 'completed',
-    description: 'Scenario conversations',
-    createdAt: '2024-01-14T15:45:00Z'
-  },
-  {
-    id: 'txn_003',
-    credits: 25,
-    amount: 4.99,
-    type: 'purchase',
-    status: 'completed',
-    paymentMethod: '•••• 1234',
-    createdAt: '2024-01-12T09:15:00Z'
-  }
-];
-
-const processMockPayment = async (paymentData: PaymentData): Promise<PurchaseDetails> => {
-  // Simulate payment processing delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  // Mock success response (95% success rate)
-  const success = Math.random() > 0.05;
-  
-  if (success) {
-    return {
-      credits: paymentData.package.credits,
-      amount: paymentData.package.price,
-      transactionId: `txn_${Date.now()}`,
-      timestamp: new Date().toISOString()
-    };
-  } else {
-    throw new Error('Payment failed. Please try again.');
-  }
-};
-
 export const useCreditsPurchase = () => {
-  const [currentBalance, setCurrentBalance] = useState(15);
+  const [currentBalance, setCurrentBalance] = useState(0);
   const [selectedPackage, setSelectedPackage] = useState<CreditPackage | null>(null);
-  const [paymentLoading, setPaymentLoading] = useState(false);
   const [purchaseComplete, setPurchaseComplete] = useState(false);
   const [purchaseDetails, setPurchaseDetails] = useState<PurchaseDetails | null>(null);
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const { processStripePayment, verifyPayment, loading: paymentLoading } = useStripePayment();
+  const { toast } = useToast();
+
+  // Fetch user's current credit balance
+  const fetchBalance = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('credits')
+        .eq('id', user.id)
+        .single();
+
+      if (profile) {
+        setCurrentBalance(profile.credits);
+      }
+    } catch (error) {
+      console.error('Error fetching balance:', error);
+    }
+  }, []);
+
+  // Fetch recent transactions
+  const fetchTransactions = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: transactions } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (transactions) {
+        const formattedTransactions: Transaction[] = transactions.map(t => ({
+          id: t.id,
+          credits: t.type === 'credit' ? t.amount : -t.amount,
+          amount: t.type === 'credit' ? 0 : 0, // We don't store price in transactions table
+          type: t.type === 'credit' ? 'purchase' : 'usage',
+          status: 'completed',
+          description: t.description || 'Transaction',
+          createdAt: t.created_at
+        }));
+        setRecentTransactions(formattedTransactions);
+      }
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    }
+  }, []);
+
+  // Initialize data
+  useEffect(() => {
+    const initializeData = async () => {
+      setLoading(true);
+      await Promise.all([fetchBalance(), fetchTransactions()]);
+      setLoading(false);
+    };
+
+    initializeData();
+  }, [fetchBalance, fetchTransactions]);
+
+  // Check for payment success/cancellation in URL params
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const sessionId = urlParams.get('session_id');
+    
+    if (success === 'true' && sessionId) {
+      verifyPayment(sessionId).then((verified) => {
+        if (verified) {
+          // Refresh balance and transactions
+          fetchBalance();
+          fetchTransactions();
+          
+          // Clear URL params
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      });
+    }
+  }, [verifyPayment, fetchBalance, fetchTransactions]);
 
   const selectPackage = useCallback((packageId: string) => {
     const pkg = CREDIT_PACKAGES.find(p => p.id === packageId);
@@ -166,20 +205,13 @@ export const useCreditsPurchase = () => {
 
   const processPurchase = useCallback(async (paymentData: PaymentData) => {
     try {
-      setPaymentLoading(true);
-      const details = await processMockPayment(paymentData);
-      
-      // Update balance
-      setCurrentBalance(prev => prev + details.credits);
-      setPurchaseDetails(details);
-      setPurchaseComplete(true);
+      // Use Stripe payment instead of mock payment
+      await processStripePayment(paymentData.package.id);
     } catch (error) {
       console.error('Payment failed:', error);
       throw error;
-    } finally {
-      setPaymentLoading(false);
     }
-  }, []);
+  }, [processStripePayment]);
 
   const resetPurchase = useCallback(() => {
     setPurchaseComplete(false);
@@ -194,9 +226,11 @@ export const useCreditsPurchase = () => {
     paymentLoading,
     purchaseComplete,
     purchaseDetails,
-    recentTransactions: mockTransactions,
+    recentTransactions,
+    loading,
     selectPackage,
     processPurchase,
-    resetPurchase
+    resetPurchase,
+    refreshBalance: fetchBalance
   };
 };

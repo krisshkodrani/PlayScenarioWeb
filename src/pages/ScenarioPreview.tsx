@@ -4,6 +4,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Scenario, Character } from '@/types/scenario';
 import { scenarioService } from '@/services/scenarioService';
+import { useScenarioStart } from '@/hooks/useScenarioStart';
+import { useScenarioCosts } from '@/hooks/useScenarioCosts';
 import PageHeader from '@/components/navigation/PageHeader';
 import ScenarioHero from '@/components/scenario-preview/ScenarioHero';
 import ObjectivesList from '@/components/scenario-preview/ObjectivesList';
@@ -11,6 +13,8 @@ import CharacterShowcase from '@/components/scenario-preview/CharacterShowcase';
 import ActionSidebar from '@/components/scenario-preview/ActionSidebar';
 import ScenarioPreviewSkeleton from '@/components/scenario-preview/ScenarioPreviewSkeleton';
 import ScenarioNotFound from '@/components/scenario-preview/ScenarioNotFound';
+import CreditCostDisplay from '@/components/credits/CreditCostDisplay';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ScenarioPreviewData {
   scenario: Scenario | null;
@@ -18,20 +22,25 @@ interface ScenarioPreviewData {
   error: string | null;
   userBookmarked: boolean;
   userLiked: boolean;
+  userCredits: number;
 }
 
 const ScenarioPreview: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { startScenario, loading: startLoading } = useScenarioStart();
   
   const [data, setData] = useState<ScenarioPreviewData>({
     scenario: null,
     loading: true,
     error: null,
     userBookmarked: false,
-    userLiked: false
+    userLiked: false,
+    userCredits: 0
   });
+
+  const costCalculation = useScenarioCosts(data.scenario);
 
   useEffect(() => {
     if (!id) return;
@@ -56,12 +65,27 @@ const ScenarioPreview: React.FC = () => {
         return;
       }
 
+      // Get user's credit balance
+      const { data: { user } } = await supabase.auth.getUser();
+      let userCredits = 0;
+      
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('credits')
+          .eq('id', user.id)
+          .single();
+        
+        userCredits = profile?.credits || 0;
+      }
+
       setData({
         scenario,
         loading: false,
         error: null,
         userBookmarked: scenario.is_bookmarked || false,
-        userLiked: scenario.is_liked || false
+        userLiked: scenario.is_liked || false,
+        userCredits
       });
 
     } catch (error) {
@@ -80,22 +104,15 @@ const ScenarioPreview: React.FC = () => {
     try {
       console.log('Starting scenario play:', data.scenario.id);
       
-      // TODO: Replace with actual API call when backend is ready
-      const mockInstanceId = `instance_${Date.now()}`;
+      const instanceId = await startScenario(data.scenario);
       
-      toast({
-        title: "Starting Scenario",
-        description: "Initializing your scenario experience...",
-      });
-      
-      // Navigate to core chat with instance ID
-      navigate(`/core-chat?instance=${mockInstanceId}&scenario=${data.scenario.id}`);
+      if (instanceId) {
+        // Navigate to core chat with instance ID
+        navigate(`/core-chat?instance=${instanceId}&scenario=${data.scenario.id}`);
+      }
     } catch (error) {
-      toast({
-        title: "Failed to Start",
-        description: "Unable to start the scenario. Please try again.",
-        variant: "destructive",
-      });
+      // Error handling is done in useScenarioStart hook
+      console.error('Failed to start scenario:', error);
     }
   };
 
@@ -182,6 +199,8 @@ const ScenarioPreview: React.FC = () => {
     { label: data.scenario.title }
   ];
 
+  const hasEnoughCredits = data.userCredits >= costCalculation.totalCost;
+
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       <div className="container mx-auto px-4 py-8">
@@ -197,6 +216,13 @@ const ScenarioPreview: React.FC = () => {
           {/* Main Content Area */}
           <div className="lg:col-span-3 space-y-8">
             <ScenarioHero scenario={data.scenario} />
+            
+            {/* Credit Cost Display */}
+            <CreditCostDisplay
+              costCalculation={costCalculation}
+              userCredits={data.userCredits}
+            />
+            
             <ObjectivesList objectives={data.scenario.objectives} />
             <CharacterShowcase characters={data.scenario.characters} />
           </div>
@@ -209,11 +235,14 @@ const ScenarioPreview: React.FC = () => {
                 hasPlayed: false,
                 isBookmarked: data.userBookmarked,
                 hasLiked: data.userLiked,
-                userCredits: 100 // TODO: Get from user profile
+                userCredits: data.userCredits
               }}
               onStartPlaying={handleStartPlaying}
               onBookmark={handleBookmark}
               onLike={handleLike}
+              startLoading={startLoading}
+              hasEnoughCredits={hasEnoughCredits}
+              requiredCredits={costCalculation.totalCost}
             />
           </div>
         </div>
