@@ -34,8 +34,17 @@ export const useStripePayment = (): StripePaymentHook => {
         throw new Error('No checkout URL received');
       }
 
-      // Redirect to Stripe Checkout
-      window.location.href = data.url;
+      // Open Stripe Checkout in a new tab to avoid iframe restrictions
+      const newWindow = window.open(data.url, '_blank');
+      
+      if (!newWindow) {
+        throw new Error('Please allow popups to complete payment');
+      }
+
+      toast({
+        title: "Redirecting to Payment",
+        description: "Opening Stripe Checkout in a new tab...",
+      });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Payment failed';
       setError(errorMessage);

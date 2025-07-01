@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CreditCard, Lock, Shield } from 'lucide-react';
+import { CreditCard, Lock, Shield, ExternalLink } from 'lucide-react';
 import { CreditPackage, PaymentData } from '@/hooks/useCreditsPurchase';
 
 interface PaymentFormProps {
@@ -167,138 +167,66 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         </CardContent>
       </Card>
 
-      {/* Payment Form */}
+      {/* Stripe Checkout Notice */}
+      <Card className="bg-gradient-to-br from-cyan-500/10 to-violet-500/10 border-cyan-500/30">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3 text-cyan-400">
+            <ExternalLink className="w-5 h-5" />
+            <div>
+              <p className="font-medium">Secure Stripe Checkout</p>
+              <p className="text-sm text-slate-300">Payment will open in a new tab for security</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Simplified Payment Button */}
       <Card className="bg-slate-800 border-slate-700">
         <CardHeader className="pb-4">
           <CardTitle className="text-white flex items-center gap-2">
             <Shield className="w-5 h-5 text-cyan-400" />
-            Secure Payment
+            Complete Purchase
           </CardTitle>
           <div className="flex items-center gap-2 text-sm text-slate-400">
             <Lock className="w-4 h-4" />
-            <span>Your payment information is encrypted and secure</span>
+            <span>Powered by Stripe - Your payment information is secure</span>
           </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="cardNumber" className="text-slate-300">Card Number</Label>
-              <Input
-                id="cardNumber"
-                type="text"
-                placeholder="1234 5678 9012 3456"
-                value={formData.cardNumber}
-                onChange={(e) => handleInputChange('cardNumber', e.target.value)}
-                className={`bg-gray-700 border-gray-600 text-white ${
-                  errors.cardNumber ? 'border-red-500' : 'focus:border-cyan-400'
-                }`}
-                maxLength={19}
-              />
-              {errors.cardNumber && (
-                <p className="text-sm text-red-400">{errors.cardNumber}</p>
-              )}
+          {errors.submit && (
+            <div className="bg-red-500/10 border border-red-500 rounded-lg p-3 mb-4">
+              <p className="text-red-400 text-sm">{errors.submit}</p>
             </div>
+          )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="expiry" className="text-slate-300">Expiry Date</Label>
-                <Input
-                  id="expiry"
-                  type="text"
-                  placeholder="MM/YY"
-                  value={formData.expiry}
-                  onChange={(e) => handleInputChange('expiry', e.target.value)}
-                  className={`bg-gray-700 border-gray-600 text-white ${
-                    errors.expiry ? 'border-red-500' : 'focus:border-cyan-400'
-                  }`}
-                  maxLength={5}
-                />
-                {errors.expiry && (
-                  <p className="text-sm text-red-400">{errors.expiry}</p>
-                )}
+          <Button
+            onClick={() => onPayment({
+              package: selectedPackage,
+              cardNumber: '',
+              expiry: '',
+              cvc: '',
+              name: '',
+              email: ''
+            })}
+            disabled={loading}
+            className="w-full bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-medium h-12 text-lg"
+          >
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
+                Opening Stripe Checkout...
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cvc" className="text-slate-300">CVC</Label>
-                <Input
-                  id="cvc"
-                  type="text"
-                  placeholder="123"
-                  value={formData.cvc}
-                  onChange={(e) => handleInputChange('cvc', e.target.value)}
-                  className={`bg-gray-700 border-gray-600 text-white ${
-                    errors.cvc ? 'border-red-500' : 'focus:border-cyan-400'
-                  }`}
-                  maxLength={4}
-                />
-                {errors.cvc && (
-                  <p className="text-sm text-red-400">{errors.cvc}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-slate-300">Cardholder Name</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="John Doe"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                className={`bg-gray-700 border-gray-600 text-white ${
-                  errors.name ? 'border-red-500' : 'focus:border-cyan-400'
-                }`}
-              />
-              {errors.name && (
-                <p className="text-sm text-red-400">{errors.name}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-300">Email Address</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="john@example.com"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                className={`bg-gray-700 border-gray-600 text-white ${
-                  errors.email ? 'border-red-500' : 'focus:border-cyan-400'
-                }`}
-              />
-              {errors.email && (
-                <p className="text-sm text-red-400">{errors.email}</p>
-              )}
-            </div>
-
-            {errors.submit && (
-              <div className="bg-red-500/10 border border-red-500 rounded-lg p-3">
-                <p className="text-red-400 text-sm">{errors.submit}</p>
+            ) : (
+              <div className="flex items-center gap-2">
+                <ExternalLink className="w-5 h-5" />
+                Pay ${selectedPackage.price} with Stripe
               </div>
             )}
+          </Button>
 
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-medium h-12 text-lg"
-            >
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-                  Processing Payment...
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Lock className="w-5 h-5" />
-                  Pay ${selectedPackage.price} Securely
-                </div>
-              )}
-            </Button>
-
-            <div className="text-center text-xs text-slate-400">
-              By completing this purchase, you agree to our Terms of Service and Privacy Policy
-            </div>
-          </form>
+          <div className="text-center text-xs text-slate-400 mt-4">
+            By completing this purchase, you agree to our Terms of Service and Privacy Policy
+          </div>
         </CardContent>
       </Card>
     </div>
