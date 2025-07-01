@@ -482,6 +482,48 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_payments: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          credits_amount: number
+          currency: string
+          id: string
+          package_id: string
+          price_amount: number
+          status: string
+          stripe_session_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          credits_amount: number
+          currency?: string
+          id?: string
+          package_id: string
+          price_amount: number
+          status?: string
+          stripe_session_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          credits_amount?: number
+          currency?: string
+          id?: string
+          package_id?: string
+          price_amount?: number
+          status?: string
+          stripe_session_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number
