@@ -1,6 +1,6 @@
 
-import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useCallback, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { ScenarioData } from '@/types/scenario';
 import { scenarioService } from '@/services/scenarioService';
@@ -20,9 +20,64 @@ const defaultScenarioData: ScenarioData = {
 export const useScenarioCreation = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   
   const [scenarioData, setScenarioData] = useState<ScenarioData>(defaultScenarioData);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingScenario, setIsLoadingScenario] = useState(false);
+  
+  // Get mode from URL parameters
+  const editScenarioId = searchParams.get('edit');
+  const duplicateScenarioId = searchParams.get('duplicate');
+  const isEditMode = !!editScenarioId;
+  const isDuplicateMode = !!duplicateScenarioId;
+
+  // Load existing scenario data when editing or duplicating
+  useEffect(() => {
+    const loadScenarioData = async () => {
+      const scenarioId = editScenarioId || duplicateScenarioId;
+      if (!scenarioId) return;
+
+      setIsLoadingScenario(true);
+      try {
+        const scenario = await scenarioService.getScenarioById(scenarioId);
+        if (scenario) {
+          const loadedData: ScenarioData = {
+            title: isDuplicateMode ? `${scenario.title} (Copy)` : scenario.title,
+            description: scenario.description,
+            objectives: scenario.objectives.map(obj => ({
+              id: obj.id ? parseInt(obj.id) : Date.now(),
+              description: obj.description
+            })),
+            win_conditions: '', // These aren't in the Scenario type, keeping empty
+            lose_conditions: '',
+            max_turns: 20, // Default value
+            initial_scene_prompt: '', // This isn't in the Scenario type, keeping empty
+            is_public: isDuplicateMode ? false : scenario.is_public,
+            characters: scenario.characters.map(char => ({
+              name: char.name,
+              personality: char.personality,
+              expertise_keywords: char.expertise_keywords,
+              is_player_character: char.role === 'Player' // Assuming role determines if player character
+            }))
+          };
+          setScenarioData(loadedData);
+          console.log('Loaded scenario data for', isEditMode ? 'editing' : 'duplicating', ':', loadedData);
+        }
+      } catch (error) {
+        console.error('Error loading scenario:', error);
+        toast({
+          title: "Error Loading Scenario",
+          description: "Failed to load scenario data. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingScenario(false);
+      }
+    };
+
+    loadScenarioData();
+  }, [editScenarioId, duplicateScenarioId, isEditMode, isDuplicateMode, toast]);
 
   const updateScenarioData = useCallback((updates: Partial<ScenarioData>) => {
     setScenarioData(prev => {
@@ -170,14 +225,23 @@ export const useScenarioCreation = () => {
       
       console.log('Final data being saved:', dataToSave);
       
-      const result = await scenarioService.createScenario(dataToSave);
+      let result;
+      if (isEditMode && editScenarioId) {
+        // Update existing scenario
+        result = await scenarioService.updateScenario(editScenarioId, dataToSave);
+      } else {
+        // Create new scenario (for new creation or duplication)
+        result = await scenarioService.createScenario(dataToSave);
+      }
       
       if (result) {
         toast({
-          title: publish ? "Scenario Published" : "Scenario Saved",
-          description: publish 
-            ? "Your scenario is now available in the public library."
-            : "Your scenario has been saved as a draft.",
+          title: isEditMode ? "Scenario Updated" : (publish ? "Scenario Published" : "Scenario Saved"),
+          description: isEditMode 
+            ? "Your scenario has been updated successfully."
+            : (publish 
+              ? "Your scenario is now available in the public library."
+              : "Your scenario has been saved as a draft."),
         });
         
         navigate('/my-scenarios');
@@ -196,7 +260,7 @@ export const useScenarioCreation = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [scenarioData, validateScenario, toast, navigate]);
+  }, [scenarioData, validateScenario, toast, navigate, isEditMode, editScenarioId]);
 
   const handlePublish = useCallback(() => handleSave(true), [handleSave]);
 
@@ -213,6 +277,11 @@ export const useScenarioCreation = () => {
     handleSave,
     handlePublish,
     resetScenario,
-    isLoading
+    isLoading,
+    isLoadingScenario,
+    isEditMode,
+    isDuplicateMode,
+    editScenarioId,
+    duplicateScenarioId
   };
 };

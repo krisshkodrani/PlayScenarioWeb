@@ -24,7 +24,12 @@ const ScenarioCreationForm: React.FC = () => {
     calculateProgress,
     handleSave,
     handlePublish,
-    isLoading
+    isLoading,
+    isLoadingScenario,
+    isEditMode,
+    isDuplicateMode,
+    editScenarioId,
+    duplicateScenarioId
   } = useScenarioCreation();
 
   const handleUseAI = () => {
@@ -42,13 +47,56 @@ const ScenarioCreationForm: React.FC = () => {
   const progress = calculateProgress();
   const isComplete = progress >= 100;
 
+  // Show loading state while fetching scenario data for editing
+  if (isLoadingScenario) {
+    return (
+      <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4"></div>
+          <p className="text-slate-300">Loading scenario...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Determine page title and subtitle based on mode
+  const getPageTitle = () => {
+    if (isEditMode) return scenarioData.title || 'Edit Scenario';
+    if (isDuplicateMode) return 'Duplicate Scenario';
+    return 'Create Scenario';
+  };
+
+  const getPageSubtitle = () => {
+    if (isEditMode) return 'Modify your existing scenario';
+    if (isDuplicateMode) return 'Create a copy of an existing scenario';
+    return 'Build an interactive AI-powered scenario';
+  };
+
+  const getCustomBreadcrumbs = () => {
+    const baseBreadcrumbs = [
+      { label: 'Dashboard', href: '/dashboard' },
+      { label: 'My Scenarios', href: '/my-scenarios' }
+    ];
+
+    if (isEditMode) {
+      baseBreadcrumbs.push({ label: scenarioData.title || 'Edit Scenario' });
+    } else if (isDuplicateMode) {
+      baseBreadcrumbs.push({ label: 'Duplicate Scenario' });
+    } else {
+      baseBreadcrumbs.push({ label: 'Create Scenario' });
+    }
+
+    return baseBreadcrumbs;
+  };
+
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       <div className="container mx-auto px-4 py-8">
         <PageHeader
-          title="Create Scenario"
-          subtitle="Build an interactive AI-powered scenario"
+          title={getPageTitle()}
+          subtitle={getPageSubtitle()}
           showBackButton={true}
+          customBreadcrumbs={getCustomBreadcrumbs()}
         />
 
         <ScenarioProgressHeader 
@@ -75,6 +123,7 @@ const ScenarioCreationForm: React.FC = () => {
               onSave={() => handleSave(false)}
               onPublish={handlePublish}
               onUseAI={handleUseAI}
+              isEditMode={isEditMode}
             />
             <CreationTips />
           </div>

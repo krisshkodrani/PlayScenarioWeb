@@ -71,11 +71,17 @@ export const updateScenario = async (scenarioId: string, updates: Partial<Scenar
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
-  const dbUpdates: any = { ...updates };
+  console.log('Updating scenario:', scenarioId, 'with data:', updates);
+
+  // Prepare scenario updates (excluding characters)
+  const { characters, ...scenarioUpdates } = updates;
+  
+  const dbUpdates: any = { ...scenarioUpdates };
   if (dbUpdates.objectives) {
     dbUpdates.objectives = dbUpdates.objectives as any;
   }
 
+  // Update the scenario
   const { data, error } = await supabase
     .from('scenarios')
     .update(dbUpdates)
@@ -87,6 +93,53 @@ export const updateScenario = async (scenarioId: string, updates: Partial<Scenar
   if (error) {
     console.error('Error updating scenario:', error);
     throw error;
+  }
+
+  console.log('Scenario updated successfully:', data);
+
+  // Handle character updates if provided
+  if (characters !== undefined) {
+    console.log('Updating characters for scenario:', scenarioId);
+    
+    // Delete existing characters
+    const { error: deleteError } = await supabase
+      .from('scenario_characters')
+      .delete()
+      .eq('scenario_id', scenarioId);
+
+    if (deleteError) {
+      console.error('Error deleting existing characters:', deleteError);
+      // Continue anyway - we'll try to create the new characters
+    } else {
+      console.log('Existing characters deleted successfully');
+    }
+
+    // Create new characters if any exist
+    if (characters.length > 0) {
+      const charactersToInsert = characters.map(char => ({
+        scenario_id: scenarioId,
+        name: char.name,
+        personality: char.personality,
+        expertise_keywords: char.expertise_keywords,
+        is_player_character: char.is_player_character,
+        creator_id: user.id,
+        role: 'Team Member'
+      }));
+
+      console.log('Characters to insert:', charactersToInsert);
+
+      const { error: charactersError, data: charactersData } = await supabase
+        .from('scenario_characters')
+        .insert(charactersToInsert)
+        .select();
+
+      if (charactersError) {
+        console.error('Error creating updated scenario characters:', charactersError);
+        // Don't throw error here, let the scenario update succeed even if characters fail
+      } else {
+        console.log('Updated characters created successfully:', charactersData);
+      }
+    }
   }
 
   return mapDatabaseScenario(data);
