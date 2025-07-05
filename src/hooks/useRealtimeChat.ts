@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -20,64 +20,85 @@ interface ScenarioInstance {
   status: string;
   current_turn: number;
   started_at: string;
+  max_turns: number | null;
+  objectives_progress: any;
+}
+
+interface Scenario {
+  id: string;
+  title: string;
+  description: string;
+  initial_scene_prompt: string;
+  objectives: any[];
+  max_turns: number | null;
 }
 
 interface UseRealtimeChatProps {
+  instanceId: string;
   scenarioId: string;
 }
 
-export const useRealtimeChat = ({ scenarioId }: UseRealtimeChatProps) => {
+export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [instance, setInstance] = useState<ScenarioInstance | null>(null);
+  const [scenario, setScenario] = useState<Scenario | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
+  
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastMessageCountRef = useRef(0);
 
-  // Initialize or get existing scenario instance
-  const initializeInstance = useCallback(async () => {
-    if (!user) return;
+  // Fetch scenario instance and validate ownership
+  const fetchInstance = useCallback(async () => {
+    if (!user || !instanceId) return;
 
     try {
-      // Check if user has an active instance for this scenario
-      const { data: existingInstance, error: fetchError } = await supabase
+      const { data: instanceData, error: instanceError } = await supabase
         .from('scenario_instances')
         .select('*')
+        .eq('id', instanceId)
         .eq('user_id', user.id)
-        .eq('scenario_id', scenarioId)
-        .eq('status', 'playing')
-        .maybeSingle();
+        .single();
 
-      if (fetchError) throw fetchError;
+      if (instanceError) throw instanceError;
+      if (!instanceData) throw new Error('Instance not found or access denied');
 
-      if (existingInstance) {
-        setInstance(existingInstance);
-      } else {
-        // Create new instance
-        const { data: newInstance, error: createError } = await supabase
-          .from('scenario_instances')
-          .insert({
-            user_id: user.id,
-            scenario_id: scenarioId,
-            status: 'playing',
-            current_turn: 0
-          })
-          .select()
-          .single();
-
-        if (createError) throw createError;
-        setInstance(newInstance);
-      }
+      setInstance(instanceData);
     } catch (err) {
-      console.error('Error initializing instance:', err);
-      setError(err instanceof Error ? err.message : 'Failed to initialize chat');
+      console.error('Error fetching instance:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch instance');
     }
-  }, [user, scenarioId]);
+  }, [user, instanceId]);
+
+  // Fetch scenario data
+  const fetchScenario = useCallback(async () => {
+    if (!scenarioId) return;
+
+    try {
+      const { data: scenarioData, error: scenarioError } = await supabase
+        .from('scenarios')
+        .select('id, title, description, initial_scene_prompt, objectives, max_turns')
+        .eq('id', scenarioId)
+        .single();
+
+      if (scenarioError) throw scenarioError;
+      if (!scenarioData) throw new Error('Scenario not found');
+
+      setScenario(scenarioData);
+    } catch (err) {
+      console.error('Error fetching scenario:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch scenario');
+    }
+  }, [scenarioId]);
 
   // Fetch existing messages
-  const fetchMessages = useCallback(async (instanceId: string) => {
+  const fetchMessages = useCallback(async () => {
+    if (!instanceId) return;
+
     try {
       const { data, error } = await supabase
         .from('instance_messages')
@@ -87,11 +108,49 @@ export const useRealtimeChat = ({ scenarioId }: UseRealtimeChatProps) => {
 
       if (error) throw error;
       setMessages(data || []);
+      lastMessageCountRef.current = data?.length || 0;
     } catch (err) {
       console.error('Error fetching messages:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch messages');
     }
-  }, []);
+  }, [instanceId]);
+
+  // Initialize scenario with first message if no messages exist
+  const initializeScenario = useCallback(async () => {
+    if (!instance || !scenario || !user) return;
+
+    try {
+      // Check if any messages exist
+      const { count } = await supabase
+        .from('instance_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('instance_id', instanceId);
+
+      // If no messages exist, create the initial scene prompt message
+      if (count === 0) {
+        const { error } = await supabase
+          .from('instance_messages')
+          .insert({
+            instance_id: instanceId,
+            sender_name: 'System',
+            message: scenario.initial_scene_prompt,
+            turn_number: 0,
+            message_type: 'system'
+          });
+
+        if (error) throw error;
+        
+        console.log('Initial scenario message created:', scenario.initial_scene_prompt);
+      }
+    } catch (err) {
+      console.error('Error initializing scenario:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to initialize scenario',
+        variant: 'destructive'
+      });
+    }
+  }, [instance, scenario, user, instanceId, toast]);
 
   // Send a message
   const sendMessage = useCallback(async (messageContent: string) => {
@@ -100,10 +159,12 @@ export const useRealtimeChat = ({ scenarioId }: UseRealtimeChatProps) => {
     try {
       setIsTyping(true);
       
+      console.log('Sending message:', messageContent, 'Instance ID:', instanceId);
+      
       const { error } = await supabase
         .from('instance_messages')
         .insert({
-          instance_id: instance.id,
+          instance_id: instanceId,
           sender_name: 'You',
           message: messageContent,
           turn_number: instance.current_turn + 1,
@@ -118,7 +179,7 @@ export const useRealtimeChat = ({ scenarioId }: UseRealtimeChatProps) => {
         .update({
           current_turn: instance.current_turn + 1
         })
-        .eq('id', instance.id);
+        .eq('id', instanceId);
 
       if (updateError) throw updateError;
 
@@ -134,56 +195,105 @@ export const useRealtimeChat = ({ scenarioId }: UseRealtimeChatProps) => {
     } finally {
       setIsTyping(false);
     }
-  }, [instance, user, toast]);
+  }, [instance, user, instanceId, toast]);
 
-  // Set up real-time subscription
+  // Polling fallback for messages
+  const pollMessages = useCallback(async () => {
+    if (!instanceId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('instance_messages')
+        .select('*')
+        .eq('instance_id', instanceId)
+        .order('timestamp', { ascending: true });
+
+      if (error) throw error;
+      
+      // Only update if message count changed
+      if (data && data.length !== lastMessageCountRef.current) {
+        setMessages(data);
+        lastMessageCountRef.current = data.length;
+      }
+    } catch (err) {
+      console.error('Polling error:', err);
+    }
+  }, [instanceId]);
+
+  // Set up real-time subscription and polling
   useEffect(() => {
-    if (!instance) return;
+    if (!instanceId) return;
 
+    // Set up real-time subscription
     const channel = supabase
-      .channel(`messages:${instance.id}`)
+      .channel(`messages:${instanceId}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'instance_messages',
-          filter: `instance_id=eq.${instance.id}`
+          filter: `instance_id=eq.${instanceId}`
         },
         (payload) => {
           const newMessage = payload.new as Message;
-          setMessages(prev => [...prev, newMessage]);
+          setMessages(prev => {
+            // Avoid duplicates
+            if (prev.find(msg => msg.id === newMessage.id)) {
+              return prev;
+            }
+            return [...prev, newMessage];
+          });
+          lastMessageCountRef.current += 1;
         }
       )
       .subscribe();
 
+    // Set up polling fallback every 2 seconds
+    pollingIntervalRef.current = setInterval(pollMessages, 2000);
+
     return () => {
       supabase.removeChannel(channel);
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
     };
-  }, [instance]);
+  }, [instanceId, pollMessages]);
 
   // Initialize everything
   useEffect(() => {
     const init = async () => {
+      if (!user) return;
+      
       setLoading(true);
-      await initializeInstance();
+      setError(null);
+      
+      await Promise.all([
+        fetchInstance(),
+        fetchScenario()
+      ]);
     };
 
-    if (user) {
-      init();
-    }
-  }, [user, initializeInstance]);
+    init();
+  }, [user, fetchInstance, fetchScenario]);
 
-  // Fetch messages when instance is ready
+  // Fetch messages and initialize scenario when instance and scenario are ready
   useEffect(() => {
-    if (instance) {
-      fetchMessages(instance.id).finally(() => setLoading(false));
-    }
-  }, [instance, fetchMessages]);
+    const initializeChat = async () => {
+      if (instance && scenario) {
+        await fetchMessages();
+        await initializeScenario();
+        setLoading(false);
+      }
+    };
+
+    initializeChat();
+  }, [instance, scenario, fetchMessages, initializeScenario]);
 
   return {
     messages,
     instance,
+    scenario,
     loading,
     error,
     isTyping,

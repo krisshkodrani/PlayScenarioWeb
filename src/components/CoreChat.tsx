@@ -7,6 +7,8 @@ import ObjectiveDrawer from './chat/ObjectiveDrawer';
 import CharacterDrawer from './chat/CharacterDrawer';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { useRealtimeChat } from '@/hooks/useRealtimeChat';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Character {
   id: string;
@@ -16,110 +18,31 @@ interface Character {
   personality: string;
 }
 
-interface MockMessage {
-  id: string;
-  sender_name: string;
-  message: string;
-  message_type: 'user' | 'ai';
-  timestamp: Date;
+interface CoreChatProps {
+  instanceId: string;
+  scenarioId: string;
 }
 
-const CHARACTERS: Character[] = [
-  {
-    id: "spock",
-    name: "Commander Spock",
-    role: "Science Officer", 
-    avatar_color: "bg-blue-600",
-    personality: "Logical, analytical"
-  },
-  {
-    id: "bones",
-    name: "Dr. McCoy",
-    role: "Chief Medical Officer",
-    avatar_color: "bg-green-600", 
-    personality: "Emotional, humanitarian"
-  },
-  {
-    id: "scotty",
-    name: "Chief Engineer Scott",
-    role: "Engineering Officer",
-    avatar_color: "bg-red-600",
-    personality: "Pragmatic, resourceful"
-  }
-];
-
-const OBJECTIVE_DATA = [
-  {
-    id: "rescue-crew",
-    title: "Rescue Kobayashi Maru Crew",
-    description: "Attempt to save 300 civilian lives aboard the disabled vessel",
-    completion_percentage: 25,
-    status: "active" as const,
-    priority: "critical" as const,
-    hints: ["Consider diplomatic approach", "Evaluate ship capabilities", "Time is critical"],
-    progress_notes: "Initial distress signal acknowledged. Multiple strategy options available."
-  },
-  {
-    id: "avoid-war", 
-    title: "Prevent Galactic Incident",
-    description: "Navigate Klingon territory without triggering interstellar conflict",
-    completion_percentage: 10,
-    status: "active" as const,
-    priority: "critical" as const, 
-    hints: ["Review Federation treaties", "Consider Klingon honor code", "Diplomatic channels available"],
-    progress_notes: "Entered neutral zone. Klingon patrol ships detected nearby."
-  },
-  {
-    id: "preserve-ship",
-    title: "Minimize Enterprise Damage", 
-    description: "Protect your crew and vessel from destruction",
-    completion_percentage: 85,
-    status: "active" as const,
-    priority: "normal" as const,
-    hints: ["Shield optimization available", "Emergency protocols ready", "Crew safety paramount"],
-    progress_notes: "Shields at optimal levels. All systems functioning normally."
-  }
-];
-
-// Mock conversation data
-const MOCK_MESSAGES: MockMessage[] = [
-  {
-    id: "1",
-    sender_name: "Commander Spock",
-    message: "Captain, we are receiving a distress signal from the Kobayashi Maru. The vessel appears to be disabled in the Klingon Neutral Zone. Logic dictates we must consider our options carefully.",
-    message_type: "ai",
-    timestamp: new Date(Date.now() - 300000) // 5 minutes ago
-  },
-  {
-    id: "2", 
-    sender_name: "You",
-    message: "What's the tactical situation, Spock? How many Klingon ships are in the area?",
-    message_type: "user",
-    timestamp: new Date(Date.now() - 240000) // 4 minutes ago
-  },
-  {
-    id: "3",
-    sender_name: "Commander Spock", 
-    message: "Sensors detect three Klingon D7 battle cruisers patrolling the sector. Their weaponry is sufficient to destroy both the Enterprise and the disabled vessel. However, I calculate a 23.7% probability of successful rescue if we approach from the asteroid field to mask our sensor signature.",
-    message_type: "ai",
-    timestamp: new Date(Date.now() - 180000) // 3 minutes ago
-  }
-];
-
-const CoreChatInner: React.FC = () => {
+const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
   const { user } = useAuth();
   const [inputValue, setInputValue] = useState('');
-  const [progressPercentage, setProgressPercentage] = useState(15);
   const [showObjectiveDrawer, setShowObjectiveDrawer] = useState(false);
   const [showCharacterDrawer, setShowCharacterDrawer] = useState(false);
-  const [objectives, setObjectives] = useState(OBJECTIVE_DATA);
   const [hasObjectiveUpdates, setHasObjectiveUpdates] = useState(false);
   const [hasCharacterUpdates, setHasCharacterUpdates] = useState(false);
-  const [messages, setMessages] = useState<MockMessage[]>(MOCK_MESSAGES);
-  const [currentTurn, setCurrentTurn] = useState(3);
-  const [maxTurns] = useState(10);
-  const [isTyping, setIsTyping] = useState(false);
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [progressPercentage, setProgressPercentage] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const {
+    messages,
+    instance,
+    scenario,
+    loading,
+    error,
+    isTyping,
+    sendMessage
+  } = useRealtimeChat({ instanceId, scenarioId });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -129,8 +52,46 @@ const CoreChatInner: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
+  // Fetch characters for this scenario
+  useEffect(() => {
+    const fetchCharacters = async () => {
+      if (!scenarioId) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('scenario_characters')
+          .select('*')
+          .eq('scenario_id', scenarioId);
+
+        if (error) throw error;
+
+        const formattedCharacters = data?.map(char => ({
+          id: char.id,
+          name: char.name,
+          role: char.role || 'Character',
+          avatar_color: 'bg-blue-600', // Default color, could be randomized
+          personality: char.personality
+        })) || [];
+
+        setCharacters(formattedCharacters);
+      } catch (err) {
+        console.error('Error fetching characters:', err);
+      }
+    };
+
+    fetchCharacters();
+  }, [scenarioId]);
+
+  // Calculate progress based on current turn vs max turns
+  useEffect(() => {
+    if (instance && scenario?.max_turns) {
+      const progress = Math.min((instance.current_turn / scenario.max_turns) * 100, 100);
+      setProgressPercentage(progress);
+    }
+  }, [instance, scenario]);
+
   const getCharacterById = (id: string): Character | undefined => {
-    return CHARACTERS.find(char => char.id === id);
+    return characters.find(char => char.id === id);
   };
 
   const handleSendMessage = async () => {
@@ -139,42 +100,11 @@ const CoreChatInner: React.FC = () => {
     const messageContent = inputValue;
     setInputValue('');
     
-    // Add user message
-    const userMessage: MockMessage = {
-      id: Date.now().toString(),
-      sender_name: "You", 
-      message: messageContent,
-      message_type: "user",
-      timestamp: new Date()
-    };
-    
-    setMessages(prev => [...prev, userMessage]);
-    setCurrentTurn(prev => prev + 1);
-    
-    // Simulate AI response
-    setIsTyping(true);
-    setTimeout(() => {
-      const aiMessage: MockMessage = {
-        id: (Date.now() + 1).toString(),
-        sender_name: "Commander Spock",
-        message: "Fascinating. Your strategic thinking demonstrates both courage and prudence. I shall analyze the implications of this approach and provide tactical recommendations.",
-        message_type: "ai", 
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, aiMessage]);
-      setIsTyping(false);
-      setProgressPercentage(prev => Math.min(prev + 5, 100));
-      
-      // Simulate objective updates
-      setHasObjectiveUpdates(true);
-      setTimeout(() => setHasObjectiveUpdates(false), 3000);
-    }, 2000);
+    await sendMessage(messageContent);
   };
 
   const toggleObjectiveDrawer = () => {
     setShowObjectiveDrawer(!showObjectiveDrawer);
-    // Close character drawer if it's open
     if (showCharacterDrawer) {
       setShowCharacterDrawer(false);
     }
@@ -185,7 +115,6 @@ const CoreChatInner: React.FC = () => {
 
   const toggleCharacterDrawer = () => {
     setShowCharacterDrawer(!showCharacterDrawer);
-    // Close objective drawer if it's open
     if (showObjectiveDrawer) {
       setShowObjectiveDrawer(false);
     }
@@ -194,13 +123,57 @@ const CoreChatInner: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-900 text-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4"></div>
+          <p className="text-slate-300">Loading scenario...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-900 text-white">
+        <div className="text-center">
+          <p className="text-red-400 mb-4">Error: {error}</p>
+          <p className="text-slate-300">Unable to load scenario chat</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!scenario || !instance) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-900 text-white">
+        <div className="text-center">
+          <p className="text-slate-300">Scenario or instance not found</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Transform objectives for the drawer
+  const objectives = scenario.objectives?.map((obj: any, index: number) => ({
+    id: obj.id || `objective-${index}`,
+    title: obj.description || obj.title || 'Objective',
+    description: obj.description || obj.title || 'Complete this objective',
+    completion_percentage: 0, // This would need to be calculated based on progress
+    status: 'active' as const,
+    priority: obj.priority || 'normal' as const,
+    hints: [],
+    progress_notes: 'In progress...'
+  })) || [];
+
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       {/* Header */}
       <ChatHeader
-        scenarioTitle="Kobayashi Maru Simulation"
-        currentTurn={currentTurn}
-        maxTurns={maxTurns}
+        scenarioTitle={scenario.title}
+        currentTurn={instance.current_turn}
+        maxTurns={scenario.max_turns || 20}
         progressPercentage={progressPercentage}
         hasObjectiveUpdates={hasObjectiveUpdates}
         hasCharacterUpdates={hasCharacterUpdates}
@@ -210,9 +183,21 @@ const CoreChatInner: React.FC = () => {
       
       {/* Message List */}
       <MessagesList
-        messages={messages}
+        messages={messages.map(msg => ({
+          id: msg.id,
+          sender_name: msg.sender_name,
+          message: msg.message,
+          message_type: msg.message_type === 'user' ? 'user' : 'ai',
+          timestamp: new Date(msg.timestamp)
+        }))}
         isTyping={isTyping}
-        typingCharacter={CHARACTERS[0]}
+        typingCharacter={characters[0] || {
+          id: 'default',
+          name: 'Assistant',
+          role: 'AI Assistant',
+          avatar_color: 'bg-blue-600',
+          personality: 'Helpful'
+        }}
         getCharacterById={getCharacterById}
       />
       
@@ -237,16 +222,16 @@ const CoreChatInner: React.FC = () => {
       <CharacterDrawer
         isOpen={showCharacterDrawer}
         onClose={() => setShowCharacterDrawer(false)}
-        characters={CHARACTERS}
+        characters={characters}
       />
     </div>
   );
 };
 
-const CoreChat: React.FC = () => {
+const CoreChat: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
   return (
     <ProtectedRoute>
-      <CoreChatInner />
+      <CoreChatInner instanceId={instanceId} scenarioId={scenarioId} />
     </ProtectedRoute>
   );
 };
