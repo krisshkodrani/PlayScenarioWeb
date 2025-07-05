@@ -88,7 +88,17 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
       if (scenarioError) throw scenarioError;
       if (!scenarioData) throw new Error('Scenario not found');
 
-      setScenario(scenarioData);
+      // Convert the scenario data to match our interface, ensuring objectives is an array
+      const formattedScenario: Scenario = {
+        id: scenarioData.id,
+        title: scenarioData.title,
+        description: scenarioData.description,
+        initial_scene_prompt: scenarioData.initial_scene_prompt,
+        objectives: Array.isArray(scenarioData.objectives) ? scenarioData.objectives : [],
+        max_turns: scenarioData.max_turns
+      };
+
+      setScenario(formattedScenario);
     } catch (err) {
       console.error('Error fetching scenario:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch scenario');
