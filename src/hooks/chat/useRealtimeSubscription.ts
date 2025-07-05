@@ -9,8 +9,9 @@ export const useRealtimeSubscription = (
 ) => {
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastMessageCountRef = useRef(0);
+  const processedMessageIds = useRef<Set<string>>(new Set());
 
-  // Polling fallback for messages
+  // Enhanced polling fallback for messages with deduplication
   const pollMessages = useCallback(async () => {
     if (!instanceId) return;
 
@@ -23,12 +24,17 @@ export const useRealtimeSubscription = (
 
       if (error) throw error;
       
-      // Only update if message count changed
-      if (data && data.length !== lastMessageCountRef.current) {
-        // Get new messages since last count
-        const newMessages = data.slice(lastMessageCountRef.current);
-        newMessages.forEach(onNewMessage);
-        lastMessageCountRef.current = data.length;
+      if (data) {
+        // Process only new messages that haven't been processed yet
+        const newMessages = data.filter(msg => !processedMessageIds.current.has(msg.id));
+        
+        if (newMessages.length > 0) {
+          newMessages.forEach(msg => {
+            processedMessageIds.current.add(msg.id);
+            onNewMessage(msg);
+          });
+          lastMessageCountRef.current = data.length;
+        }
       }
     } catch (err) {
       console.error('Polling error:', err);
@@ -38,6 +44,9 @@ export const useRealtimeSubscription = (
   // Set up real-time subscription and polling
   useEffect(() => {
     if (!instanceId) return;
+
+    // Clear processed messages when instance changes
+    processedMessageIds.current.clear();
 
     // Set up real-time subscription
     const channel = supabase
@@ -52,14 +61,22 @@ export const useRealtimeSubscription = (
         },
         (payload) => {
           const newMessage = payload.new as Message;
-          onNewMessage(newMessage);
-          lastMessageCountRef.current += 1;
+          
+          // Only process if not already processed
+          if (!processedMessageIds.current.has(newMessage.id)) {
+            processedMessageIds.current.add(newMessage.id);
+            onNewMessage(newMessage);
+            lastMessageCountRef.current += 1;
+          }
         }
       )
       .subscribe();
 
-    // Set up polling fallback every 2 seconds
-    pollingIntervalRef.current = setInterval(pollMessages, 2000);
+    // Set up polling fallback every 3 seconds (increased from 2 to reduce load)
+    pollingIntervalRef.current = setInterval(pollMessages, 3000);
+
+    // Initial poll to catch up with any existing messages
+    pollMessages();
 
     return () => {
       supabase.removeChannel(channel);

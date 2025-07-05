@@ -38,7 +38,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
     }
   }, [handleSendMessage, updateInstance]);
 
-  // Initialize everything
+  // Initialize everything in proper sequence
   useEffect(() => {
     const init = async () => {
       if (!user) return;
@@ -47,26 +47,34 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
       setError(null);
       
       try {
+        // First, fetch instance and scenario data
         await Promise.all([
           fetchInstance(),
           fetchScenario()
         ]);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to initialize chat');
+        setLoading(false);
       }
     };
 
     init();
   }, [user, fetchInstance, fetchScenario]);
 
-  // Fetch messages and initialize scenario when instance and scenario are ready
+  // Initialize chat after instance and scenario are loaded
   useEffect(() => {
     const initializeChat = async () => {
-      if (instance && scenario) {
+      if (instance && scenario && user) {
         try {
-          await fetchMessages();
+          // First initialize the scenario (create initial message if needed)
           await initializeScenario();
+          
+          // Then fetch all messages (including the one we just created)
+          await fetchMessages();
+          
+          console.log('Chat initialization completed successfully');
         } catch (err) {
+          console.error('Error initializing chat:', err);
           setError(err instanceof Error ? err.message : 'Failed to initialize chat');
         } finally {
           setLoading(false);
@@ -75,7 +83,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
     };
 
     initializeChat();
-  }, [instance, scenario, fetchMessages, initializeScenario]);
+  }, [instance, scenario, user, initializeScenario, fetchMessages]);
 
   return {
     messages,

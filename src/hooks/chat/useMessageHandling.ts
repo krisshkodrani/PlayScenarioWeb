@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Message, ScenarioInstance, Scenario } from '@/types/chat';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,6 +14,8 @@ export const useMessageHandling = (
   const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
+  const initializationRef = useRef<Promise<void> | null>(null);
+  const isInitializedRef = useRef(false);
 
   // Fetch existing messages
   const fetchMessages = useCallback(async () => {
@@ -27,8 +29,31 @@ export const useMessageHandling = (
         .order('timestamp', { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
-      return data?.length || 0;
+      
+      // Deduplicate messages by content and turn_number for system messages
+      const deduplicatedData = data?.reduce((acc: Message[], current: Message) => {
+        // For system messages, check for duplicates by content and turn_number
+        if (current.message_type === 'system') {
+          const isDuplicate = acc.some(msg => 
+            msg.message_type === 'system' && 
+            msg.message === current.message &&
+            msg.turn_number === current.turn_number
+          );
+          if (!isDuplicate) {
+            acc.push(current);
+          }
+        } else {
+          // For non-system messages, check by ID
+          const isDuplicate = acc.some(msg => msg.id === current.id);
+          if (!isDuplicate) {
+            acc.push(current);
+          }
+        }
+        return acc;
+      }, []) || [];
+
+      setMessages(deduplicatedData);
+      return deduplicatedData.length;
     } catch (err) {
       console.error('Error fetching messages:', err);
       throw err;
@@ -37,39 +62,60 @@ export const useMessageHandling = (
 
   // Initialize scenario with first message if no messages exist
   const initializeScenario = useCallback(async () => {
-    if (!instance || !scenario || !user) return;
+    if (!instance || !scenario || !user || isInitializedRef.current) return;
 
-    try {
-      // Check if any messages exist
-      const { count } = await supabase
-        .from('instance_messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('instance_id', instanceId);
-
-      // If no messages exist, create the initial scene prompt message
-      if (count === 0) {
-        const { error } = await supabase
-          .from('instance_messages')
-          .insert({
-            instance_id: instanceId,
-            sender_name: 'System',
-            message: scenario.initial_scene_prompt,
-            turn_number: 0,
-            message_type: 'system'
-          });
-
-        if (error) throw error;
-        
-        console.log('Initial scenario message created:', scenario.initial_scene_prompt);
-      }
-    } catch (err) {
-      console.error('Error initializing scenario:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to initialize scenario',
-        variant: 'destructive'
-      });
+    // If initialization is already in progress, wait for it
+    if (initializationRef.current) {
+      await initializationRef.current;
+      return;
     }
+
+    // Start initialization
+    initializationRef.current = (async () => {
+      try {
+        console.log('Checking if scenario needs initialization...');
+        
+        // Check if any messages exist
+        const { count, error: countError } = await supabase
+          .from('instance_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('instance_id', instanceId);
+
+        if (countError) throw countError;
+
+        // If no messages exist, create the initial scene prompt message
+        if (count === 0) {
+          console.log('Creating initial scenario message...');
+          
+          const { error } = await supabase
+            .from('instance_messages')
+            .insert({
+              instance_id: instanceId,
+              sender_name: 'System',
+              message: scenario.initial_scene_prompt,
+              turn_number: 0,
+              message_type: 'system'
+            });
+
+          if (error) throw error;
+          
+          console.log('Initial scenario message created successfully');
+        } else {
+          console.log('Messages already exist, skipping initialization');
+        }
+        
+        isInitializedRef.current = true;
+      } catch (err) {
+        console.error('Error initializing scenario:', err);
+        toast({
+          title: 'Error',
+          description: 'Failed to initialize scenario',
+          variant: 'destructive'
+        });
+      }
+    })();
+
+    await initializationRef.current;
   }, [instance, scenario, user, instanceId, toast]);
 
   // Send a message
@@ -120,10 +166,23 @@ export const useMessageHandling = (
 
   const addMessage = useCallback((newMessage: Message) => {
     setMessages(prev => {
-      // Avoid duplicates
+      // Check for exact duplicates by ID
       if (prev.find(msg => msg.id === newMessage.id)) {
         return prev;
       }
+      
+      // For system messages, also check for content duplicates
+      if (newMessage.message_type === 'system') {
+        const contentDuplicate = prev.find(msg => 
+          msg.message_type === 'system' && 
+          msg.message === newMessage.message &&
+          msg.turn_number === newMessage.turn_number
+        );
+        if (contentDuplicate) {
+          return prev;
+        }
+      }
+      
       return [...prev, newMessage];
     });
   }, []);
