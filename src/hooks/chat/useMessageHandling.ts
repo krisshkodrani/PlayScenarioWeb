@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Message, ScenarioInstance, Scenario } from '@/types/chat';
@@ -119,50 +118,66 @@ export const useMessageHandling = (
   }, [instance, scenario, user, instanceId, toast]);
 
   // Send a message
-  const sendMessage = useCallback(async (messageContent: string) => {
-    if (!instance || !user) return;
+  const sendMessage = useCallback(
+    async (messageContent: string) => {
+      if (!instance || !user) return;
 
-    try {
-      setIsTyping(true);
-      
-      console.log('Sending message:', messageContent, 'Instance ID:', instanceId);
-      
-      const { error } = await supabase
-        .from('instance_messages')
-        .insert({
-          instance_id: instanceId,
-          sender_name: 'You',
-          message: messageContent,
-          turn_number: instance.current_turn + 1,
-          message_type: 'user'
+      try {
+        setIsTyping(true);
+
+        console.log(
+          'Sending message to FastAPI:',
+          messageContent,
+          'Instance ID:',
+          instanceId
+        );
+
+        // Build request payload with recent history to save backend DB look-ups
+        const payload = {
+          scenario_instance_id: instanceId,
+          user_message: messageContent,
+          conversation_history: messages.slice(-10).map(
+            ({ id, sender_name, message, message_type, timestamp }) => ({
+              id,
+              sender_name,
+              message,
+              message_type,
+              timestamp
+            })
+          )
+        };
+
+        const res = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/api/v1/chat/scenario-completions`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }
+        );
+
+        if (!res.ok) {
+          throw new Error(await res.text());
+        }
+
+        // Parse response to retrieve updated turn number so outer hooks stay in sync
+        const data: { turn_number: number } = await res.json();
+
+        return { current_turn: data.turn_number };
+      } catch (err) {
+        console.error('Error sending message:', err);
+        toast({
+          title: 'Error',
+          description: 'Failed to send message. Please try again.',
+          variant: 'destructive'
         });
-
-      if (error) throw error;
-
-      // Update instance turn count
-      const { error: updateError } = await supabase
-        .from('scenario_instances')
-        .update({
-          current_turn: instance.current_turn + 1
-        })
-        .eq('id', instanceId);
-
-      if (updateError) throw updateError;
-
-      return { current_turn: instance.current_turn + 1 };
-      
-    } catch (err) {
-      console.error('Error sending message:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to send message. Please try again.',
-        variant: 'destructive'
-      });
-      throw err;
-    } finally {
-      setIsTyping(false);
-    }
-  }, [instance, user, instanceId, toast]);
+        throw err;
+      } finally {
+        setIsTyping(false);
+      }
+    },
+    [instance, user, instanceId, messages, toast]
+  );
 
   const addMessage = useCallback((newMessage: Message) => {
     setMessages(prev => {
