@@ -150,12 +150,12 @@ export const useDashboardData = () => {
           console.error('Failed to fetch characters:', charactersError);
         }
 
-        // Fetch game instances for user
+        // Fetch game instances for user with scenario info
         const { data: gameInstances, error: instancesError } = await supabase
           .from('scenario_instances')
           .select(`
             *,
-            scenarios:scenario_id(title)
+            scenarios:scenario_id(title, description)
           `)
           .eq('user_id', user.id)
           .order('started_at', { ascending: false });

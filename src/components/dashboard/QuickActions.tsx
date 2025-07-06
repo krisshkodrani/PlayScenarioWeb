@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { 
   Search, 
   FileText, 
-  Users 
+  Users,
+  GamepadIcon
 } from 'lucide-react';
 
 interface QuickActionsProps {
@@ -13,13 +14,15 @@ interface QuickActionsProps {
   onBrowseScenarios: () => void;
   onViewMyCharacters: () => void;
   onViewMyScenarios: () => void;
+  onViewMyGames: () => void;
 }
 
 const QuickActions: React.FC<QuickActionsProps> = ({
   onCreateScenario,
   onBrowseScenarios,
   onViewMyCharacters,
-  onViewMyScenarios
+  onViewMyScenarios,
+  onViewMyGames
 }) => {
   const actions = [
     {
@@ -28,6 +31,13 @@ const QuickActions: React.FC<QuickActionsProps> = ({
       icon: Search,
       onClick: onBrowseScenarios,
       className: 'bg-emerald-500 hover:bg-emerald-600'
+    },
+    {
+      title: 'My Games',
+      description: 'Continue playing or view history',
+      icon: GamepadIcon,
+      onClick: onViewMyGames,
+      className: 'bg-cyan-500 hover:bg-cyan-600'
     },
     {
       title: 'My Scenarios',
@@ -51,7 +61,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
         <CardTitle className="text-white">Quick Actions</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-full">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 h-full">
           {actions.map((action, index) => (
             <Button
               key={index}
