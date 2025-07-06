@@ -2,6 +2,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Message } from '@/types/chat';
+import { logger } from '@/lib/logger';
 
 export const useRealtimeSubscription = (
   instanceId: string,
@@ -29,6 +30,12 @@ export const useRealtimeSubscription = (
         const newMessages = data.filter(msg => !processedMessageIds.current.has(msg.id));
         
         if (newMessages.length > 0) {
+          logger.debug('Chat', 'Polling found new messages', { 
+            instanceId, 
+            newMessageCount: newMessages.length,
+            totalMessages: data.length 
+          });
+          
           newMessages.forEach(msg => {
             processedMessageIds.current.add(msg.id);
             onNewMessage(msg);
@@ -37,13 +44,15 @@ export const useRealtimeSubscription = (
         }
       }
     } catch (err) {
-      console.error('Polling error:', err);
+      logger.error('Chat', 'Message polling failed', err, { instanceId });
     }
   }, [instanceId, onNewMessage]);
 
   // Set up real-time subscription and polling
   useEffect(() => {
     if (!instanceId) return;
+
+    logger.info('Chat', 'Setting up realtime subscription', { instanceId });
 
     // Clear processed messages when instance changes
     processedMessageIds.current.clear();
@@ -64,6 +73,12 @@ export const useRealtimeSubscription = (
           
           // Only process if not already processed
           if (!processedMessageIds.current.has(newMessage.id)) {
+            logger.debug('Chat', 'Realtime message received', { 
+              instanceId,
+              messageId: newMessage.id,
+              sender: newMessage.sender_name 
+            });
+            
             processedMessageIds.current.add(newMessage.id);
             onNewMessage(newMessage);
             lastMessageCountRef.current += 1;
@@ -79,6 +94,7 @@ export const useRealtimeSubscription = (
     pollMessages();
 
     return () => {
+      logger.debug('Chat', 'Cleaning up realtime subscription', { instanceId });
       supabase.removeChannel(channel);
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);

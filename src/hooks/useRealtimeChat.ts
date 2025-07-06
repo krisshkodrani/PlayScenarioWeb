@@ -5,6 +5,7 @@ import { UseRealtimeChatProps } from '@/types/chat';
 import { useScenarioData } from '@/hooks/chat/useScenarioData';
 import { useMessageHandling } from '@/hooks/chat/useMessageHandling';
 import { useRealtimeSubscription } from '@/hooks/chat/useRealtimeSubscription';
+import { logger } from '@/lib/logger';
 
 export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps) => {
   const { user } = useAuth();
@@ -43,6 +44,8 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
     const init = async () => {
       if (!user) return;
       
+      logger.info('Chat', 'Initializing realtime chat', { instanceId, scenarioId, userId: user.id });
+      
       setLoading(true);
       setError(null);
       
@@ -52,30 +55,43 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
           fetchInstance(),
           fetchScenario()
         ]);
+        
+        logger.debug('Chat', 'Instance and scenario data loaded successfully');
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to initialize chat');
+        const errorMessage = err instanceof Error ? err.message : 'Failed to initialize chat';
+        logger.error('Chat', 'Failed to initialize chat data', err, { instanceId, scenarioId });
+        setError(errorMessage);
         setLoading(false);
       }
     };
 
     init();
-  }, [user, fetchInstance, fetchScenario]);
+  }, [user, fetchInstance, fetchScenario, instanceId, scenarioId]);
 
   // Initialize chat after instance and scenario are loaded
   useEffect(() => {
     const initializeChat = async () => {
       if (instance && scenario && user) {
         try {
+          logger.debug('Chat', 'Initializing chat session', { 
+            instanceId: instance.id,
+            scenarioId: scenario.id,
+            currentTurn: instance.current_turn 
+          });
+          
           // First initialize the scenario (create initial message if needed)
           await initializeScenario();
           
           // Then fetch all messages (including the one we just created)
           await fetchMessages();
           
-          console.log('Chat initialization completed successfully');
+          logger.info('Chat', 'Chat initialization completed successfully', { 
+            instanceId: instance.id 
+          });
         } catch (err) {
-          console.error('Error initializing chat:', err);
-          setError(err instanceof Error ? err.message : 'Failed to initialize chat');
+          const errorMessage = err instanceof Error ? err.message : 'Failed to initialize chat';
+          logger.error('Chat', 'Chat initialization failed', err, { instanceId });
+          setError(errorMessage);
         } finally {
           setLoading(false);
         }
@@ -83,7 +99,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
     };
 
     initializeChat();
-  }, [instance, scenario, user, initializeScenario, fetchMessages]);
+  }, [instance, scenario, user, initializeScenario, fetchMessages, instanceId]);
 
   return {
     messages,

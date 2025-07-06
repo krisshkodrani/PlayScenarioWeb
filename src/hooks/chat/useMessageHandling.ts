@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Message, ScenarioInstance, Scenario } from '@/types/chat';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { logger } from '@/lib/logger';
 
 export const useMessageHandling = (
   instanceId: string,
@@ -21,6 +22,8 @@ export const useMessageHandling = (
     if (!instanceId) return;
 
     try {
+      logger.debug('Chat', 'Fetching messages for instance', { instanceId });
+      
       const { data, error } = await supabase
         .from('instance_messages')
         .select('*')
@@ -51,10 +54,16 @@ export const useMessageHandling = (
         return acc;
       }, []) || [];
 
+      logger.info('Chat', 'Messages fetched successfully', { 
+        instanceId, 
+        messageCount: deduplicatedData.length,
+        duplicatesRemoved: (data?.length || 0) - deduplicatedData.length
+      });
+
       setMessages(deduplicatedData);
       return deduplicatedData.length;
     } catch (err) {
-      console.error('Error fetching messages:', err);
+      logger.error('Chat', 'Failed to fetch messages', err, { instanceId });
       throw err;
     }
   }, [instanceId]);
@@ -72,7 +81,10 @@ export const useMessageHandling = (
     // Start initialization
     initializationRef.current = (async () => {
       try {
-        console.log('Checking if scenario needs initialization...');
+        logger.debug('Chat', 'Checking if scenario needs initialization', { 
+          instanceId, 
+          scenarioId: scenario.id 
+        });
         
         // Check if any messages exist
         const { count, error: countError } = await supabase
@@ -84,7 +96,7 @@ export const useMessageHandling = (
 
         // If no messages exist, create the initial scene prompt message
         if (count === 0) {
-          console.log('Creating initial scenario message...');
+          logger.info('Chat', 'Creating initial scenario message', { instanceId });
           
           const { error } = await supabase
             .from('instance_messages')
@@ -98,14 +110,17 @@ export const useMessageHandling = (
 
           if (error) throw error;
           
-          console.log('Initial scenario message created successfully');
+          logger.info('Chat', 'Initial scenario message created successfully', { instanceId });
         } else {
-          console.log('Messages already exist, skipping initialization');
+          logger.debug('Chat', 'Messages already exist, skipping initialization', { 
+            instanceId, 
+            existingMessageCount: count 
+          });
         }
         
         isInitializedRef.current = true;
       } catch (err) {
-        console.error('Error initializing scenario:', err);
+        logger.error('Chat', 'Failed to initialize scenario', err, { instanceId });
         toast({
           title: 'Error',
           description: 'Failed to initialize scenario',
@@ -125,14 +140,13 @@ export const useMessageHandling = (
       try {
         setIsTyping(true);
 
-        console.log(
-          'Sending message to FastAPI:',
-          messageContent,
-          'Instance ID:',
-          instanceId
-        );
+        logger.debug('Chat', 'Sending message to backend', {
+          instanceId,
+          messageLength: messageContent.length,
+          currentTurn: instance.current_turn
+        });
 
-        // Build request payload with recent history to save backend DB look-ups
+        // Build request payload with recent history to reduce backend DB lookups
         const payload = {
           scenario_instance_id: instanceId,
           user_message: messageContent,
@@ -163,9 +177,14 @@ export const useMessageHandling = (
         // Parse response to retrieve updated turn number so outer hooks stay in sync
         const data: { turn_number: number } = await res.json();
 
+        logger.info('Chat', 'Message sent successfully', {
+          instanceId,
+          newTurn: data.turn_number
+        });
+
         return { current_turn: data.turn_number };
       } catch (err) {
-        console.error('Error sending message:', err);
+        logger.error('Chat', 'Failed to send message', err, { instanceId });
         toast({
           title: 'Error',
           description: 'Failed to send message. Please try again.',
@@ -183,6 +202,7 @@ export const useMessageHandling = (
     setMessages(prev => {
       // Check for exact duplicates by ID
       if (prev.find(msg => msg.id === newMessage.id)) {
+        logger.debug('Chat', 'Duplicate message ignored', { messageId: newMessage.id });
         return prev;
       }
       
@@ -194,9 +214,19 @@ export const useMessageHandling = (
           msg.turn_number === newMessage.turn_number
         );
         if (contentDuplicate) {
+          logger.debug('Chat', 'Duplicate system message ignored', { 
+            messageType: newMessage.message_type,
+            turnNumber: newMessage.turn_number 
+          });
           return prev;
         }
       }
+      
+      logger.debug('Chat', 'New message added', { 
+        messageId: newMessage.id,
+        messageType: newMessage.message_type,
+        sender: newMessage.sender_name 
+      });
       
       return [...prev, newMessage];
     });

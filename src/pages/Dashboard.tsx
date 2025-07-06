@@ -12,6 +12,7 @@ import QuickActions from '@/components/dashboard/QuickActions';
 import CreditStatusCard from '@/components/dashboard/CreditStatusCard';
 import DashboardSkeleton from '@/components/dashboard/DashboardSkeleton';
 import NewUserDashboard from '@/components/dashboard/NewUserDashboard';
+import InProgressGames from '@/components/dashboard/InProgressGames';
 import { useDashboardData } from '@/hooks/useDashboardData';
 
 const Dashboard: React.FC = () => {
@@ -94,6 +95,19 @@ const Dashboard: React.FC = () => {
     );
   }
 
+  // Get in-progress games for the InProgressGames component
+  const inProgressGames = data.gameInstances
+    .filter(game => game.status === 'playing')
+    .map(game => ({
+      id: game.id,
+      scenario_id: game.scenario_id,
+      scenario_title: game.scenarios?.title || 'Unknown Scenario',
+      current_turn: game.current_turn,
+      max_turns: game.max_turns,
+      started_at: game.started_at,
+      status: game.status
+    }));
+
   return (
     <div className="min-h-screen bg-slate-900">
       <div className="container mx-auto px-4 py-8">
@@ -115,6 +129,7 @@ const Dashboard: React.FC = () => {
               onBrowseScenarios={() => navigate('/browse')}
               onViewMyCharacters={() => navigate('/my-characters')}
               onViewMyScenarios={() => navigate('/my-scenarios')}
+              onViewMyGames={() => navigate('/my-games')}
             />
           </div>
           <div>
@@ -125,6 +140,13 @@ const Dashboard: React.FC = () => {
             />
           </div>
         </div>
+
+        {/* In Progress Games Section */}
+        {inProgressGames.length > 0 && (
+          <div className="mb-8">
+            <InProgressGames games={inProgressGames} />
+          </div>
+        )}
 
         <div className="grid grid-cols-1">
           <RecentActivity activities={data.activityFeed} />

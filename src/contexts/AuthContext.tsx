@@ -1,8 +1,8 @@
-
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { authService, User, RegisterCredentials } from '@/services/authService';
 import { Session } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -31,160 +31,97 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
-
-    const initializeAuth = async () => {
-      try {
-        // Get initial session
-        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting initial session:', error);
-        }
-
-        if (mounted) {
-          setSession(initialSession);
-          setUser(initialSession?.user as User | null);
-          setInitialized(true);
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-        if (mounted) {
-          setInitialized(true);
-          setLoading(false);
-        }
-      }
-    };
-
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
+        logger.info('Auth', `Auth state changed: ${event}`, { 
+          userId: session?.user?.id,
+          email: session?.user?.email 
+        });
         
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user as User | null);
-          
-          // Handle specific auth events
-          if (event === 'SIGNED_OUT') {
-            // Clear any cached data
-            setUser(null);
-            setSession(null);
-          } else if (event === 'TOKEN_REFRESHED') {
-            // Session was refreshed, update state
-            console.log('Token refreshed successfully');
-          } else if (event === 'SIGNED_IN') {
-            console.log('User signed in successfully');
-          }
-          
-          if (!initialized) {
-            setInitialized(true);
-            setLoading(false);
-          }
-        }
+        setUser(session?.user ?? null);
+        setLoading(false);
       }
     );
 
-    // Initialize auth state
-    initializeAuth();
+    return () => subscription.unsubscribe();
+  }, []);
 
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [initialized]);
-
-  const signIn = async (email: string, password: string): Promise<{ error: string | null }> => {
+  const signUp = async (email: string, password: string, username: string) => {
     try {
-      const { user, error } = await authService.signIn({ email, password });
+      logger.debug('Auth', 'Attempting user registration', { email, username });
       
-      if (error) {
-        return { error: authService.getErrorMessage(error) };
-      }
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username,
+          },
+        },
+      });
 
-      return { error: null };
-    } catch (error) {
-      console.error('Unexpected signin error:', error);
-      return { error: 'An unexpected error occurred during sign in.' };
-    }
-  };
+      if (error) throw error;
 
-  const signUp = async (credentials: RegisterCredentials): Promise<{ error: string | null }> => {
-    try {
-      const { user, error } = await authService.signUp(credentials);
+      logger.info('Auth', 'User registration successful', { 
+        userId: data.user?.id,
+        email: data.user?.email 
+      });
       
-      if (error) {
-        return { error: authService.getErrorMessage(error) };
-      }
-
-      return { error: null };
+      return { data, error: null };
     } catch (error) {
-      console.error('Unexpected signup error:', error);
-      return { error: 'An unexpected error occurred during sign up.' };
+      logger.error('Auth', 'Registration failed', error);
+      return { data: null, error };
     }
   };
 
-  const signOut = async (): Promise<void> => {
+  const signIn = async (email: string, password: string) => {
     try {
-      await authService.signOut();
-      // State will be updated by the auth state change listener
-    } catch (error) {
-      console.error('Error signing out:', error);
-      // Force clear state even if signout fails
-      setUser(null);
-      setSession(null);
-    }
-  };
-
-  const resetPassword = async (email: string): Promise<{ error: string | null }> => {
-    try {
-      const { error } = await authService.resetPassword(email);
+      logger.debug('Auth', 'Attempting user sign in', { email });
       
-      if (error) {
-        return { error: authService.getErrorMessage(error) };
-      }
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      return { error: null };
-    } catch (error) {
-      console.error('Unexpected password reset error:', error);
-      return { error: 'An unexpected error occurred during password reset.' };
-    }
-  };
+      if (error) throw error;
 
-  const resendVerificationEmail = async (email: string): Promise<{ error: string | null }> => {
-    try {
-      const { error } = await authService.resendVerificationEmail(email);
+      logger.info('Auth', 'User signed in successfully', { 
+        userId: data.user?.id,
+        email: data.user?.email 
+      });
       
-      if (error) {
-        return { error: authService.getErrorMessage(error) };
-      }
-
-      return { error: null };
+      return { data, error: null };
     } catch (error) {
-      console.error('Unexpected verification email error:', error);
-      return { error: 'An unexpected error occurred while sending verification email.' };
+      logger.error('Auth', 'Sign in failed', error);
+      return { data: null, error };
     }
   };
 
-  const value: AuthContextType = {
+  const signOut = async () => {
+    try {
+      logger.debug('Auth', 'Attempting user sign out');
+      
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+
+      logger.info('Auth', 'User signed out successfully');
+    } catch (error) {
+      logger.error('Auth', 'Sign out failed', error);
+      throw error;
+    }
+  };
+
+  const value = {
     user,
-    session,
     loading,
-    signIn,
     signUp,
+    signIn,
     signOut,
-    resetPassword,
-    resendVerificationEmail,
-    isAuthenticated: !!user,
-    initialized,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

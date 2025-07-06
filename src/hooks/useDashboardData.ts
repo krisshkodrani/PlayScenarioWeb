@@ -1,132 +1,33 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { DashboardData, GameStats, ScenarioStats, ActivityItem } from '@/types/dashboard';
-
-const processGameStats = (instances: any[]): GameStats => {
-  const total = instances.length;
-  const completed = instances.filter(i => ['completed', 'won', 'lost'].includes(i.status));
-  const won = instances.filter(i => i.status === 'won');
-  const winRate = completed.length > 0 ? Math.round((won.length / completed.length) * 100) : 0;
-  
-  return {
-    total,
-    completed: completed.length,
-    inProgress: instances.filter(i => i.status === 'playing').length,
-    winRate,
-    averageScore: instances
-      .filter(i => i.final_score)
-      .reduce((acc, i) => acc + i.final_score, 0) / instances.filter(i => i.final_score).length || 0
-  };
-};
-
-const processScenarioStats = (scenarios: any[]): ScenarioStats => {
-  const total = scenarios.length;
-  const published = scenarios.filter(s => s.is_public).length;
-  const totalLikes = scenarios.reduce((acc, s) => acc + (s.like_count || 0), 0);
-  const totalBookmarks = scenarios.reduce((acc, s) => acc + (s.bookmark_count || 0), 0);
-  const totalPlays = scenarios.reduce((acc, s) => acc + (s.play_count || 0), 0);
-  
-  return { 
-    total, 
-    published, 
-    private: total - published, 
-    totalLikes, 
-    totalBookmarks,
-    totalPlays 
-  };
-};
-
-const generateActivityFeed = (
-  instances: any[],
-  scenarios: any[],
-  transactions: any[]
-): ActivityItem[] => {
-  const activities: ActivityItem[] = [];
-  
-  // Recent completed games
-  instances
-    .filter(i => ['completed', 'won', 'lost'].includes(i.status))
-    .slice(0, 3)
-    .forEach(instance => {
-      activities.push({
-        type: 'game_completed',
-        title: `Completed scenario "${instance.scenarios?.title || 'Unknown Scenario'}"`,
-        description: `Result: ${instance.status} • Score: ${instance.final_score || 'N/A'}`,
-        timestamp: instance.ended_at || instance.started_at,
-        metadata: { instanceId: instance.id, scenarioId: instance.scenario_id }
-      });
-    });
-  
-  // Recent scenarios created
-  scenarios
-    .slice(0, 2)
-    .forEach(scenario => {
-      activities.push({
-        type: 'scenario_created',
-        title: `Created "${scenario.title}"`,
-        description: `${scenario.is_public ? 'Published' : 'Private'} • ${scenario.play_count || 0} plays`,
-        timestamp: scenario.created_at,
-        metadata: { scenarioId: scenario.id }
-      });
-    });
-  
-  // Recent credit transactions
-  transactions
-    .slice(0, 2)
-    .forEach(transaction => {
-      activities.push({
-        type: 'credit_transaction',
-        title: transaction.amount > 0 ? 'Credits purchased' : 'Credits used',
-        description: `${Math.abs(transaction.amount)} credits • ${transaction.description}`,
-        timestamp: transaction.created_at,
-        metadata: { transactionId: transaction.id }
-      });
-    });
-  
-  return activities.sort((a, b) => 
-    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  ).slice(0, 10);
-};
+import { useAuth } from '@/contexts/AuthContext';
+import { DashboardData } from '@/types/dashboard';
+import { logger } from '@/lib/logger';
 
 export const useDashboardData = () => {
+  const { user } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        
-        // Get current user
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-          throw new Error('Not authenticated');
-        }
+      if (!user) return;
 
-        // Fetch user profile
+      try {
+        logger.debug('API', 'Fetching dashboard data', { userId: user.id });
+        setLoading(true);
+        setError(null);
+
+        // Fetch user profile with credits
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .single();
 
-        if (profileError && profileError.code !== 'PGRST116') {
-          throw new Error('Failed to fetch profile');
-        }
-
-        // Fetch transactions
-        const { data: transactions, error: transactionsError } = await supabase
-          .from('transactions')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(10);
-
-        if (transactionsError) {
-          console.error('Failed to fetch transactions:', transactionsError);
-        }
+        if (profileError) throw profileError;
 
         // Fetch scenarios created by user
         const { data: scenarios, error: scenariosError } = await supabase
@@ -135,73 +36,106 @@ export const useDashboardData = () => {
           .eq('creator_id', user.id)
           .order('created_at', { ascending: false });
 
-        if (scenariosError) {
-          console.error('Failed to fetch scenarios:', scenariosError);
-        }
+        if (scenariosError) throw scenariosError;
 
-        // Fetch characters created by user
+        // Fetch characters created by user  
         const { data: characters, error: charactersError } = await supabase
           .from('scenario_characters')
           .select('*')
           .eq('creator_id', user.id)
           .order('created_at', { ascending: false });
 
-        if (charactersError) {
-          console.error('Failed to fetch characters:', charactersError);
-        }
+        if (charactersError) throw charactersError;
 
-        // Fetch game instances for user
-        const { data: gameInstances, error: instancesError } = await supabase
+        // Fetch game instances
+        const { data: gameInstances, error: gameInstancesError } = await supabase
           .from('scenario_instances')
           .select(`
             *,
-            scenarios:scenario_id(title)
+            scenarios:scenario_id(title, description)
           `)
           .eq('user_id', user.id)
           .order('started_at', { ascending: false });
 
-        if (instancesError) {
-          console.error('Failed to fetch game instances:', instancesError);
-        }
-        
-        const gameStats = processGameStats(gameInstances || []);
-        const scenarioStats = processScenarioStats(scenarios || []);
-        const activityFeed = generateActivityFeed(gameInstances || [], scenarios || [], transactions || []);
-        
-        setData({
-          user: {
-            id: user.id,
-            email: user.email || '',
-            username: profile?.username || null,
-            created_at: user.created_at || new Date().toISOString()
-          },
-          credits: {
-            credits: profile?.credits || 0,
-            last_updated: profile?.updated_at || new Date().toISOString()
-          },
-          recentTransactions: (transactions || []).map(t => ({
-            id: t.id,
-            credits_change: t.amount,
-            reason: t.description || 'Transaction',
-            created_at: t.created_at
+        if (gameInstancesError) throw gameInstancesError;
+
+        // Fetch recent transactions
+        const { data: transactions, error: transactionsError } = await supabase
+          .from('transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (transactionsError) throw transactionsError;
+
+        // Calculate statistics
+        const gameStats = {
+          total: gameInstances?.length || 0,
+          won: gameInstances?.filter(g => g.status === 'won').length || 0,
+          lost: gameInstances?.filter(g => g.status === 'lost').length || 0,
+          inProgress: gameInstances?.filter(g => g.status === 'playing').length || 0
+        };
+
+        const scenarioStats = {
+          total: scenarios?.length || 0,
+          public: scenarios?.filter(s => s.is_public).length || 0,
+          private: scenarios?.filter(s => !s.is_public).length || 0,
+          totalLikes: scenarios?.reduce((sum, s) => sum + (s.like_count || 0), 0) || 0
+        };
+
+        // Create activity feed
+        const activityFeed = [
+          ...(gameInstances || []).slice(0, 3).map(game => ({
+            id: game.id,
+            type: 'game_played' as const,
+            title: `Played "${game.scenarios?.title || 'Unknown Scenario'}"`,
+            description: `Status: ${game.status} | Turn ${game.current_turn}`,
+            timestamp: game.started_at,
+            metadata: { scenarioId: game.scenario_id, status: game.status }
           })),
+          ...(scenarios || []).slice(0, 2).map(scenario => ({
+            id: scenario.id,
+            type: 'scenario_created' as const,
+            title: `Created "${scenario.title}"`,
+            description: scenario.description,
+            timestamp: scenario.created_at,
+            metadata: { isPublic: scenario.is_public, likes: scenario.like_count }
+          }))
+        ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 5);
+
+        const dashboardData: DashboardData = {
+          user: profile,
+          credits: { credits: profile.credits },
           scenarios: scenarios || [],
-          gameInstances: gameInstances || [],
           characters: characters || [],
+          gameInstances: gameInstances || [],
+          recentTransactions: transactions || [],
           gameStats,
           scenarioStats,
           activityFeed
+        };
+
+        logger.info('API', 'Dashboard data fetched successfully', {
+          userId: user.id,
+          scenarioCount: scenarios?.length || 0,
+          characterCount: characters?.length || 0,
+          gameCount: gameInstances?.length || 0,
+          credits: profile.credits
         });
+
+        setData(dashboardData);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
-        console.error('Dashboard fetch error:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch dashboard data';
+        logger.error('API', 'Failed to fetch dashboard data', err, { userId: user.id });
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
     };
 
     fetchDashboardData();
-  }, []);
+  }, [user]);
 
   return { data, loading, error };
 };
