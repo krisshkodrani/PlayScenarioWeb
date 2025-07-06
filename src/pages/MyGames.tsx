@@ -24,7 +24,7 @@ interface GameInstance {
   } | null;
 }
 
-interface GameFilters {
+interface GameFiltersState {
   status: 'all' | 'playing' | 'completed' | 'won' | 'lost';
   search: string;
   sortBy: 'started_desc' | 'started_asc' | 'title' | 'progress';
@@ -36,7 +36,7 @@ const MyGames: React.FC = () => {
   const [games, setGames] = useState<GameInstance[]>([]);
   const [filteredGames, setFilteredGames] = useState<GameInstance[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState<GameFilters>({
+  const [filters, setFilters] = useState<GameFiltersState>({
     status: 'all',
     search: '',
     sortBy: 'started_desc'
