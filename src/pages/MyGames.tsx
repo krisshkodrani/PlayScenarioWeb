@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,6 +7,7 @@ import GameFilters from '@/components/my-games/GameFilters';
 import GameInstanceCard from '@/components/my-games/GameInstanceCard';
 import EmptyGames from '@/components/my-games/EmptyGames';
 import { Loader2 } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 interface GameInstance {
   id: string;
@@ -55,6 +55,7 @@ const MyGames: React.FC = () => {
   const fetchGames = async () => {
     try {
       setLoading(true);
+      logger.debug('API', 'Fetching user games', { userId: user?.id });
       
       const { data, error } = await supabase
         .from('scenario_instances')
@@ -67,15 +68,27 @@ const MyGames: React.FC = () => {
 
       if (error) throw error;
       
+      logger.info('API', 'Games fetched successfully', { 
+        userId: user?.id,
+        gameCount: data?.length || 0 
+      });
+      
       setGames(data || []);
     } catch (error) {
-      console.error('Error fetching games:', error);
+      logger.error('API', 'Failed to fetch games', error, { userId: user?.id });
     } finally {
       setLoading(false);
     }
   };
 
   const applyFilters = () => {
+    logger.debug('UI', 'Applying game filters', { 
+      status: filters.status,
+      searchTerm: filters.search,
+      sortBy: filters.sortBy,
+      totalGames: games.length 
+    });
+
     let filtered = [...games];
 
     // Status filter
@@ -110,14 +123,21 @@ const MyGames: React.FC = () => {
       }
     });
 
+    logger.debug('UI', 'Filters applied', { 
+      filteredCount: filtered.length,
+      originalCount: games.length 
+    });
+
     setFilteredGames(filtered);
   };
 
   const handleContinueGame = (instanceId: string, scenarioId: string) => {
+    logger.info('UI', 'Continuing game', { instanceId, scenarioId });
     navigate(`/core-chat?instance=${instanceId}&scenario=${scenarioId}`);
   };
 
   const handleViewResults = (instanceId: string) => {
+    logger.info('UI', 'Viewing game results', { instanceId });
     navigate(`/results/${instanceId}`);
   };
 
