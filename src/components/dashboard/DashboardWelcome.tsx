@@ -28,7 +28,7 @@ const DashboardWelcome: React.FC<DashboardWelcomeProps> = ({ user }) => {
   return (
     <div className="mb-8">
       <h1 className="text-3xl font-bold text-white mb-2">
-        {getTimeBasedGreeting()}, {user.username || user.email.split('@')[0]}! 👋
+        {getTimeBasedGreeting()}, {user.username || user.display_name || 'Player'}! 👋
       </h1>
       <p className="text-slate-400">
         Member for {getAccountAge()} • Ready to create some amazing scenarios?
