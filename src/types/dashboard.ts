@@ -1,42 +1,46 @@
 
 export interface User {
   id: string;
-  email: string;
   username?: string;
   created_at: string;
+  bio?: string;
+  display_name?: string;
+  profile_visibility?: string;
+  show_email_publicly?: boolean;
+  updated_at: string;
+  credits: number;
 }
 
 export interface Credits {
   credits: number;
-  last_updated: string;
 }
 
 export interface Transaction {
   id: string;
-  credits_change: number;
-  reason: string;
+  amount: number;
+  type: string;
+  description: string | null;
   created_at: string;
+  user_id: string;
 }
 
 export interface GameStats {
   total: number;
-  completed: number;
+  won: number;
+  lost: number;
   inProgress: number;
-  winRate: number;
-  averageScore: number;
 }
 
 export interface ScenarioStats {
   total: number;
-  published: number;
+  public: number;
   private: number;
   totalLikes: number;
-  totalBookmarks: number;
-  totalPlays: number;
 }
 
 export interface ActivityItem {
-  type: 'game_completed' | 'scenario_created' | 'scenario_liked' | 'credit_transaction';
+  id: string;
+  type: 'game_played' | 'scenario_created' | 'scenario_liked' | 'credit_transaction';
   title: string;
   description: string;
   timestamp: string;
