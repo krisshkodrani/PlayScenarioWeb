@@ -35,7 +35,7 @@ export const getAdminScenarios = async (
     .from('scenarios')
     .select(`
       *,
-      profiles!scenarios_creator_id_fkey(username),
+      profiles!creator_id(username),
       scenario_characters(id)
     `, { count: 'exact' });
 
@@ -91,8 +91,8 @@ export const getAdminScenarios = async (
     title: scenario.title,
     description: scenario.description,
     creator_id: scenario.creator_id,
-    creator_username: scenario.profiles?.username || 'Unknown',
-    status: scenario.status || 'active',
+    creator_username: (scenario.profiles as any)?.username || 'Unknown',
+    status: (scenario.status || 'active') as 'active' | 'blocked' | 'pending_review',
     is_public: scenario.is_public,
     created_at: scenario.created_at,
     blocked_at: scenario.blocked_at,

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Shield, Users, FileText, AlertTriangle, TrendingUp, Activity } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader } from '@/components/navigation/PageHeader';
+import PageHeader from '@/components/navigation/PageHeader';
 
 interface DashboardStats {
   totalUsers: number;
@@ -94,8 +94,7 @@ const AdminDashboard: React.FC = () => {
       <div className="max-w-7xl mx-auto space-y-6">
         <PageHeader
           title="Admin Dashboard"
-          description="Manage and moderate your PlayScenarioAI platform"
-          icon={Shield}
+          subtitle="Manage and moderate your PlayScenarioAI platform"
         />
 
         {/* Stats Cards */}

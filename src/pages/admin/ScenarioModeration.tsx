@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { PageHeader } from '@/components/navigation/PageHeader';
+import PageHeader from '@/components/navigation/PageHeader';
 import { Button } from '@/components/ui/button';
 import { ScenarioModerationFilters } from '@/components/admin/ScenarioModerationFilters';
 import { ScenarioModerationTable } from '@/components/admin/ScenarioModerationTable';
@@ -95,8 +95,7 @@ const ScenarioModeration: React.FC = () => {
       <div className="max-w-7xl mx-auto space-y-6">
         <PageHeader
           title="Scenario Moderation"
-          description="Review and moderate scenario content"
-          icon={Shield}
+          subtitle="Review and moderate scenario content"
           actions={
             <Button
               onClick={() => loadScenarios(currentPage)}
