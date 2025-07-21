@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +9,7 @@ import { AdminRoute } from "@/components/auth/AdminRoute";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserManagement from "./pages/admin/UserManagement";
 import ScenarioModeration from "./pages/admin/ScenarioModeration";
+import CharacterModeration from "./pages/admin/CharacterModeration";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
@@ -112,6 +112,11 @@ const App = () => (
             <Route path="/admin/scenarios" element={
               <AdminRoute>
                 <ScenarioModeration />
+              </AdminRoute>
+            } />
+            <Route path="/admin/characters" element={
+              <AdminRoute>
+                <CharacterModeration />
               </AdminRoute>
             } />
             

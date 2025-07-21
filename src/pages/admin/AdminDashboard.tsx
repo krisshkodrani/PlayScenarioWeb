@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { Shield, Users, FileText, AlertTriangle, TrendingUp, Activity } from 'lu
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import PageHeader from '@/components/navigation/PageHeader';
+import CharacterModeration from "./CharacterModeration";
 
 interface DashboardStats {
   totalUsers: number;
@@ -71,12 +71,12 @@ const AdminDashboard: React.FC = () => {
     },
     {
       title: 'Character Moderation',
-      description: 'Review character content and behavior',
+      description: 'Review and moderate character content',
       icon: Shield,
       color: 'text-purple-400',
       bgColor: 'bg-purple-500/10',
       borderColor: 'border-purple-500/20',
-      action: () => console.log('Character moderation - coming soon')
+      action: () => navigate('/admin/characters')
     },
     {
       title: 'Audit Trail',
