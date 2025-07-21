@@ -2,11 +2,15 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Eye, Shield, ShieldOff, Calendar, User, Heart, Play, Users } from 'lucide-react';
-import { AdminScenario } from '@/services/admin/adminScenarioService';
+import { AdminScenario, bulkBlockScenarios, bulkUnblockScenarios } from '@/services/admin/adminScenarioService';
 import { useToast } from '@/hooks/use-toast';
+import { useBulkSelection } from '@/hooks/useBulkSelection';
+import { BulkActionToolbar, SCENARIO_BULK_ACTIONS } from './BulkActionToolbar';
+import { BulkConfirmationDialog } from './BulkConfirmationDialog';
 import { format } from 'date-fns';
 
 interface ScenarioModerationTableProps {
@@ -25,7 +29,23 @@ export const ScenarioModerationTable: React.FC<ScenarioModerationTableProps> = (
   const [blockingScenario, setBlockingScenario] = useState<string | null>(null);
   const [blockReason, setBlockReason] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [bulkAction, setBulkAction] = useState<'bulk-block' | 'bulk-unblock' | null>(null);
+  const [bulkLoading, setBulkLoading] = useState(false);
   const { toast } = useToast();
+
+  const {
+    selectedItems,
+    isSelected,
+    isAllSelected,
+    isPartialSelected,
+    selectedCount,
+    totalCount,
+    toggleItem,
+    toggleAll,
+    clearSelection,
+    getSelectedIds
+  } = useBulkSelection(scenarios);
 
   const handleBlock = async (scenarioId: string) => {
     if (!blockReason.trim()) {
@@ -76,6 +96,50 @@ export const ScenarioModerationTable: React.FC<ScenarioModerationTableProps> = (
     }
   };
 
+  const handleBulkAction = (actionId: string) => {
+    if (actionId === 'bulk-block' || actionId === 'bulk-unblock') {
+      setBulkAction(actionId);
+      setBulkDialogOpen(true);
+    }
+  };
+
+  const handleBulkConfirm = async (reason?: string) => {
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length === 0) return;
+
+    setBulkLoading(true);
+    try {
+      if (bulkAction === 'bulk-block' && reason) {
+        await bulkBlockScenarios(selectedIds, reason);
+        toast({
+          title: "Success",
+          description: `${selectedIds.length} scenario${selectedIds.length === 1 ? '' : 's'} blocked successfully`,
+        });
+      } else if (bulkAction === 'bulk-unblock') {
+        await bulkUnblockScenarios(selectedIds);
+        toast({
+          title: "Success",
+          description: `${selectedIds.length} scenario${selectedIds.length === 1 ? '' : 's'} unblocked successfully`,
+        });
+      }
+      
+      clearSelection();
+      setBulkDialogOpen(false);
+      setBulkAction(null);
+      
+      // Trigger a refresh by calling the parent's methods (this will reload the data)
+      window.location.reload();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to complete bulk operation",
+        variant: "destructive",
+      });
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
@@ -113,12 +177,44 @@ export const ScenarioModerationTable: React.FC<ScenarioModerationTableProps> = (
     );
   }
 
+  const selectedScenarios = scenarios.filter(scenario => isSelected(scenario.id));
+
   return (
     <div className="space-y-4">
+      <BulkActionToolbar
+        selectedCount={selectedCount}
+        totalCount={totalCount}
+        actions={SCENARIO_BULK_ACTIONS}
+        onAction={handleBulkAction}
+        onClearSelection={clearSelection}
+        loading={bulkLoading}
+      />
+
+      {/* Select All Checkbox */}
+      {scenarios.length > 0 && (
+        <div className="bg-slate-800 border border-gray-700 rounded-lg p-4 flex items-center gap-3">
+          <Checkbox
+            checked={isAllSelected}
+            onCheckedChange={toggleAll}
+            className="border-gray-600"
+            data-indeterminate={isPartialSelected}
+          />
+          <span className="text-sm text-slate-300">
+            {isAllSelected ? 'Deselect all' : 'Select all'} scenarios
+          </span>
+        </div>
+      )}
+
       {scenarios.map((scenario) => (
         <div key={scenario.id} className="bg-slate-800 border border-gray-700 rounded-xl p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
+          <div className="flex items-start gap-4 mb-4">
+            <Checkbox
+              checked={isSelected(scenario.id)}
+              onCheckedChange={() => toggleItem(scenario.id)}
+              className="border-gray-600 mt-1"
+            />
+            <div className="flex-1 flex justify-between">
+              <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
                 <h3 className="text-lg font-semibold text-white">{scenario.title}</h3>
                 {getStatusBadge(scenario.status)}
@@ -163,9 +259,9 @@ export const ScenarioModerationTable: React.FC<ScenarioModerationTableProps> = (
                   )}
                 </div>
               )}
-            </div>
+              </div>
 
-            <div className="flex items-center gap-2 ml-4">
+              <div className="flex items-center gap-2 ml-4">
               <Button
                 variant="outline"
                 size="sm"
@@ -243,10 +339,22 @@ export const ScenarioModerationTable: React.FC<ScenarioModerationTableProps> = (
                   {actionLoading === scenario.id ? 'Unblocking...' : 'Unblock'}
                 </Button>
               )}
+              </div>
             </div>
           </div>
         </div>
       ))}
+
+      <BulkConfirmationDialog
+        open={bulkDialogOpen}
+        onOpenChange={setBulkDialogOpen}
+        action={bulkAction}
+        selectedCount={selectedCount}
+        selectedItems={selectedScenarios.map(s => ({ id: s.id, title: s.title }))}
+        onConfirm={handleBulkConfirm}
+        loading={bulkLoading}
+        itemType="scenario"
+      />
     </div>
   );
 };

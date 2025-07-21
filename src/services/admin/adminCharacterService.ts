@@ -181,6 +181,93 @@ class AdminCharacterService {
     await this.logAdminAction(adminUser.user.id, characterId, 'mark_pending_review', 'character', { reason });
   }
 
+  // Bulk operations
+  async bulkBlockCharacters(characterIds: string[], reason: string): Promise<void> {
+    const { data: adminUser } = await supabase.auth.getUser();
+    if (!adminUser.user) throw new Error('Not authenticated');
+
+    const { error } = await supabase
+      .from('scenario_characters')
+      .update({
+        status: 'blocked',
+        blocked_at: new Date().toISOString(),
+        blocked_by: adminUser.user.id,
+        blocked_reason: reason
+      })
+      .in('id', characterIds);
+
+    if (error) throw error;
+
+    // Log bulk admin action
+    await this.logAdminAction(
+      adminUser.user.id, 
+      characterIds[0], 
+      'bulk_character_blocked', 
+      'character', 
+      { 
+        character_ids: characterIds,
+        bulk_count: characterIds.length,
+        reason 
+      }
+    );
+  }
+
+  async bulkUnblockCharacters(characterIds: string[]): Promise<void> {
+    const { data: adminUser } = await supabase.auth.getUser();
+    if (!adminUser.user) throw new Error('Not authenticated');
+
+    const { error } = await supabase
+      .from('scenario_characters')
+      .update({
+        status: 'active',
+        blocked_at: null,
+        blocked_by: null,
+        blocked_reason: null
+      })
+      .in('id', characterIds);
+
+    if (error) throw error;
+
+    // Log bulk admin action
+    await this.logAdminAction(
+      adminUser.user.id, 
+      characterIds[0], 
+      'bulk_character_unblocked', 
+      'character', 
+      { 
+        character_ids: characterIds,
+        bulk_count: characterIds.length
+      }
+    );
+  }
+
+  async bulkSetPendingReview(characterIds: string[], reason: string): Promise<void> {
+    const { data: adminUser } = await supabase.auth.getUser();
+    if (!adminUser.user) throw new Error('Not authenticated');
+
+    const { error } = await supabase
+      .from('scenario_characters')
+      .update({
+        status: 'pending_review'
+      })
+      .in('id', characterIds);
+
+    if (error) throw error;
+
+    // Log bulk admin action
+    await this.logAdminAction(
+      adminUser.user.id, 
+      characterIds[0], 
+      'bulk_character_pending_review', 
+      'character', 
+      { 
+        character_ids: characterIds,
+        bulk_count: characterIds.length,
+        reason 
+      }
+    );
+  }
+
   private async logAdminAction(
     adminId: string,
     targetId: string,

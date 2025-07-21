@@ -171,3 +171,74 @@ export const unblockScenario = async (scenarioId: string): Promise<void> => {
       reason: 'Content unblocked by admin'
     });
 };
+
+// Bulk operations
+export const bulkBlockScenarios = async (scenarioIds: string[], reason: string): Promise<void> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  const { error } = await supabase
+    .from('scenarios')
+    .update({
+      status: 'blocked',
+      blocked_reason: reason,
+      blocked_at: new Date().toISOString(),
+      blocked_by: user.id
+    })
+    .in('id', scenarioIds);
+
+  if (error) {
+    console.error('Error bulk blocking scenarios:', error);
+    throw error;
+  }
+
+  // Log the bulk admin action
+  await supabase
+    .from('admin_actions')
+    .insert({
+      admin_id: user.id,
+      action_type: 'bulk_content_blocked',
+      target_type: 'scenario',
+      target_id: scenarioIds[0], // Use first ID as representative
+      reason: reason,
+      details: { 
+        scenario_ids: scenarioIds,
+        bulk_count: scenarioIds.length
+      }
+    });
+};
+
+export const bulkUnblockScenarios = async (scenarioIds: string[]): Promise<void> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  const { error } = await supabase
+    .from('scenarios')
+    .update({
+      status: 'active',
+      blocked_reason: null,
+      blocked_at: null,
+      blocked_by: null
+    })
+    .in('id', scenarioIds);
+
+  if (error) {
+    console.error('Error bulk unblocking scenarios:', error);
+    throw error;
+  }
+
+  // Log the bulk admin action
+  await supabase
+    .from('admin_actions')
+    .insert({
+      admin_id: user.id,
+      action_type: 'bulk_content_unblocked',
+      target_type: 'scenario',
+      target_id: scenarioIds[0], // Use first ID as representative
+      reason: 'Bulk content unblocked by admin',
+      details: { 
+        scenario_ids: scenarioIds,
+        bulk_count: scenarioIds.length
+      }
+    });
+};

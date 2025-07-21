@@ -2,13 +2,18 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertTriangle, Shield, ShieldCheck, Eye, Users, MessageSquare, Star, Clock } from 'lucide-react';
-import { AdminCharacter } from '@/services/admin/adminCharacterService';
+import { AdminCharacter, adminCharacterService } from '@/services/admin/adminCharacterService';
+import { useBulkSelection } from '@/hooks/useBulkSelection';
+import { BulkActionToolbar, CHARACTER_BULK_ACTIONS } from './BulkActionToolbar';
+import { BulkConfirmationDialog } from './BulkConfirmationDialog';
+import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 
 interface CharacterModerationTableProps {
@@ -30,6 +35,23 @@ export const CharacterModerationTable: React.FC<CharacterModerationTableProps> =
   const [actionType, setActionType] = useState<'block' | 'unblock' | 'pending_review' | null>(null);
   const [reason, setReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [bulkAction, setBulkAction] = useState<'bulk-block' | 'bulk-unblock' | 'bulk-pending-review' | null>(null);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const { toast } = useToast();
+
+  const {
+    selectedItems,
+    isSelected,
+    isAllSelected,
+    isPartialSelected,
+    selectedCount,
+    totalCount,
+    toggleItem,
+    toggleAll,
+    clearSelection,
+    getSelectedIds
+  } = useBulkSelection(characters);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -84,6 +106,56 @@ export const CharacterModerationTable: React.FC<CharacterModerationTableProps> =
     }
   };
 
+  const handleBulkAction = (actionId: string) => {
+    if (actionId === 'bulk-block' || actionId === 'bulk-unblock' || actionId === 'bulk-pending-review') {
+      setBulkAction(actionId as 'bulk-block' | 'bulk-unblock' | 'bulk-pending-review');
+      setBulkDialogOpen(true);
+    }
+  };
+
+  const handleBulkConfirm = async (reason?: string) => {
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length === 0) return;
+
+    setBulkLoading(true);
+    try {
+      if (bulkAction === 'bulk-block' && reason) {
+        await adminCharacterService.bulkBlockCharacters(selectedIds, reason);
+        toast({
+          title: "Success",
+          description: `${selectedIds.length} character${selectedIds.length === 1 ? '' : 's'} blocked successfully`,
+        });
+      } else if (bulkAction === 'bulk-unblock') {
+        await adminCharacterService.bulkUnblockCharacters(selectedIds);
+        toast({
+          title: "Success",
+          description: `${selectedIds.length} character${selectedIds.length === 1 ? '' : 's'} unblocked successfully`,
+        });
+      } else if (bulkAction === 'bulk-pending-review' && reason) {
+        await adminCharacterService.bulkSetPendingReview(selectedIds, reason);
+        toast({
+          title: "Success",
+          description: `${selectedIds.length} character${selectedIds.length === 1 ? '' : 's'} marked for review successfully`,
+        });
+      }
+      
+      clearSelection();
+      setBulkDialogOpen(false);
+      setBulkAction(null);
+      
+      // Trigger a refresh by calling the parent's methods (this will reload the data)
+      window.location.reload();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to complete bulk operation",
+        variant: "destructive",
+      });
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
   const openActionDialog = (character: AdminCharacter, type: 'block' | 'unblock' | 'pending_review') => {
     setSelectedCharacter(character);
     setActionType(type);
@@ -102,8 +174,19 @@ export const CharacterModerationTable: React.FC<CharacterModerationTableProps> =
     );
   }
 
+  const selectedCharacters = characters.filter(character => isSelected(character.id));
+
   return (
     <>
+      <BulkActionToolbar
+        selectedCount={selectedCount}
+        totalCount={totalCount}
+        actions={CHARACTER_BULK_ACTIONS}
+        onAction={handleBulkAction}
+        onClearSelection={clearSelection}
+        loading={bulkLoading}
+      />
+
       <Card className="bg-slate-800 border-gray-700">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
@@ -115,6 +198,14 @@ export const CharacterModerationTable: React.FC<CharacterModerationTableProps> =
           <Table>
             <TableHeader>
               <TableRow className="border-gray-700 hover:bg-slate-700/50">
+                <TableHead className="text-slate-300 w-12">
+                  <Checkbox
+                    checked={isAllSelected}
+                    onCheckedChange={toggleAll}
+                    className="border-gray-600"
+                    data-indeterminate={isPartialSelected}
+                  />
+                </TableHead>
                 <TableHead className="text-slate-300">Character</TableHead>
                 <TableHead className="text-slate-300">Type</TableHead>
                 <TableHead className="text-slate-300">Creator</TableHead>
@@ -127,6 +218,13 @@ export const CharacterModerationTable: React.FC<CharacterModerationTableProps> =
             <TableBody>
               {characters.map((character) => (
                 <TableRow key={character.id} className="border-gray-700 hover:bg-slate-700/30">
+                  <TableCell>
+                    <Checkbox
+                      checked={isSelected(character.id)}
+                      onCheckedChange={() => toggleItem(character.id)}
+                      className="border-gray-600"
+                    />
+                  </TableCell>
                   <TableCell>
                     <div className="space-y-1">
                       <div className="font-medium text-white">{character.name}</div>
@@ -239,6 +337,17 @@ export const CharacterModerationTable: React.FC<CharacterModerationTableProps> =
           )}
         </CardContent>
       </Card>
+
+      <BulkConfirmationDialog
+        open={bulkDialogOpen}
+        onOpenChange={setBulkDialogOpen}
+        action={bulkAction}
+        selectedCount={selectedCount}
+        selectedItems={selectedCharacters.map(c => ({ id: c.id, name: c.name }))}
+        onConfirm={handleBulkConfirm}
+        loading={bulkLoading}
+        itemType="character"
+      />
 
       {/* Action Dialog */}
       <Dialog open={!!selectedCharacter && !!actionType} onOpenChange={() => {
