@@ -1,110 +1,114 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Users, FileText, Shield, Activity, AlertTriangle, CheckCircle } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-interface AdminStats {
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Shield, Users, FileText, AlertTriangle, TrendingUp, Activity } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { PageHeader } from '@/components/navigation/PageHeader';
+
+interface DashboardStats {
   totalUsers: number;
   totalScenarios: number;
-  totalCharacters: number;
   blockedScenarios: number;
-  blockedCharacters: number;
   recentActions: number;
 }
 
-export const AdminDashboard: React.FC = () => {
-  const [stats, setStats] = useState<AdminStats>({
+const AdminDashboard: React.FC = () => {
+  const navigate = useNavigate();
+  const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     totalScenarios: 0,
-    totalCharacters: 0,
     blockedScenarios: 0,
-    blockedCharacters: 0,
-    recentActions: 0,
+    recentActions: 0
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchStats();
+    const loadDashboardStats = async () => {
+      try {
+        const [usersResult, scenariosResult, blockedScenariosResult, actionsResult] = await Promise.all([
+          supabase.from('profiles').select('id', { count: 'exact', head: true }),
+          supabase.from('scenarios').select('id', { count: 'exact', head: true }),
+          supabase.from('scenarios').select('id', { count: 'exact', head: true }).eq('status', 'blocked'),
+          supabase.from('admin_actions').select('id', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+        ]);
+
+        setStats({
+          totalUsers: usersResult.count || 0,
+          totalScenarios: scenariosResult.count || 0,
+          blockedScenarios: blockedScenariosResult.count || 0,
+          recentActions: actionsResult.count || 0
+        });
+      } catch (error) {
+        console.error('Error loading dashboard stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardStats();
   }, []);
 
-  const fetchStats = async () => {
-    try {
-      setLoading(true);
-
-      // Fetch user count
-      const { count: userCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
-
-      // Fetch scenario stats
-      const { count: scenarioCount } = await supabase
-        .from('scenarios')
-        .select('*', { count: 'exact', head: true });
-
-      const { count: blockedScenarios } = await supabase
-        .from('scenarios')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'blocked');
-
-      // Fetch character stats
-      const { count: characterCount } = await supabase
-        .from('scenario_characters')
-        .select('*', { count: 'exact', head: true });
-
-      const { count: blockedCharacters } = await supabase
-        .from('scenario_characters')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'blocked');
-
-      // Fetch recent admin actions (last 24 hours)
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-
-      const { count: recentActions } = await supabase
-        .from('admin_actions')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', yesterday.toISOString());
-
-      setStats({
-        totalUsers: userCount || 0,
-        totalScenarios: scenarioCount || 0,
-        totalCharacters: characterCount || 0,
-        blockedScenarios: blockedScenarios || 0,
-        blockedCharacters: blockedCharacters || 0,
-        recentActions: recentActions || 0,
-      });
-    } catch (error) {
-      console.error('Error fetching admin stats:', error);
-    } finally {
-      setLoading(false);
+  const quickActions = [
+    {
+      title: 'User Management',
+      description: 'Manage user accounts and permissions',
+      icon: Users,
+      color: 'text-blue-400',
+      bgColor: 'bg-blue-500/10',
+      borderColor: 'border-blue-500/20',
+      action: () => navigate('/admin/users')
+    },
+    {
+      title: 'Scenario Moderation',
+      description: 'Review and moderate scenario content',
+      icon: FileText,
+      color: 'text-green-400',
+      bgColor: 'bg-green-500/10',
+      borderColor: 'border-green-500/20',
+      action: () => navigate('/admin/scenarios')
+    },
+    {
+      title: 'Character Moderation',
+      description: 'Review character content and behavior',
+      icon: Shield,
+      color: 'text-purple-400',
+      bgColor: 'bg-purple-500/10',
+      borderColor: 'border-purple-500/20',
+      action: () => console.log('Character moderation - coming soon')
+    },
+    {
+      title: 'Audit Trail',
+      description: 'View admin action logs and history',
+      icon: Activity,
+      color: 'text-amber-400',
+      bgColor: 'bg-amber-500/10',
+      borderColor: 'border-amber-500/20',
+      action: () => console.log('Audit trail - coming soon')
     }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400" />
-      </div>
-    );
-  }
+  ];
 
   return (
     <div className="min-h-screen bg-slate-900 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Admin Dashboard</h1>
-          <p className="text-slate-400">Monitor platform activity and manage content</p>
-        </div>
+      <div className="max-w-7xl mx-auto space-y-6">
+        <PageHeader
+          title="Admin Dashboard"
+          description="Manage and moderate your PlayScenarioAI platform"
+          icon={Shield}
+        />
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="bg-slate-800 border-gray-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-300">Total Users</CardTitle>
-              <Users className="h-4 w-4 text-cyan-400" />
+              <Users className="w-4 h-4 text-blue-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{stats.totalUsers}</div>
+              <div className="text-2xl font-bold text-white">
+                {loading ? '...' : stats.totalUsers.toLocaleString()}
+              </div>
               <p className="text-xs text-slate-400">Registered accounts</p>
             </CardContent>
           </Card>
@@ -112,101 +116,70 @@ export const AdminDashboard: React.FC = () => {
           <Card className="bg-slate-800 border-gray-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-300">Total Scenarios</CardTitle>
-              <FileText className="h-4 w-4 text-violet-400" />
+              <FileText className="w-4 h-4 text-green-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{stats.totalScenarios}</div>
+              <div className="text-2xl font-bold text-white">
+                {loading ? '...' : stats.totalScenarios.toLocaleString()}
+              </div>
               <p className="text-xs text-slate-400">Created scenarios</p>
             </CardContent>
           </Card>
 
           <Card className="bg-slate-800 border-gray-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-300">Total Characters</CardTitle>
-              <Users className="h-4 w-4 text-amber-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">{stats.totalCharacters}</div>
-              <p className="text-xs text-slate-400">AI characters created</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-800 border-gray-700">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-300">Blocked Content</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-red-400" />
+              <AlertTriangle className="w-4 h-4 text-red-400" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-white">
-                {stats.blockedScenarios + stats.blockedCharacters}
+                {loading ? '...' : stats.blockedScenarios.toLocaleString()}
               </div>
-              <p className="text-xs text-slate-400">
-                {stats.blockedScenarios} scenarios, {stats.blockedCharacters} characters
-              </p>
+              <p className="text-xs text-slate-400">Blocked scenarios</p>
             </CardContent>
           </Card>
 
           <Card className="bg-slate-800 border-gray-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-300">Recent Actions</CardTitle>
-              <Activity className="h-4 w-4 text-emerald-400" />
+              <TrendingUp className="w-4 h-4 text-purple-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{stats.recentActions}</div>
-              <p className="text-xs text-slate-400">Last 24 hours</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-800 border-gray-700">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-300">System Status</CardTitle>
-              <CheckCircle className="h-4 w-4 text-emerald-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-emerald-400">Healthy</div>
-              <p className="text-xs text-slate-400">All systems operational</p>
+              <div className="text-2xl font-bold text-white">
+                {loading ? '...' : stats.recentActions.toLocaleString()}
+              </div>
+              <p className="text-xs text-slate-400">Last 7 days</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <button
-            onClick={() => window.location.href = '/admin/users'}
-            className="p-4 bg-slate-800 hover:bg-slate-700 border border-gray-700 rounded-lg transition-colors text-left"
-          >
-            <Shield className="h-6 w-6 text-cyan-400 mb-2" />
-            <h3 className="font-semibold text-white mb-1">Manage Users</h3>
-            <p className="text-sm text-slate-400">View and moderate user accounts</p>
-          </button>
-
-          <button
-            onClick={() => window.location.href = '/admin/scenarios'}
-            className="p-4 bg-slate-800 hover:bg-slate-700 border border-gray-700 rounded-lg transition-colors text-left"
-          >
-            <FileText className="h-6 w-6 text-violet-400 mb-2" />
-            <h3 className="font-semibold text-white mb-1">Moderate Scenarios</h3>
-            <p className="text-sm text-slate-400">Review and manage scenario content</p>
-          </button>
-
-          <button
-            onClick={() => window.location.href = '/admin/characters'}
-            className="p-4 bg-slate-800 hover:bg-slate-700 border border-gray-700 rounded-lg transition-colors text-left"
-          >
-            <Users className="h-6 w-6 text-amber-400 mb-2" />
-            <h3 className="font-semibold text-white mb-1">Moderate Characters</h3>
-            <p className="text-sm text-slate-400">Review AI character configurations</p>
-          </button>
-
-          <button
-            onClick={() => window.location.href = '/admin/audit'}
-            className="p-4 bg-slate-800 hover:bg-slate-700 border border-gray-700 rounded-lg transition-colors text-left"
-          >
-            <Activity className="h-6 w-6 text-emerald-400 mb-2" />
-            <h3 className="font-semibold text-white mb-1">View Audit Log</h3>
-            <p className="text-sm text-slate-400">Track all administrative actions</p>
-          </button>
-        </div>
+        <Card className="bg-slate-800 border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-white">Quick Actions</CardTitle>
+            <CardDescription className="text-slate-400">
+              Common administrative tasks
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {quickActions.map((action, index) => (
+                <Button
+                  key={index}
+                  variant="ghost"
+                  className={`h-auto p-4 justify-start text-left ${action.bgColor} ${action.borderColor} border hover:bg-opacity-80`}
+                  onClick={action.action}
+                >
+                  <action.icon className={`w-6 h-6 ${action.color} mr-3`} />
+                  <div>
+                    <div className={`font-medium ${action.color}`}>{action.title}</div>
+                    <div className="text-sm text-slate-400">{action.description}</div>
+                  </div>
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

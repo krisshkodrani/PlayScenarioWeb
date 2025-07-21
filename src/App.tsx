@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AdminRoute } from "@/components/auth/AdminRoute";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserManagement from "./pages/admin/UserManagement";
+import ScenarioModeration from "./pages/admin/ScenarioModeration";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
@@ -106,6 +107,11 @@ const App = () => (
             <Route path="/admin/users" element={
               <AdminRoute>
                 <UserManagement />
+              </AdminRoute>
+            } />
+            <Route path="/admin/scenarios" element={
+              <AdminRoute>
+                <ScenarioModeration />
               </AdminRoute>
             } />
             
