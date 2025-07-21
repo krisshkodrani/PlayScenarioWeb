@@ -126,6 +126,36 @@ const AdminDashboard: React.FC = () => {
     }
   ];
 
+  const analyticsActions = [
+    {
+      title: 'Content Analytics',
+      description: 'Deep dive into content creation and performance',
+      icon: BarChart3,
+      color: 'text-cyan-400',
+      bgColor: 'bg-cyan-500/10',
+      borderColor: 'border-cyan-500/20',
+      action: () => navigate('/admin/analytics/content')
+    },
+    {
+      title: 'User Analytics',
+      description: 'User behavior and engagement insights',
+      icon: Users,
+      color: 'text-violet-400',
+      bgColor: 'bg-violet-500/10',
+      borderColor: 'border-violet-500/20',
+      action: () => navigate('/admin/analytics/users')
+    },
+    {
+      title: 'Moderation Analytics',
+      description: 'Track moderation effectiveness and trends',
+      icon: Shield,
+      color: 'text-orange-400',
+      bgColor: 'bg-orange-500/10',
+      borderColor: 'border-orange-500/20',
+      action: () => navigate('/admin/analytics/moderation')
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-slate-900 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -261,32 +291,64 @@ const AdminDashboard: React.FC = () => {
         )}
 
         {/* Quick Actions */}
-        <Card className="bg-slate-800 border-gray-700">
-          <CardHeader>
-            <CardTitle className="text-white">Quick Actions</CardTitle>
-            <CardDescription className="text-slate-400">
-              Common administrative tasks
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {quickActions.map((action, index) => (
-                <Button
-                  key={index}
-                  variant="ghost"
-                  className={`h-auto p-4 justify-start text-left ${action.bgColor} ${action.borderColor} border hover:bg-opacity-80`}
-                  onClick={action.action}
-                >
-                  <action.icon className={`w-6 h-6 ${action.color} mr-3`} />
-                  <div>
-                    <div className={`font-medium ${action.color}`}>{action.title}</div>
-                    <div className="text-sm text-slate-400">{action.description}</div>
-                  </div>
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="bg-slate-800 border-gray-700">
+            <CardHeader>
+              <CardTitle className="text-white">Quick Actions</CardTitle>
+              <CardDescription className="text-slate-400">
+                Common administrative tasks
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 gap-3">
+                {quickActions.map((action, index) => (
+                  <Button
+                    key={index}
+                    variant="ghost"
+                    className={`h-auto p-4 justify-start text-left ${action.bgColor} ${action.borderColor} border hover:bg-opacity-80`}
+                    onClick={action.action}
+                  >
+                    <action.icon className={`w-6 h-6 ${action.color} mr-3`} />
+                    <div>
+                      <div className={`font-medium ${action.color}`}>{action.title}</div>
+                      <div className="text-sm text-slate-400">{action.description}</div>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-slate-800 border-gray-700">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <PieChart className="w-5 h-5 text-cyan-400" />
+                Analytics Dashboard
+              </CardTitle>
+              <CardDescription className="text-slate-400">
+                Deep insights and detailed analytics
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 gap-3">
+                {analyticsActions.map((action, index) => (
+                  <Button
+                    key={index}
+                    variant="ghost"
+                    className={`h-auto p-4 justify-start text-left ${action.bgColor} ${action.borderColor} border hover:bg-opacity-80`}
+                    onClick={action.action}
+                  >
+                    <action.icon className={`w-6 h-6 ${action.color} mr-3`} />
+                    <div>
+                      <div className={`font-medium ${action.color}`}>{action.title}</div>
+                      <div className="text-sm text-slate-400">{action.description}</div>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

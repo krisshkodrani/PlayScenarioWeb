@@ -11,6 +11,9 @@ import UserManagement from "./pages/admin/UserManagement";
 import ScenarioModeration from "./pages/admin/ScenarioModeration";
 import CharacterModeration from "./pages/admin/CharacterModeration";
 import AuditTrail from "./pages/admin/AuditTrail";
+import ContentAnalytics from "./pages/admin/ContentAnalytics";
+import UserAnalytics from "./pages/admin/UserAnalytics";
+import ModerationAnalytics from "./pages/admin/ModerationAnalytics";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
@@ -123,6 +126,21 @@ const App = () => (
             <Route path="/admin/audit" element={
               <AdminRoute>
                 <AuditTrail />
+              </AdminRoute>
+            } />
+            <Route path="/admin/analytics/content" element={
+              <AdminRoute>
+                <ContentAnalytics />
+              </AdminRoute>
+            } />
+            <Route path="/admin/analytics/users" element={
+              <AdminRoute>
+                <UserAnalytics />
+              </AdminRoute>
+            } />
+            <Route path="/admin/analytics/moderation" element={
+              <AdminRoute>
+                <ModerationAnalytics />
               </AdminRoute>
             } />
             
