@@ -10,6 +10,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserManagement from "./pages/admin/UserManagement";
 import ScenarioModeration from "./pages/admin/ScenarioModeration";
 import CharacterModeration from "./pages/admin/CharacterModeration";
+import AuditTrail from "./pages/admin/AuditTrail";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
@@ -117,6 +118,11 @@ const App = () => (
             <Route path="/admin/characters" element={
               <AdminRoute>
                 <CharacterModeration />
+              </AdminRoute>
+            } />
+            <Route path="/admin/audit" element={
+              <AdminRoute>
+                <AuditTrail />
               </AdminRoute>
             } />
             

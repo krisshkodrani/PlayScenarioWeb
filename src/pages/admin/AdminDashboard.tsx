@@ -5,7 +5,6 @@ import { Shield, Users, FileText, AlertTriangle, TrendingUp, Activity } from 'lu
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import PageHeader from '@/components/navigation/PageHeader';
-import CharacterModeration from "./CharacterModeration";
 
 interface DashboardStats {
   totalUsers: number;
@@ -85,7 +84,7 @@ const AdminDashboard: React.FC = () => {
       color: 'text-amber-400',
       bgColor: 'bg-amber-500/10',
       borderColor: 'border-amber-500/20',
-      action: () => console.log('Audit trail - coming soon')
+      action: () => navigate('/admin/audit')
     }
   ];
 
