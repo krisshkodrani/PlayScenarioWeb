@@ -1,10 +1,17 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, Users, FileText, AlertTriangle, TrendingUp, Activity } from 'lucide-react';
+import { Shield, Users, FileText, AlertTriangle, TrendingUp, Activity, BarChart3, PieChart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import PageHeader from '@/components/navigation/PageHeader';
+import MetricCard from '@/components/admin/MetricCard';
+import TrendChart from '@/components/admin/charts/TrendChart';
+import DistributionChart from '@/components/admin/charts/DistributionChart';
+import ComparisonChart from '@/components/admin/charts/ComparisonChart';
+import TimePeriodSelector from '@/components/admin/TimePeriodSelector';
+import { adminAnalyticsService, PlatformMetrics, TimeSeriesData, ContentQualityMetrics, ModerationMetrics } from '@/services/admin/adminAnalyticsService';
 
 interface DashboardStats {
   totalUsers: number;
@@ -21,11 +28,19 @@ const AdminDashboard: React.FC = () => {
     blockedScenarios: 0,
     recentActions: 0
   });
+  const [platformMetrics, setPlatformMetrics] = useState<PlatformMetrics | null>(null);
+  const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesData[]>([]);
+  const [contentMetrics, setContentMetrics] = useState<ContentQualityMetrics | null>(null);
+  const [moderationMetrics, setModerationMetrics] = useState<ModerationMetrics | null>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState('30d');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadDashboardStats = async () => {
+    const loadDashboardData = async () => {
       try {
+        setLoading(true);
+        
+        // Load basic stats (existing functionality)
         const [usersResult, scenariosResult, blockedScenariosResult, actionsResult] = await Promise.all([
           supabase.from('profiles').select('id', { count: 'exact', head: true }),
           supabase.from('scenarios').select('id', { count: 'exact', head: true }),
@@ -39,15 +54,38 @@ const AdminDashboard: React.FC = () => {
           blockedScenarios: blockedScenariosResult.count || 0,
           recentActions: actionsResult.count || 0
         });
+
+        // Load analytics data
+        const [platform, timeSeries, content, moderation] = await Promise.all([
+          adminAnalyticsService.getPlatformMetrics(),
+          adminAnalyticsService.getTimeSeriesData(getDaysFromPeriod(selectedPeriod)),
+          adminAnalyticsService.getContentQualityMetrics(),
+          adminAnalyticsService.getModerationMetrics()
+        ]);
+
+        setPlatformMetrics(platform);
+        setTimeSeriesData(timeSeries);
+        setContentMetrics(content);
+        setModerationMetrics(moderation);
       } catch (error) {
-        console.error('Error loading dashboard stats:', error);
+        console.error('Error loading dashboard data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadDashboardStats();
-  }, []);
+    loadDashboardData();
+  }, [selectedPeriod]);
+
+  const getDaysFromPeriod = (period: string): number => {
+    switch (period) {
+      case '7d': return 7;
+      case '30d': return 30;
+      case '90d': return 90;
+      case '1y': return 365;
+      default: return 30;
+    }
+  };
 
   const quickActions = [
     {
@@ -94,62 +132,133 @@ const AdminDashboard: React.FC = () => {
         <PageHeader
           title="Admin Dashboard"
           subtitle="Manage and moderate your PlayScenarioAI platform"
+          actions={
+            <TimePeriodSelector
+              selectedPeriod={selectedPeriod}
+              onPeriodChange={setSelectedPeriod}
+            />
+          }
         />
 
-        {/* Stats Cards */}
+        {/* Enhanced Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <MetricCard
+            title="Total Users"
+            value={stats.totalUsers}
+            change={platformMetrics?.userGrowthRate}
+            icon={Users}
+            iconColor="text-blue-400"
+            iconBgColor="bg-blue-500/10"
+          />
+          <MetricCard
+            title="Total Scenarios"
+            value={stats.totalScenarios}
+            change={platformMetrics?.contentGrowthRate}
+            icon={FileText}
+            iconColor="text-green-400"
+            iconBgColor="bg-green-500/10"
+          />
+          <MetricCard
+            title="Blocked Content"
+            value={stats.blockedScenarios}
+            icon={AlertTriangle}
+            iconColor="text-red-400"
+            iconBgColor="bg-red-500/10"
+          />
+          <MetricCard
+            title="Recent Actions"
+            value={stats.recentActions}
+            changeLabel="last 7 days"
+            icon={TrendingUp}
+            iconColor="text-purple-400"
+            iconBgColor="bg-purple-500/10"
+          />
+        </div>
+
+        {/* Analytics Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Growth Trends */}
           <Card className="bg-slate-800 border-gray-700">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-300">Total Users</CardTitle>
-              <Users className="w-4 h-4 text-blue-400" />
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-cyan-400" />
+                Platform Growth Trends
+              </CardTitle>
+              <CardDescription className="text-slate-400">
+                User registration and content creation over time
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">
-                {loading ? '...' : stats.totalUsers.toLocaleString()}
-              </div>
-              <p className="text-xs text-slate-400">Registered accounts</p>
+              {!loading && timeSeriesData.length > 0 ? (
+                <TrendChart
+                  data={timeSeriesData}
+                  dataKeys={['users', 'scenarios', 'characters']}
+                  colors={['#22D3EE', '#10B981', '#8B5CF6']}
+                  height={300}
+                />
+              ) : (
+                <div className="h-[300px] flex items-center justify-center text-slate-400">
+                  {loading ? 'Loading...' : 'No data available'}
+                </div>
+              )}
             </CardContent>
           </Card>
 
+          {/* Content Quality Distribution */}
           <Card className="bg-slate-800 border-gray-700">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-300">Total Scenarios</CardTitle>
-              <FileText className="w-4 h-4 text-green-400" />
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <PieChart className="w-5 h-5 text-violet-400" />
+                Content Status Distribution
+              </CardTitle>
+              <CardDescription className="text-slate-400">
+                Breakdown of scenario and character statuses
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">
-                {loading ? '...' : stats.totalScenarios.toLocaleString()}
-              </div>
-              <p className="text-xs text-slate-400">Created scenarios</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-800 border-gray-700">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-300">Blocked Content</CardTitle>
-              <AlertTriangle className="w-4 h-4 text-red-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">
-                {loading ? '...' : stats.blockedScenarios.toLocaleString()}
-              </div>
-              <p className="text-xs text-slate-400">Blocked scenarios</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-800 border-gray-700">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-300">Recent Actions</CardTitle>
-              <TrendingUp className="w-4 h-4 text-purple-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">
-                {loading ? '...' : stats.recentActions.toLocaleString()}
-              </div>
-              <p className="text-xs text-slate-400">Last 7 days</p>
+              {contentMetrics ? (
+                <DistributionChart
+                  data={[
+                    { name: 'Active Scenarios', value: contentMetrics.activeScenarios, color: '#10B981' },
+                    { name: 'Blocked Scenarios', value: contentMetrics.blockedScenarios, color: '#EF4444' },
+                    { name: 'Total Likes', value: Math.floor(contentMetrics.totalLikes / 10), color: '#22D3EE' },
+                    { name: 'Bookmarks', value: Math.floor(contentMetrics.totalBookmarks / 5), color: '#FACC15' }
+                  ]}
+                  height={300}
+                  innerRadius={40}
+                />
+              ) : (
+                <div className="h-[300px] flex items-center justify-center text-slate-400">
+                  {loading ? 'Loading...' : 'No data available'}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
+
+        {/* Moderation Metrics */}
+        {moderationMetrics && (
+          <Card className="bg-slate-800 border-gray-700">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Shield className="w-5 h-5 text-amber-400" />
+                Moderation Overview
+              </CardTitle>
+              <CardDescription className="text-slate-400">
+                Content violations and resolution metrics
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ComparisonChart
+                data={moderationMetrics.violationsByType}
+                dataKeys={['count']}
+                colors={['#FACC15']}
+                height={250}
+                xAxisKey="type"
+              />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Quick Actions */}
         <Card className="bg-slate-800 border-gray-700">
