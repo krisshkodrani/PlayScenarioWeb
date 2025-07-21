@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_actions: {
+        Row: {
+          action_type: string
+          admin_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          reason: string | null
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          action_type: string
+          admin_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          reason?: string | null
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          action_type?: string
+          admin_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          reason?: string | null
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: []
+      }
       character_usage_stats: {
         Row: {
           average_rating: number | null
@@ -192,6 +225,7 @@ export type Database = {
           credits: number
           display_name: string | null
           id: string
+          is_super_admin: boolean | null
           profile_visibility: string | null
           show_email_publicly: boolean | null
           updated_at: string
@@ -203,6 +237,7 @@ export type Database = {
           credits?: number
           display_name?: string | null
           id: string
+          is_super_admin?: boolean | null
           profile_visibility?: string | null
           show_email_publicly?: boolean | null
           updated_at?: string
@@ -214,6 +249,7 @@ export type Database = {
           credits?: number
           display_name?: string | null
           id?: string
+          is_super_admin?: boolean | null
           profile_visibility?: string | null
           show_email_publicly?: boolean | null
           updated_at?: string
@@ -303,6 +339,9 @@ export type Database = {
       }
       scenario_characters: {
         Row: {
+          blocked_at: string | null
+          blocked_by: string | null
+          blocked_reason: string | null
           created_at: string
           creator_id: string
           expertise_keywords: string[]
@@ -312,8 +351,12 @@ export type Database = {
           personality: string
           role: string
           scenario_id: string
+          status: string | null
         }
         Insert: {
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
           created_at?: string
           creator_id: string
           expertise_keywords?: string[]
@@ -323,8 +366,12 @@ export type Database = {
           personality: string
           role?: string
           scenario_id: string
+          status?: string | null
         }
         Update: {
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
           created_at?: string
           creator_id?: string
           expertise_keywords?: string[]
@@ -334,6 +381,7 @@ export type Database = {
           personality?: string
           role?: string
           scenario_id?: string
+          status?: string | null
         }
         Relationships: [
           {
@@ -433,6 +481,9 @@ export type Database = {
       scenarios: {
         Row: {
           average_score: number | null
+          blocked_at: string | null
+          blocked_by: string | null
+          blocked_reason: string | null
           bookmark_count: number
           created_at: string
           creator_id: string
@@ -445,12 +496,16 @@ export type Database = {
           max_turns: number | null
           objectives: Json
           play_count: number
+          status: string | null
           title: string
           updated_at: string
           win_conditions: string | null
         }
         Insert: {
           average_score?: number | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
           bookmark_count?: number
           created_at?: string
           creator_id: string
@@ -463,12 +518,16 @@ export type Database = {
           max_turns?: number | null
           objectives?: Json
           play_count?: number
+          status?: string | null
           title: string
           updated_at?: string
           win_conditions?: string | null
         }
         Update: {
           average_score?: number | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
           bookmark_count?: number
           created_at?: string
           creator_id?: string
@@ -481,6 +540,7 @@ export type Database = {
           max_turns?: number | null
           objectives?: Json
           play_count?: number
+          status?: string | null
           title?: string
           updated_at?: string
           win_conditions?: string | null
@@ -576,6 +636,10 @@ export type Database = {
           reason: string
           instance_id?: string
         }
+        Returns: boolean
+      }
+      is_super_admin: {
+        Args: { user_id: string }
         Returns: boolean
       }
       log_rls_violation: {

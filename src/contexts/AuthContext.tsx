@@ -17,6 +17,8 @@ interface AuthContextType {
   resendVerificationEmail: (email: string) => Promise<{ error: string | null }>;
   isAuthenticated: boolean;
   initialized: boolean;
+  isAdmin: boolean;
+  profile: any | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,6 +36,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
+  const [profile, setProfile] = useState<any | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -45,6 +49,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Fetch user profile and admin status
+        if (session?.user) {
+          try {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+            
+            setProfile(profileData);
+            setIsAdmin(profileData?.is_super_admin || false);
+          } catch (error) {
+            logger.error('Auth', 'Failed to fetch user profile', error);
+            setProfile(null);
+            setIsAdmin(false);
+          }
+        } else {
+          setProfile(null);
+          setIsAdmin(false);
+        }
+        
         setLoading(false);
         setInitialized(true);
       }
@@ -160,6 +186,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     resendVerificationEmail,
     isAuthenticated: !!user,
     initialized,
+    isAdmin,
+    profile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
