@@ -50,6 +50,35 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, character, onSug
   const [feedbackType, setFeedbackType] = useState<'positive' | 'negative'>('positive');
   const isUser = message.message_type === 'user';
 
+  // Parse JSON message for AI responses
+  const parseAIMessage = (messageContent: string) => {
+    try {
+      const parsed = JSON.parse(messageContent);
+      return {
+        content: parsed.content || messageContent,
+        character_name: parsed.character_name,
+        internal_state: parsed.internal_state,
+        suggested_follow_ups: parsed.suggested_follow_ups,
+        metrics: parsed.metrics,
+        flags: parsed.flags
+      };
+    } catch {
+      // If not JSON, return as plain text
+      return {
+        content: messageContent,
+        character_name: null,
+        internal_state: null,
+        suggested_follow_ups: null,
+        metrics: null,
+        flags: null
+      };
+    }
+  };
+
+  const parsedData = !isUser ? parseAIMessage(message.message) : null;
+  const displayContent = isUser ? message.message : parsedData?.content || message.message;
+  const displayName = parsedData?.character_name || message.character_name || character?.name || 'AI';
+
   const handleFeedback = (type: 'positive' | 'negative') => {
     setFeedbackType(type);
     setShowFeedbackModal(true);
@@ -64,7 +93,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, character, onSug
     return (
       <div className="flex justify-end">
         <div className="bg-gradient-to-br from-cyan-500 to-violet-600 text-white px-4 py-3 rounded-2xl rounded-br-sm max-w-xs ml-auto shadow-lg">
-          <p className="text-sm md:text-base">{message.message}</p>
+          <p className="text-sm md:text-base">{displayContent}</p>
         </div>
       </div>
     );
@@ -73,37 +102,54 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, character, onSug
   return (
     <>
       <div className="flex items-start gap-3 group">
-        {/* Character Avatar - use character_name from message if available */}
+        {/* Character Avatar */}
         <CharacterAvatar 
           character={character} 
-          characterName={message.character_name}
+          characterName={displayName}
           size="sm" 
         />
         
         <div className="flex-1 relative">
-          {/* Character Name and Emotion */}
+          {/* Character Name and Status Indicators */}
           <div className="flex items-center gap-2 mb-1 ml-1">
-            <p className="text-xs text-slate-400">
-              {message.character_name || character?.name || 'AI'}
+            <p className="text-xs font-medium text-slate-300">
+              {displayName}
             </p>
-            {message.internal_state?.emotion && (
-              <EmotionIndicator emotion={message.internal_state.emotion} size="sm" />
+            {(parsedData?.internal_state?.emotion || message.internal_state?.emotion) && (
+              <EmotionIndicator 
+                emotion={parsedData?.internal_state?.emotion || message.internal_state?.emotion} 
+                size="sm" 
+              />
             )}
-            {message.metrics && (
-              <MetricsDisplay metrics={message.metrics} />
+            {(parsedData?.metrics || message.metrics) && (
+              <MetricsDisplay metrics={parsedData?.metrics || message.metrics} />
             )}
           </div>
           
           {/* Message Content */}
           <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur border border-slate-600 text-white px-4 py-3 rounded-2xl rounded-bl-sm max-w-xs mr-auto shadow-lg">
-            <p className="text-sm md:text-base">{message.message}</p>
+            <p className="text-sm md:text-base whitespace-pre-wrap">{displayContent}</p>
             
             {/* Character Thoughts - Expandable */}
-            {message.internal_state?.thoughts && (
-              <div className="mt-2 pt-2 border-t border-slate-600/50">
-                <p className="text-xs text-slate-400 italic">
-                  💭 {message.internal_state.thoughts}
-                </p>
+            {(parsedData?.internal_state?.thoughts || message.internal_state?.thoughts) && (
+              <details className="mt-3">
+                <summary className="text-xs text-slate-400 cursor-pointer hover:text-slate-300 transition-colors select-none">
+                  💭 Internal thoughts
+                </summary>
+                <div className="mt-2 pt-2 border-t border-slate-600/50">
+                  <p className="text-xs text-slate-400 italic">
+                    {parsedData?.internal_state?.thoughts || message.internal_state?.thoughts}
+                  </p>
+                </div>
+              </details>
+            )}
+
+            {/* Objective Impact */}
+            {(parsedData?.internal_state?.objective_impact || message.internal_state?.objective_impact) && (
+              <div className="mt-3 pt-2 border-t border-slate-600/50">
+                <div className="text-xs text-amber-400 bg-amber-400/10 border border-amber-400/30 rounded px-2 py-1">
+                  🎯 {parsedData?.internal_state?.objective_impact || message.internal_state?.objective_impact}
+                </div>
               </div>
             )}
           </div>
@@ -129,9 +175,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, character, onSug
       </div>
 
       {/* Follow-up Suggestions */}
-      {message.suggested_follow_ups && onSuggestionClick && (
+      {(parsedData?.suggested_follow_ups || message.suggested_follow_ups) && onSuggestionClick && (
         <FollowUpSuggestions 
-          suggestions={message.suggested_follow_ups}
+          suggestions={parsedData?.suggested_follow_ups || message.suggested_follow_ups}
           onSuggestionClick={onSuggestionClick}
         />
       )}

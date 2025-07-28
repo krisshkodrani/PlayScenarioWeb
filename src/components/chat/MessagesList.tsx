@@ -34,20 +34,42 @@ const MessagesList: React.FC<MessagesListProps> = ({
   getCharacterById,
   onSuggestionClick
 }) => {
+  // Helper function to get character for AI messages
+  const getMessageCharacter = (message: MockMessage) => {
+    if (message.message_type === 'user') return undefined;
+    
+    // Try to get character from parsed JSON message
+    try {
+      const parsed = JSON.parse(message.message);
+      if (parsed.character_name) {
+        // Find character by name or return undefined to use default avatar
+        const foundCharacter = getCharacterById(parsed.character_name.toLowerCase());
+        return foundCharacter;
+      }
+    } catch {
+      // Fall back to default character lookup if message isn't JSON
+    }
+    
+    return getCharacterById('spock') || undefined;
+  };
+
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex-1 overflow-y-auto p-4 space-y-6">
       {messages.map((message) => (
         <MessageBubble 
           key={message.id}
           message={message}
-          character={message.message_type === 'ai' ? getCharacterById('spock') : undefined}
+          character={getMessageCharacter(message)}
           onSuggestionClick={onSuggestionClick}
         />
       ))}
       
       {/* Typing Indicator */}
       {isTyping && (
-        <TypingIndicator character={typingCharacter} />
+        <TypingIndicator 
+          character={typingCharacter}
+          characterName={typingCharacter?.name}
+        />
       )}
     </div>
   );
