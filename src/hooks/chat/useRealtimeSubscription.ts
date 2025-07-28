@@ -38,7 +38,10 @@ export const useRealtimeSubscription = (
           
           newMessages.forEach(msg => {
             processedMessageIds.current.add(msg.id);
-            onNewMessage(msg);
+            onNewMessage({
+              ...msg,
+              message_type: msg.message_type as 'user_message' | 'ai_response' | 'system'
+            });
           });
           lastMessageCountRef.current = data.length;
         }
@@ -69,7 +72,11 @@ export const useRealtimeSubscription = (
           filter: `instance_id=eq.${instanceId}`
         },
         (payload) => {
-          const newMessage = payload.new as Message;
+          const rawMessage = payload.new as any;
+          const newMessage = {
+            ...rawMessage,
+            message_type: rawMessage.message_type as 'user_message' | 'ai_response' | 'system'
+          } as Message;
           
           // Only process if not already processed
           if (!processedMessageIds.current.has(newMessage.id)) {

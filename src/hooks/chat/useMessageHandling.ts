@@ -35,7 +35,7 @@ export const useMessageHandling = (
       if (error) throw error;
       
       // Deduplicate messages by content and turn_number for system messages
-      const deduplicatedData = data?.reduce((acc: Message[], current: Message) => {
+      const deduplicatedData = data?.reduce((acc: any[], current: any) => {
         // For system messages, check for duplicates by content and turn_number
         if (current.message_type === 'system') {
           const isDuplicate = acc.some(msg => 
@@ -44,13 +44,19 @@ export const useMessageHandling = (
             msg.turn_number === current.turn_number
           );
           if (!isDuplicate) {
-            acc.push(current);
+            acc.push({
+              ...current,
+              message_type: current.message_type as 'user_message' | 'ai_response' | 'system'
+            });
           }
         } else {
           // For non-system messages, check by ID
           const isDuplicate = acc.some(msg => msg.id === current.id);
           if (!isDuplicate) {
-            acc.push(current);
+            acc.push({
+              ...current,
+              message_type: current.message_type as 'user_message' | 'ai_response' | 'system'
+            });
           }
         }
         return acc;
@@ -202,7 +208,7 @@ export const useMessageHandling = (
             sender_name: data.character_name,
             message: data.content,
             turn_number: data.current_turn || data.turn_number || (instance?.current_turn || 0) + 1,
-            message_type: 'ai',
+            message_type: 'ai_response',
             timestamp: new Date().toISOString(),
             character_name: data.character_name,
             response_type: data.response_type,

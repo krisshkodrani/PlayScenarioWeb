@@ -4,7 +4,7 @@ export interface Message {
   sender_name: string;
   message: string;
   turn_number: number;
-  message_type: string;
+  message_type: 'user_message' | 'ai_response' | 'system';
   timestamp: string;
   // Enhanced fields for rich AI responses
   character_name?: string;

@@ -198,7 +198,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
           id: msg.id,
           sender_name: msg.sender_name,
           message: msg.message,
-          message_type: msg.message_type === 'user' ? 'user' : 'ai',
+          message_type: msg.message_type as 'user_message' | 'ai_response' | 'system',
           timestamp: new Date(msg.timestamp),
           character_name: msg.character_name,
           response_type: msg.response_type,

@@ -15,7 +15,7 @@ interface MockMessage {
   id: string;
   sender_name: string;
   message: string;
-  message_type: 'user' | 'ai';
+  message_type: 'user_message' | 'ai_response' | 'system';
   timestamp: Date;
 }
 
@@ -36,7 +36,7 @@ const MessagesList: React.FC<MessagesListProps> = ({
 }) => {
   // Helper function to get character for AI messages
   const getMessageCharacter = (message: MockMessage) => {
-    if (message.message_type === 'user') return undefined;
+    if (message.message_type === 'user_message') return undefined;
     
     // Try to get character from parsed JSON message
     try {

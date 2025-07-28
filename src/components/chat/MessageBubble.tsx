@@ -16,7 +16,7 @@ interface Message {
   id: string;
   sender_name: string;
   message: string;
-  message_type: 'user' | 'ai';
+  message_type: 'user_message' | 'ai_response' | 'system';
   character_id?: string;
   timestamp: Date;
   // Enhanced fields for rich AI responses
@@ -47,7 +47,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 }) => {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackType, setFeedbackType] = useState<'positive' | 'negative'>('positive');
-  const isUser = message.message_type === 'user';
+  const messageType = message.message_type;
 
   // Parse JSON message for AI responses
   const parseAIMessage = (messageContent: string) => {
@@ -73,8 +73,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       };
     }
   };
-  const parsedData = !isUser ? parseAIMessage(message.message) : null;
-  const displayContent = isUser ? message.message : parsedData?.content || message.message;
+  const parsedData = messageType === 'ai_response' ? parseAIMessage(message.message) : null;
+  const displayContent = messageType === 'user_message' ? message.message : parsedData?.content || message.message;
   const displayName = parsedData?.character_name || message.character_name || character?.name || 'AI';
   const handleFeedback = (type: 'positive' | 'negative') => {
     setFeedbackType(type);
@@ -88,7 +88,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     });
     // Here you would typically send the feedback to your backend
   };
-  if (isUser) {
+  // User message - right aligned
+  if (messageType === 'user_message') {
     return (
       <div className="flex justify-end w-full">
         <div className="bg-gradient-to-br from-cyan-500 to-violet-600 text-white px-4 py-3 rounded-2xl rounded-br-sm max-w-[80%] md:max-w-[80%] sm:max-w-[90%] shadow-lg">
@@ -97,6 +98,18 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       </div>
     );
   }
+
+  // System message - full width, centered
+  if (messageType === 'system') {
+    return (
+      <div className="w-full">
+        <div className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-200 px-6 py-4 rounded-xl mx-auto text-center shadow-lg shadow-amber-500/10">
+          <p className="text-sm md:text-base font-medium">{displayContent}</p>
+        </div>
+      </div>
+    );
+  }
+  // AI response - left aligned with avatar and features
   return (
     <div className="w-full">
       <div className="flex items-start gap-3 group max-w-[80%] md:max-w-[80%] sm:max-w-[90%]">
