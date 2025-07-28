@@ -53,14 +53,24 @@ const MessagesList: React.FC<MessagesListProps> = ({
     return getCharacterById('spock') || undefined;
   };
 
+  // Find the index of the last AI message
+  const lastAiMessageIndex = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].message_type === 'ai_response') {
+        return i;
+      }
+    }
+    return -1;
+  })();
+
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-6">
-      {messages.map((message) => (
+      {messages.map((message, index) => (
         <MessageBubble 
           key={message.id}
           message={message}
           character={getMessageCharacter(message)}
-          onSuggestionClick={onSuggestionClick}
+          onSuggestionClick={index === lastAiMessageIndex ? onSuggestionClick : undefined}
         />
       ))}
       
