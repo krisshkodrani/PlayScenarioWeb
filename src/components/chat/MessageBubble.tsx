@@ -130,14 +130,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               </details>
             )}
 
-            {/* Objective Impact */}
-            {(parsedData?.internal_state?.objective_impact || message.internal_state?.objective_impact) && (
-              <div className="mt-2 pt-2 border-t border-slate-600/50">
-                <p className="text-xs text-amber-400 font-medium">
-                  {parsedData?.internal_state?.objective_impact || message.internal_state?.objective_impact}
-                </p>
-              </div>
-            )}
           </div>
           
           {/* Feedback buttons - positioned at bottom left */}
