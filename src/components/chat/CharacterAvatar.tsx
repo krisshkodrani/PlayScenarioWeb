@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { getCharacterColor } from '../../utils/characterColors';
 
 interface Character {
   id: string;
@@ -10,11 +11,12 @@ interface Character {
 }
 
 interface CharacterAvatarProps {
-  character: Character;
+  character?: Character;
+  characterName?: string;
   size?: 'sm' | 'md' | 'lg';
 }
 
-const CharacterAvatar: React.FC<CharacterAvatarProps> = ({ character, size = 'md' }) => {
+const CharacterAvatar: React.FC<CharacterAvatarProps> = ({ character, characterName, size = 'md' }) => {
   const sizeClasses = {
     sm: 'w-8 h-8',
     md: 'w-10 h-10',
@@ -37,11 +39,15 @@ const CharacterAvatar: React.FC<CharacterAvatarProps> = ({ character, size = 'md
       .slice(0, 2);
   };
 
+  // Use either provided character or characterName
+  const name = character?.name || characterName || 'Unknown';
+  const avatarColor = character?.avatar_color || getCharacterColor(name);
+
   return (
     <div 
-      className={`${sizeClasses[size]} ${character.avatar_color} rounded-full flex items-center justify-center text-white font-semibold ${textSizeClasses[size]} shrink-0 shadow-lg`}
+      className={`${sizeClasses[size]} ${avatarColor} rounded-full flex items-center justify-center text-white font-semibold ${textSizeClasses[size]} shrink-0 shadow-lg`}
     >
-      {getInitials(character.name)}
+      {getInitials(name)}
     </div>
   );
 };

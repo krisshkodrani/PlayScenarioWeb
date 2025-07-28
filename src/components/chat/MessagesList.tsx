@@ -24,13 +24,15 @@ interface MessagesListProps {
   isTyping: boolean;
   typingCharacter: Character;
   getCharacterById: (id: string) => Character | undefined;
+  onSuggestionClick?: (suggestion: string) => void;
 }
 
 const MessagesList: React.FC<MessagesListProps> = ({
   messages,
   isTyping,
   typingCharacter,
-  getCharacterById
+  getCharacterById,
+  onSuggestionClick
 }) => {
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -39,6 +41,7 @@ const MessagesList: React.FC<MessagesListProps> = ({
           key={message.id}
           message={message}
           character={message.message_type === 'ai' ? getCharacterById('spock') : undefined}
+          onSuggestionClick={onSuggestionClick}
         />
       ))}
       

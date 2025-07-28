@@ -6,6 +6,26 @@ export interface Message {
   turn_number: number;
   message_type: string;
   timestamp: string;
+  // Enhanced fields for rich AI responses
+  character_name?: string;
+  response_type?: string;
+  internal_state?: {
+    emotion: string;
+    thoughts: string;
+    objective_impact: string;
+  };
+  suggested_follow_ups?: string[];
+  metrics?: {
+    authenticity: number;
+    relevance: number;
+    engagement: number;
+    consistency: number;
+  };
+  flags?: {
+    requires_other_character: boolean;
+    advances_objective: boolean;
+    reveals_information: boolean;
+  };
 }
 
 export interface ScenarioInstance {

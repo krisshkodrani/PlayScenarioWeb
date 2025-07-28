@@ -186,15 +186,38 @@ export const useMessageHandling = (
           throw new Error(`API request failed: ${res.status} ${res.statusText}`);
         }
 
-        // Parse response to retrieve updated turn number so outer hooks stay in sync
-        const data: { turn_number: number } = await res.json();
+        // Parse response to retrieve updated turn number and character data
+        const data = await res.json();
 
         logger.info('Chat', 'Message sent successfully', {
           instanceId,
-          newTurn: data.turn_number
+          newTurn: data.turn_number || data.current_turn
         });
 
-        return { current_turn: data.turn_number };
+        // Check if response contains rich character data
+        if (data.character_name && data.content) {
+          // Create enhanced message with character data
+          const enhancedMessage: Message = {
+            id: `ai-${Date.now()}`,
+            sender_name: data.character_name,
+            message: data.content,
+            turn_number: data.current_turn || data.turn_number || (instance?.current_turn || 0) + 1,
+            message_type: 'ai',
+            timestamp: new Date().toISOString(),
+            character_name: data.character_name,
+            response_type: data.response_type,
+            internal_state: data.internal_state,
+            suggested_follow_ups: data.suggested_follow_ups,
+            metrics: data.metrics,
+            flags: data.flags
+          };
+
+          // Add the enhanced message immediately
+          addMessage(enhancedMessage);
+        }
+
+        return { current_turn: data.current_turn || data.turn_number };
+      
       } catch (err) {
         logger.error('Chat', 'Failed to send message', err, { instanceId });
         toast({

@@ -103,6 +103,17 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     await sendMessage(messageContent);
   };
 
+  const handleSuggestionClick = (suggestion: string) => {
+    setInputValue(suggestion);
+    // Auto-send the suggestion after a brief delay
+    setTimeout(async () => {
+      if (suggestion.trim()) {
+        setInputValue('');
+        await sendMessage(suggestion);
+      }
+    }, 100);
+  };
+
   const toggleObjectiveDrawer = () => {
     setShowObjectiveDrawer(!showObjectiveDrawer);
     if (showCharacterDrawer) {
@@ -188,7 +199,13 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
           sender_name: msg.sender_name,
           message: msg.message,
           message_type: msg.message_type === 'user' ? 'user' : 'ai',
-          timestamp: new Date(msg.timestamp)
+          timestamp: new Date(msg.timestamp),
+          character_name: msg.character_name,
+          response_type: msg.response_type,
+          internal_state: msg.internal_state,
+          suggested_follow_ups: msg.suggested_follow_ups,
+          metrics: msg.metrics,
+          flags: msg.flags
         }))}
         isTyping={isTyping}
         typingCharacter={characters[0] || {
@@ -199,6 +216,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
           personality: 'Helpful'
         }}
         getCharacterById={getCharacterById}
+        onSuggestionClick={handleSuggestionClick}
       />
       
       <div ref={messagesEndRef} />
