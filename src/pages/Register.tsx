@@ -105,11 +105,11 @@ const Register: React.FC = () => {
     setErrors({});
 
     try {
-      const { error } = await signUp({
-        email: formData.email,
-        password: formData.password,
-        username: formData.username || undefined
-      });
+      const { error } = await signUp(
+        formData.email,
+        formData.password,
+        formData.username || undefined
+      );
 
       if (error) {
         setErrors({ general: error });
@@ -129,12 +129,11 @@ const Register: React.FC = () => {
   const handleResendVerification = async () => {
     setLoading(true);
     try {
-      const { signUp } = useAuth();
-      await signUp({
-        email: registeredEmail,
-        password: formData.password,
-        username: formData.username || undefined
-      });
+      await signUp(
+        registeredEmail,
+        formData.password,
+        formData.username || undefined
+      );
     } catch (error) {
       setErrors({ 
         general: 'Failed to resend verification email. Please try again.' 

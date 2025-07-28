@@ -11,7 +11,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ data?: any; error: string | null }>;
-  signUp: (email: string, password: string, username: string) => Promise<{ data?: any; error: string | null }>;
+  signUp: (email: string, password: string, username?: string) => Promise<{ data?: any; error: string | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
   resendVerificationEmail: (email: string) => Promise<{ error: string | null }>;
@@ -79,13 +79,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (credentials: RegisterCredentials) => {
+  const signUp = async (email: string, password: string, username?: string) => {
     try {
       logger.debug('Auth', 'Attempting user registration', { 
-        email: credentials.email, 
-        username: credentials.username 
+        email, 
+        username 
       });
       
+      const credentials: RegisterCredentials = { email, password, username };
       const { user, error } = await authService.signUp(credentials);
 
       if (error) {
