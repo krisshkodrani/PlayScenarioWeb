@@ -57,7 +57,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               : 'bg-amber-500/20 text-amber-400 border-amber-400 hover:bg-amber-500/30 focus:ring-amber-400'
           }`}
           aria-label={`Switch to ${mode === 'focused' ? 'unfocused' : 'focused'} mode (Ctrl+T)`}
-          title={`${mode === 'focused' ? 'FOCUSED' : 'UNFOCUSED'} mode (Ctrl+T to toggle)`}
+          title={`${mode === 'focused' ? 'CHAT' : 'ACTION'} mode (Ctrl+T to toggle)`}
         >
           {mode === 'focused' ? (
             <MessageCircle className="w-5 h-5" />
