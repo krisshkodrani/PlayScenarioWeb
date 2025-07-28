@@ -121,9 +121,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, character, onSug
                 size="sm" 
               />
             )}
-            {(parsedData?.metrics || message.metrics) && (
-              <MetricsDisplay metrics={parsedData?.metrics || message.metrics} />
-            )}
           </div>
           
           {/* Message Content */}
