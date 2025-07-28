@@ -114,17 +114,6 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
 
   const handleSuggestionClick = (suggestion: string) => {
     setInputValue(suggestion);
-    // Auto-send the suggestion after a brief delay
-    setTimeout(async () => {
-      if (suggestion.trim()) {
-        setInputValue('');
-        // Add prefix based on mode and map focus state to message mode for suggestions
-        const prefix = chatMode === 'focused' ? 'CHAT ' : 'ACTION ';
-        const messageContent = prefix + suggestion;
-        const messageMode = chatMode === 'focused' ? 'chat' : 'action';
-        await sendMessage(messageContent, messageMode);
-      }
-    }, 100);
   };
 
   const toggleObjectiveDrawer = () => {
