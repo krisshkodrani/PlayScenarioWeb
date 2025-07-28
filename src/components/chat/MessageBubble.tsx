@@ -116,20 +116,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur border border-slate-600 text-white px-4 py-3 rounded-2xl rounded-bl-sm shadow-lg">
             <p className="text-sm md:text-base whitespace-pre-wrap">{displayContent}</p>
             
-            {/* Character Thoughts - Expandable */}
-            {(parsedData?.internal_state?.thoughts || message.internal_state?.thoughts) && (
-              <details className="mt-3">
-                <summary className="text-xs text-cyan-400 cursor-pointer hover:text-cyan-300 transition-colors">
-                  Character thoughts
-                </summary>
-                <div className="mt-2 pt-2 border-t border-slate-600/50">
-                  <p className="text-xs text-slate-400 italic">
-                    {parsedData?.internal_state?.thoughts || message.internal_state?.thoughts}
-                  </p>
-                </div>
-              </details>
-            )}
-
           </div>
           
           {/* Feedback buttons - positioned at bottom left */}
