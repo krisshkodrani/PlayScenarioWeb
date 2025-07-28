@@ -11,9 +11,15 @@ export const useScenarioData = (instanceId: string, scenarioId: string) => {
 
   // Fetch scenario instance and validate ownership
   const fetchInstance = useCallback(async () => {
-    if (!user || !instanceId) return;
+    console.log('🔍 fetchInstance: Starting', { user: !!user, userId: user?.id, instanceId });
+    
+    if (!user || !instanceId) {
+      console.log('❌ fetchInstance: Missing user or instanceId');
+      return;
+    }
 
     try {
+      console.log('📡 fetchInstance: Making Supabase query');
       const { data: instanceData, error: instanceError } = await supabase
         .from('scenario_instances')
         .select('*')
@@ -21,29 +27,60 @@ export const useScenarioData = (instanceId: string, scenarioId: string) => {
         .eq('user_id', user.id)
         .single();
 
-      if (instanceError) throw instanceError;
-      if (!instanceData) throw new Error('Instance not found or access denied');
+      console.log('📡 fetchInstance: Query result', { 
+        data: !!instanceData, 
+        error: instanceError?.message,
+        instanceData: instanceData 
+      });
 
+      if (instanceError) {
+        console.error('❌ fetchInstance: Supabase error:', instanceError);
+        throw instanceError;
+      }
+      if (!instanceData) {
+        console.error('❌ fetchInstance: No data returned');
+        throw new Error('Instance not found or access denied');
+      }
+
+      console.log('✅ fetchInstance: Setting instance data', instanceData);
       setInstance(instanceData);
     } catch (err) {
-      console.error('Error fetching instance:', err);
+      console.error('❌ fetchInstance: Error:', err);
       throw err;
     }
   }, [user, instanceId]);
 
   // Fetch scenario data
   const fetchScenario = useCallback(async () => {
-    if (!scenarioId) return;
+    console.log('🔍 fetchScenario: Starting', { scenarioId });
+    
+    if (!scenarioId) {
+      console.log('❌ fetchScenario: Missing scenarioId');
+      return;
+    }
 
     try {
+      console.log('📡 fetchScenario: Making Supabase query');
       const { data: scenarioData, error: scenarioError } = await supabase
         .from('scenarios')
         .select('id, title, description, initial_scene_prompt, objectives, max_turns')
         .eq('id', scenarioId)
         .single();
 
-      if (scenarioError) throw scenarioError;
-      if (!scenarioData) throw new Error('Scenario not found');
+      console.log('📡 fetchScenario: Query result', { 
+        data: !!scenarioData, 
+        error: scenarioError?.message,
+        scenarioData: scenarioData 
+      });
+
+      if (scenarioError) {
+        console.error('❌ fetchScenario: Supabase error:', scenarioError);
+        throw scenarioError;
+      }
+      if (!scenarioData) {
+        console.error('❌ fetchScenario: No data returned');
+        throw new Error('Scenario not found');
+      }
 
       // Convert the scenario data to match our interface, ensuring objectives is an array
       const formattedScenario: Scenario = {
@@ -55,9 +92,10 @@ export const useScenarioData = (instanceId: string, scenarioId: string) => {
         max_turns: scenarioData.max_turns
       };
 
+      console.log('✅ fetchScenario: Setting scenario data', formattedScenario);
       setScenario(formattedScenario);
     } catch (err) {
-      console.error('Error fetching scenario:', err);
+      console.error('❌ fetchScenario: Error:', err);
       throw err;
     }
   }, [scenarioId]);
