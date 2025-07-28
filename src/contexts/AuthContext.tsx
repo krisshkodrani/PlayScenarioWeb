@@ -40,8 +40,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!isMounted) return;
+
         logger.info('Auth', `Auth state changed: ${event}`, { 
           userId: session?.user?.id,
           email: session?.user?.email 
@@ -50,22 +54,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Fetch user profile and admin status
+        // Fetch user profile and admin status with better error handling
         if (session?.user) {
-          try {
-            const { data: profileData } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
+          // Use setTimeout to defer Supabase calls and prevent auth deadlocks
+          setTimeout(async () => {
+            if (!isMounted) return;
             
-            setProfile(profileData);
-            setIsAdmin(profileData?.is_super_admin || false);
-          } catch (error) {
-            logger.error('Auth', 'Failed to fetch user profile', error);
-            setProfile(null);
-            setIsAdmin(false);
-          }
+            try {
+              const { data: profileData, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .maybeSingle();
+              
+              if (error) {
+                logger.error('Auth', 'Failed to fetch user profile', error);
+              }
+              
+              if (isMounted) {
+                setProfile(profileData || null);
+                setIsAdmin(profileData?.is_super_admin || false);
+              }
+            } catch (error) {
+              logger.error('Auth', 'Failed to fetch user profile', error);
+              if (isMounted) {
+                setProfile(null);
+                setIsAdmin(false);
+              }
+            }
+          }, 0);
         } else {
           setProfile(null);
           setIsAdmin(false);
@@ -76,7 +93,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    return () => subscription.unsubscribe();
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (isMounted) {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+        setInitialized(true);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, username?: string) => {
