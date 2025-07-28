@@ -98,7 +98,9 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isTyping) return;
 
-    const messageContent = inputValue;
+    // Add prefix based on mode
+    const prefix = chatMode === 'focused' ? 'CHAT ' : 'ACTION ';
+    const messageContent = prefix + inputValue;
     setInputValue('');
     
     // Map focus states to message modes
@@ -116,9 +118,11 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     setTimeout(async () => {
       if (suggestion.trim()) {
         setInputValue('');
-        // Map focus state to message mode for suggestions
+        // Add prefix based on mode and map focus state to message mode for suggestions
+        const prefix = chatMode === 'focused' ? 'CHAT ' : 'ACTION ';
+        const messageContent = prefix + suggestion;
         const messageMode = chatMode === 'focused' ? 'chat' : 'action';
-        await sendMessage(suggestion, messageMode);
+        await sendMessage(messageContent, messageMode);
       }
     }, 100);
   };

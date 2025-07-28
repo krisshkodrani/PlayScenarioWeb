@@ -51,6 +51,17 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const messageType = message.message_type;
 
   // Parse JSON message for AI responses
+  // Function to remove CHAT/ACTION prefix from user messages for display
+  const removeMessagePrefix = (messageContent: string): string => {
+    if (messageContent.startsWith('CHAT ')) {
+      return messageContent.substring(5);
+    }
+    if (messageContent.startsWith('ACTION ')) {
+      return messageContent.substring(7);
+    }
+    return messageContent;
+  };
+
   const parseAIMessage = (messageContent: string) => {
     try {
       const parsed = JSON.parse(messageContent);
@@ -75,7 +86,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     }
   };
   const parsedData = messageType === 'ai_response' ? parseAIMessage(message.message) : null;
-  const displayContent = messageType === 'user_message' ? message.message : parsedData?.content || message.message;
+  const displayContent = messageType === 'user_message' 
+    ? removeMessagePrefix(message.message) 
+    : parsedData?.content || message.message;
   const displayName = parsedData?.character_name || message.character_name || character?.name || 'AI';
   const handleFeedback = (type: 'positive' | 'negative') => {
     setFeedbackType(type);
