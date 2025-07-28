@@ -21,22 +21,12 @@ export const useScenarioData = (instanceId: string, scenarioId: string) => {
     try {
       console.log('📡 fetchInstance: Making Supabase query');
       
-      // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Query timeout')), 10000)
-      );
-      
-      const queryPromise = supabase
+      const { data: instanceData, error: instanceError } = await supabase
         .from('scenario_instances')
         .select('*')
         .eq('id', instanceId)
         .eq('user_id', user.id)
         .maybeSingle();
-
-      const { data: instanceData, error: instanceError } = await Promise.race([
-        queryPromise,
-        timeoutPromise
-      ]) as any;
 
       console.log('📡 fetchInstance: Query result', { 
         data: !!instanceData, 
@@ -73,21 +63,11 @@ export const useScenarioData = (instanceId: string, scenarioId: string) => {
     try {
       console.log('📡 fetchScenario: Making Supabase query');
       
-      // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Query timeout')), 10000)
-      );
-      
-      const queryPromise = supabase
+      const { data: scenarioData, error: scenarioError } = await supabase
         .from('scenarios')
         .select('id, title, description, initial_scene_prompt, objectives, max_turns')
         .eq('id', scenarioId)
         .maybeSingle();
-
-      const { data: scenarioData, error: scenarioError } = await Promise.race([
-        queryPromise,
-        timeoutPromise
-      ]) as any;
 
       console.log('📡 fetchScenario: Query result', { 
         data: !!scenarioData, 
