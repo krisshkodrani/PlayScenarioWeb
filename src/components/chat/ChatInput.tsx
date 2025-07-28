@@ -51,7 +51,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         {/* Mode Toggle Button */}
         <button
           onClick={onModeToggle}
-          className={`min-w-[90px] min-h-[44px] font-medium text-sm transition-all duration-200 rounded-lg border-2 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 ${
+          className={`min-w-[44px] min-h-[44px] font-medium text-sm transition-all duration-200 rounded-lg border-2 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 ${
             mode === 'focused'
               ? 'bg-cyan-500/20 text-cyan-400 border-cyan-400 hover:bg-cyan-500/30 focus:ring-cyan-400'
               : 'bg-amber-500/20 text-amber-400 border-amber-400 hover:bg-amber-500/30 focus:ring-amber-400'
@@ -60,11 +60,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
           title={`${mode === 'focused' ? 'FOCUSED' : 'UNFOCUSED'} mode (Ctrl+T to toggle)`}
         >
           {mode === 'focused' ? (
-            <MessageCircle className="w-4 h-4" />
+            <MessageCircle className="w-5 h-5" />
           ) : (
-            <Zap className="w-4 h-4" />
+            <Zap className="w-5 h-5" />
           )}
-          <span>{mode === 'focused' ? 'FOCUSED' : 'UNFOCUSED'}</span>
         </button>
         
         {/* Send Button */}
