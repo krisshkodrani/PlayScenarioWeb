@@ -25,7 +25,7 @@ export const useScenarioData = (instanceId: string, scenarioId: string) => {
         .select('*')
         .eq('id', instanceId)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       console.log('📡 fetchInstance: Query result', { 
         data: !!instanceData, 
@@ -65,7 +65,7 @@ export const useScenarioData = (instanceId: string, scenarioId: string) => {
         .from('scenarios')
         .select('id, title, description, initial_scene_prompt, objectives, max_turns')
         .eq('id', scenarioId)
-        .single();
+        .maybeSingle();
 
       console.log('📡 fetchScenario: Query result', { 
         data: !!scenarioData, 
