@@ -1,7 +1,6 @@
 
 import React, { KeyboardEvent } from 'react';
 import { Send, MessageCircle, Zap } from 'lucide-react';
-import { Toggle } from '@/components/ui/toggle';
 
 interface ChatInputProps {
   value: string;
@@ -50,26 +49,23 @@ const ChatInput: React.FC<ChatInputProps> = ({
         />
         
         {/* Mode Toggle Button */}
-        <Toggle
-          pressed={mode === 'action'}
-          onPressedChange={onModeToggle}
-          className={`min-w-[80px] min-h-[44px] font-medium text-sm transition-all duration-200 ${
+        <button
+          onClick={onModeToggle}
+          className={`min-w-[80px] min-h-[44px] font-medium text-sm transition-all duration-200 rounded-lg border-2 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 ${
             mode === 'chat'
-              ? 'bg-cyan-500/20 text-cyan-400 border-cyan-400 hover:bg-cyan-500/30 data-[state=off]:bg-cyan-500/20'
-              : 'bg-amber-500/20 text-amber-400 border-amber-400 hover:bg-amber-500/30 data-[state=on]:bg-amber-500/20'
+              ? 'bg-cyan-500/20 text-cyan-400 border-cyan-400 hover:bg-cyan-500/30 focus:ring-cyan-400'
+              : 'bg-amber-500/20 text-amber-400 border-amber-400 hover:bg-amber-500/30 focus:ring-amber-400'
           }`}
           aria-label={`Switch to ${mode === 'chat' ? 'action' : 'chat'} mode (Ctrl+T)`}
           title={`${mode === 'chat' ? 'CHAT' : 'ACTION'} mode (Ctrl+T to toggle)`}
         >
-          <div className="flex items-center gap-2">
-            {mode === 'chat' ? (
-              <MessageCircle className="w-4 h-4" />
-            ) : (
-              <Zap className="w-4 h-4" />
-            )}
-            <span>{mode === 'chat' ? 'CHAT' : 'ACTION'}</span>
-          </div>
-        </Toggle>
+          {mode === 'chat' ? (
+            <MessageCircle className="w-4 h-4" />
+          ) : (
+            <Zap className="w-4 h-4" />
+          )}
+          <span>{mode === 'chat' ? 'CHAT' : 'ACTION'}</span>
+        </button>
         
         {/* Send Button */}
         <button 
