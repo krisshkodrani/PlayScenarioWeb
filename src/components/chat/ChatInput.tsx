@@ -7,7 +7,7 @@ interface ChatInputProps {
   onChange: (value: string) => void;
   onSend: () => void;
   disabled?: boolean;
-  mode: 'chat' | 'action';
+  mode: 'focused' | 'unfocused';
   onModeToggle: () => void;
 }
 
@@ -41,30 +41,30 @@ const ChatInput: React.FC<ChatInputProps> = ({
           onKeyPress={handleKeyPress}
           disabled={disabled}
           className={`flex-1 bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur border rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-1 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${
-            mode === 'chat' 
+            mode === 'focused' 
               ? 'border-slate-600 focus:border-cyan-400 focus:ring-cyan-400' 
               : 'border-amber-600/50 focus:border-amber-400 focus:ring-amber-400'
           }`}
-          placeholder={mode === 'chat' ? "Type your response..." : "Enter an action or command..."}
+          placeholder={mode === 'focused' ? "Type your response..." : "Enter an action or command..."}
         />
         
         {/* Mode Toggle Button */}
         <button
           onClick={onModeToggle}
-          className={`min-w-[80px] min-h-[44px] font-medium text-sm transition-all duration-200 rounded-lg border-2 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 ${
-            mode === 'chat'
+          className={`min-w-[90px] min-h-[44px] font-medium text-sm transition-all duration-200 rounded-lg border-2 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 ${
+            mode === 'focused'
               ? 'bg-cyan-500/20 text-cyan-400 border-cyan-400 hover:bg-cyan-500/30 focus:ring-cyan-400'
               : 'bg-amber-500/20 text-amber-400 border-amber-400 hover:bg-amber-500/30 focus:ring-amber-400'
           }`}
-          aria-label={`Switch to ${mode === 'chat' ? 'action' : 'chat'} mode (Ctrl+T)`}
-          title={`${mode === 'chat' ? 'CHAT' : 'ACTION'} mode (Ctrl+T to toggle)`}
+          aria-label={`Switch to ${mode === 'focused' ? 'unfocused' : 'focused'} mode (Ctrl+T)`}
+          title={`${mode === 'focused' ? 'FOCUSED' : 'UNFOCUSED'} mode (Ctrl+T to toggle)`}
         >
-          {mode === 'chat' ? (
+          {mode === 'focused' ? (
             <MessageCircle className="w-4 h-4" />
           ) : (
             <Zap className="w-4 h-4" />
           )}
-          <span>{mode === 'chat' ? 'CHAT' : 'ACTION'}</span>
+          <span>{mode === 'focused' ? 'FOCUSED' : 'UNFOCUSED'}</span>
         </button>
         
         {/* Send Button */}

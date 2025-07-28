@@ -26,7 +26,7 @@ interface CoreChatProps {
 const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
   const { user } = useAuth();
   const [inputValue, setInputValue] = useState('');
-  const [chatMode, setChatMode] = useState<'chat' | 'action'>('chat');
+  const [chatMode, setChatMode] = useState<'focused' | 'unfocused'>('unfocused');
   const [showObjectiveDrawer, setShowObjectiveDrawer] = useState(false);
   const [showCharacterDrawer, setShowCharacterDrawer] = useState(false);
   const [hasObjectiveUpdates, setHasObjectiveUpdates] = useState(false);
@@ -101,11 +101,13 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     const messageContent = inputValue;
     setInputValue('');
     
-    await sendMessage(messageContent, chatMode);
+    // Map focus states to message modes
+    const messageMode = chatMode === 'focused' ? 'chat' : 'action';
+    await sendMessage(messageContent, messageMode);
   };
 
   const toggleMode = () => {
-    setChatMode(prev => prev === 'chat' ? 'action' : 'chat');
+    setChatMode(prev => prev === 'focused' ? 'unfocused' : 'focused');
   };
 
   const handleSuggestionClick = (suggestion: string) => {
@@ -114,7 +116,9 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     setTimeout(async () => {
       if (suggestion.trim()) {
         setInputValue('');
-        await sendMessage(suggestion, chatMode);
+        // Map focus state to message mode for suggestions
+        const messageMode = chatMode === 'focused' ? 'chat' : 'action';
+        await sendMessage(suggestion, messageMode);
       }
     }, 100);
   };
