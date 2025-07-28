@@ -40,7 +40,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           onChange={(e) => onChange(e.target.value)}
           onKeyPress={handleKeyPress}
           disabled={disabled}
-          className={`flex-1 bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur border rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-1 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${
+          className={`flex-1 bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur border rounded-lg px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${
             mode === 'focused' 
               ? 'border-slate-600 focus:border-cyan-400 focus:ring-cyan-400' 
               : 'border-amber-600/50 focus:border-amber-400 focus:ring-amber-400'
