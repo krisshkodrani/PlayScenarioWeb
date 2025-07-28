@@ -6,6 +6,7 @@ export interface Message {
   turn_number: number;
   message_type: 'user_message' | 'ai_response' | 'system';
   timestamp: string;
+  mode?: 'chat' | 'action'; // New field for message mode
   // Enhanced fields for rich AI responses
   character_name?: string;
   response_type?: string;

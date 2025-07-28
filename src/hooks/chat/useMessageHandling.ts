@@ -142,7 +142,7 @@ export const useMessageHandling = (
 
   // Send a message
   const sendMessage = useCallback(
-    async (messageContent: string) => {
+    async (messageContent: string, mode: 'chat' | 'action' = 'chat') => {
       if (!instance || !user) return;
 
       try {
@@ -159,13 +159,15 @@ export const useMessageHandling = (
         const payload = {
           scenario_instance_id: instanceId,
           user_message: messageContent,
+          message_mode: mode,
           conversation_history: messages.slice(-10).map(
-            ({ id, sender_name, message, message_type, timestamp }) => ({
+            ({ id, sender_name, message, message_type, timestamp, mode: msgMode }) => ({
               id,
               sender_name,
               message,
               message_type,
-              timestamp
+              timestamp,
+              mode: msgMode
             })
           )
         };
@@ -210,6 +212,7 @@ export const useMessageHandling = (
             turn_number: data.current_turn || data.turn_number || (instance?.current_turn || 0) + 1,
             message_type: 'ai_response',
             timestamp: new Date().toISOString(),
+            mode: mode, // Include the mode for AI responses
             character_name: data.character_name,
             response_type: data.response_type,
             internal_state: data.internal_state,

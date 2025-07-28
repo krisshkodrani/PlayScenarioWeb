@@ -32,8 +32,8 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
   useRealtimeSubscription(instanceId, addMessage);
 
   // Enhanced send message with instance update
-  const sendMessage = useCallback(async (messageContent: string) => {
-    const result = await handleSendMessage(messageContent);
+  const sendMessage = useCallback(async (messageContent: string, mode: 'chat' | 'action' = 'chat') => {
+    const result = await handleSendMessage(messageContent, mode);
     if (result) {
       updateInstance({ current_turn: result.current_turn });
     }

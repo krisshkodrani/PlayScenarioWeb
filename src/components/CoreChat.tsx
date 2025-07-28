@@ -26,6 +26,7 @@ interface CoreChatProps {
 const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
   const { user } = useAuth();
   const [inputValue, setInputValue] = useState('');
+  const [chatMode, setChatMode] = useState<'chat' | 'action'>('chat');
   const [showObjectiveDrawer, setShowObjectiveDrawer] = useState(false);
   const [showCharacterDrawer, setShowCharacterDrawer] = useState(false);
   const [hasObjectiveUpdates, setHasObjectiveUpdates] = useState(false);
@@ -100,7 +101,11 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     const messageContent = inputValue;
     setInputValue('');
     
-    await sendMessage(messageContent);
+    await sendMessage(messageContent, chatMode);
+  };
+
+  const toggleMode = () => {
+    setChatMode(prev => prev === 'chat' ? 'action' : 'chat');
   };
 
   const handleSuggestionClick = (suggestion: string) => {
@@ -109,7 +114,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     setTimeout(async () => {
       if (suggestion.trim()) {
         setInputValue('');
-        await sendMessage(suggestion);
+        await sendMessage(suggestion, chatMode);
       }
     }, 100);
   };
@@ -200,6 +205,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
           message: msg.message,
           message_type: msg.message_type as 'user_message' | 'ai_response' | 'system',
           timestamp: new Date(msg.timestamp),
+          mode: msg.mode,
           character_name: msg.character_name,
           response_type: msg.response_type,
           internal_state: msg.internal_state,
@@ -227,6 +233,8 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
         onChange={setInputValue}
         onSend={handleSendMessage}
         disabled={isTyping}
+        mode={chatMode}
+        onModeToggle={toggleMode}
       />
 
       {/* Objective Drawer */}

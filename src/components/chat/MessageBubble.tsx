@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ThumbsUp, ThumbsDown } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MessageCircle, Zap } from 'lucide-react';
 import CharacterAvatar from './CharacterAvatar';
 import FeedbackModal from './FeedbackModal';
 import FollowUpSuggestions from './FollowUpSuggestions';
@@ -19,6 +19,7 @@ interface Message {
   message_type: 'user_message' | 'ai_response' | 'system';
   character_id?: string;
   timestamp: Date;
+  mode?: 'chat' | 'action';
   // Enhanced fields for rich AI responses
   character_name?: string;
   response_type?: string;
@@ -90,10 +91,30 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   };
   // User message - right aligned
   if (messageType === 'user_message') {
+    const isActionMessage = message.mode === 'action';
     return (
       <div className="flex justify-end w-full">
-        <div className="bg-gradient-to-br from-cyan-500 to-violet-600 text-white px-4 py-3 rounded-2xl rounded-br-sm max-w-[80%] md:max-w-[80%] sm:max-w-[90%] shadow-lg">
-          <p className="text-sm md:text-base">{displayContent}</p>
+        <div className="relative">
+          {/* Mode indicator badge */}
+          <div className={`absolute -top-2 -left-2 z-10 w-6 h-6 rounded-full flex items-center justify-center shadow-lg ${
+            isActionMessage 
+              ? 'bg-amber-500 text-slate-900' 
+              : 'bg-cyan-500 text-slate-900'
+          }`}>
+            {isActionMessage ? (
+              <Zap className="w-3 h-3" />
+            ) : (
+              <MessageCircle className="w-3 h-3" />
+            )}
+          </div>
+          
+          <div className={`px-4 py-3 rounded-2xl rounded-br-sm max-w-[80%] md:max-w-[80%] sm:max-w-[90%] shadow-lg ${
+            isActionMessage 
+              ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white' 
+              : 'bg-gradient-to-br from-cyan-500 to-violet-600 text-white'
+          }`}>
+            <p className="text-sm md:text-base">{displayContent}</p>
+          </div>
         </div>
       </div>
     );
@@ -110,6 +131,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     );
   }
   // AI response - left aligned with avatar and features
+  const isActionResponse = message.mode === 'action';
   return (
     <div className="w-full">
       <div className="flex items-start gap-3 group max-w-[80%] md:max-w-[80%] sm:max-w-[90%]">
@@ -122,11 +144,27 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             <p className="text-xs font-medium text-slate-300">
               {displayName}
             </p>
+            {/* Mode indicator for AI responses */}
+            {message.mode && (
+              <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                isActionResponse ? 'bg-amber-500/20 text-amber-400' : 'bg-cyan-500/20 text-cyan-400'
+              }`}>
+                {isActionResponse ? (
+                  <Zap className="w-2.5 h-2.5" />
+                ) : (
+                  <MessageCircle className="w-2.5 h-2.5" />
+                )}
+              </div>
+            )}
             {(parsedData?.internal_state?.emotion || message.internal_state?.emotion) && <EmotionIndicator emotion={parsedData?.internal_state?.emotion || message.internal_state?.emotion} size="sm" />}
           </div>
           
           {/* Message Content */}
-          <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur border border-slate-600 text-white px-4 py-3 rounded-2xl rounded-bl-sm shadow-lg">
+          <div className={`backdrop-blur text-white px-4 py-3 rounded-2xl rounded-bl-sm shadow-lg ${
+            isActionResponse 
+              ? 'bg-gradient-to-br from-amber-600/20 to-orange-600/20 border border-amber-500/30' 
+              : 'bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600'
+          }`}>
             <p className="text-sm md:text-base whitespace-pre-wrap">{displayContent}</p>
             
           </div>
