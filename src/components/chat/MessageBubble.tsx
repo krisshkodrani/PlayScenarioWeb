@@ -89,14 +89,17 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     // Here you would typically send the feedback to your backend
   };
   if (isUser) {
-    return <div className="flex justify-end">
-        <div className="bg-gradient-to-br from-cyan-500 to-violet-600 text-white px-4 py-3 rounded-2xl rounded-br-sm max-w-xs ml-auto shadow-lg">
+    return (
+      <div className="flex justify-end w-full">
+        <div className="bg-gradient-to-br from-cyan-500 to-violet-600 text-white px-4 py-3 rounded-2xl rounded-br-sm max-w-[80%] md:max-w-[80%] sm:max-w-[90%] shadow-lg">
           <p className="text-sm md:text-base">{displayContent}</p>
         </div>
-      </div>;
+      </div>
+    );
   }
-  return <>
-      <div className="flex items-start gap-3 group">
+  return (
+    <div className="w-full">
+      <div className="flex items-start gap-3 group max-w-[80%] md:max-w-[80%] sm:max-w-[90%]">
         {/* Character Avatar */}
         <CharacterAvatar character={character} characterName={displayName} size="sm" />
         
@@ -110,21 +113,31 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           </div>
           
           {/* Message Content */}
-          <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur border border-slate-600 text-white px-4 py-3 rounded-2xl rounded-bl-sm max-w-xs mr-auto shadow-lg">
+          <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur border border-slate-600 text-white px-4 py-3 rounded-2xl rounded-bl-sm shadow-lg">
             <p className="text-sm md:text-base whitespace-pre-wrap">{displayContent}</p>
             
             {/* Character Thoughts - Expandable */}
-            {(parsedData?.internal_state?.thoughts || message.internal_state?.thoughts) && <details className="mt-3">
-                
+            {(parsedData?.internal_state?.thoughts || message.internal_state?.thoughts) && (
+              <details className="mt-3">
+                <summary className="text-xs text-cyan-400 cursor-pointer hover:text-cyan-300 transition-colors">
+                  Character thoughts
+                </summary>
                 <div className="mt-2 pt-2 border-t border-slate-600/50">
                   <p className="text-xs text-slate-400 italic">
                     {parsedData?.internal_state?.thoughts || message.internal_state?.thoughts}
                   </p>
                 </div>
-              </details>}
+              </details>
+            )}
 
             {/* Objective Impact */}
-            {parsedData?.internal_state?.objective_impact || message.internal_state?.objective_impact}
+            {(parsedData?.internal_state?.objective_impact || message.internal_state?.objective_impact) && (
+              <div className="mt-2 pt-2 border-t border-slate-600/50">
+                <p className="text-xs text-amber-400 font-medium">
+                  {parsedData?.internal_state?.objective_impact || message.internal_state?.objective_impact}
+                </p>
+              </div>
+            )}
           </div>
           
           {/* Feedback buttons - positioned at bottom left */}
@@ -140,9 +153,22 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       </div>
 
       {/* Follow-up Suggestions */}
-      {(parsedData?.suggested_follow_ups || message.suggested_follow_ups) && onSuggestionClick && <FollowUpSuggestions suggestions={parsedData?.suggested_follow_ups || message.suggested_follow_ups} onSuggestionClick={onSuggestionClick} />}
+      {(parsedData?.suggested_follow_ups || message.suggested_follow_ups) && onSuggestionClick && (
+        <div className="mt-4 max-w-[80%] md:max-w-[80%] sm:max-w-[90%]">
+          <FollowUpSuggestions 
+            suggestions={parsedData?.suggested_follow_ups || message.suggested_follow_ups} 
+            onSuggestionClick={onSuggestionClick} 
+          />
+        </div>
+      )}
 
-      <FeedbackModal isOpen={showFeedbackModal} onClose={() => setShowFeedbackModal(false)} onSubmit={handleFeedbackSubmit} feedbackType={feedbackType} />
-    </>;
+      <FeedbackModal 
+        isOpen={showFeedbackModal} 
+        onClose={() => setShowFeedbackModal(false)} 
+        onSubmit={handleFeedbackSubmit} 
+        feedbackType={feedbackType} 
+      />
+    </div>
+  );
 };
 export default MessageBubble;
