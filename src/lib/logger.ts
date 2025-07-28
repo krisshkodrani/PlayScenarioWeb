@@ -58,6 +58,20 @@ class Logger {
     
     console.error(this.formatMessage('error', category, message, errorContext));
   }
+
+  // Development-specific helper for debugging network requests
+  debugNetwork(url: string, options?: RequestInit, response?: Response): void {
+    if (!this.isDevelopment) return;
+    
+    console.group('🌐 Network Request');
+    console.log('URL:', url);
+    console.log('Options:', options);
+    if (response) {
+      console.log('Response Status:', response.status, response.statusText);
+      console.log('Response Headers:', Object.fromEntries(response.headers.entries()));
+    }
+    console.groupEnd();
+  }
 }
 
 export const logger = new Logger();

@@ -11,7 +11,7 @@ interface RecentActivityProps {
 const RecentActivity: React.FC<RecentActivityProps> = ({ activities }) => {
   const getActivityIcon = (type: ActivityItem['type']) => {
     switch (type) {
-      case 'game_completed':
+      case 'game_played':
         return GamepadIcon;
       case 'scenario_created':
         return FileText;
@@ -26,7 +26,7 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ activities }) => {
 
   const getActivityColor = (type: ActivityItem['type']) => {
     switch (type) {
-      case 'game_completed':
+      case 'game_played':
         return 'text-cyan-400';
       case 'scenario_created':
         return 'text-violet-400';

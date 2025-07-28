@@ -21,11 +21,11 @@ const CreditStatusCard: React.FC<CreditStatusCardProps> = ({
   const isLowCredit = balance <= lowCreditThreshold;
   
   const formatTransaction = (transaction: Transaction) => {
-    const isPositive = transaction.credits_change > 0;
+    const isPositive = transaction.amount > 0;
     return {
       ...transaction,
       isPositive,
-      displayChange: `${isPositive ? '+' : ''}${transaction.credits_change}`
+      displayChange: `${isPositive ? '+' : ''}${transaction.amount}`
     };
   };
 

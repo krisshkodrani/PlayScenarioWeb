@@ -31,6 +31,11 @@ const BREADCRUMB_CONFIG: BreadcrumbConfig = {
   '/core-chat': { label: 'Scenario Play', parent: '/browse' },
   '/login': { label: 'Login' },
   '/register': { label: 'Register' },
+  '/admin': { label: 'Admin Dashboard' },
+  '/admin/users': { label: 'User Management', parent: '/admin' },
+  '/admin/scenarios': { label: 'Scenario Moderation', parent: '/admin' },
+  '/admin/characters': { label: 'Character Moderation', parent: '/admin' },
+  '/admin/audit': { label: 'Audit Trail', parent: '/admin' },
 };
 
 interface AppBreadcrumbProps {

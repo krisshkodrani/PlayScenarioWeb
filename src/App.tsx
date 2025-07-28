@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,6 +5,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { AdminRoute } from "@/components/auth/AdminRoute";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UserManagement from "./pages/admin/UserManagement";
+import ScenarioModeration from "./pages/admin/ScenarioModeration";
+import CharacterModeration from "./pages/admin/CharacterModeration";
+import AuditTrail from "./pages/admin/AuditTrail";
+import ContentAnalytics from "./pages/admin/ContentAnalytics";
+import UserAnalytics from "./pages/admin/UserAnalytics";
+import ModerationAnalytics from "./pages/admin/ModerationAnalytics";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
@@ -92,6 +100,48 @@ const App = () => (
               <ProtectedRoute>
                 <Results />
               </ProtectedRoute>
+            } />
+            
+            {/* Admin Routes */}
+            <Route path="/admin" element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            } />
+            <Route path="/admin/users" element={
+              <AdminRoute>
+                <UserManagement />
+              </AdminRoute>
+            } />
+            <Route path="/admin/scenarios" element={
+              <AdminRoute>
+                <ScenarioModeration />
+              </AdminRoute>
+            } />
+            <Route path="/admin/characters" element={
+              <AdminRoute>
+                <CharacterModeration />
+              </AdminRoute>
+            } />
+            <Route path="/admin/audit" element={
+              <AdminRoute>
+                <AuditTrail />
+              </AdminRoute>
+            } />
+            <Route path="/admin/analytics/content" element={
+              <AdminRoute>
+                <ContentAnalytics />
+              </AdminRoute>
+            } />
+            <Route path="/admin/analytics/users" element={
+              <AdminRoute>
+                <UserAnalytics />
+              </AdminRoute>
+            } />
+            <Route path="/admin/analytics/moderation" element={
+              <AdminRoute>
+                <ModerationAnalytics />
+              </AdminRoute>
             } />
             
             {/* Legal Pages */}

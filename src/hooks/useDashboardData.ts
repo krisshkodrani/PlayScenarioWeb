@@ -105,7 +105,17 @@ export const useDashboardData = () => {
         ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 5);
 
         const dashboardData: DashboardData = {
-          user: profile,
+          user: {
+            id: profile.id,
+            username: profile.username,
+            created_at: profile.created_at,
+            bio: profile.bio,
+            display_name: profile.display_name,
+            profile_visibility: profile.profile_visibility,
+            show_email_publicly: profile.show_email_publicly,
+            updated_at: profile.updated_at,
+            credits: profile.credits
+          },
           credits: { credits: profile.credits },
           scenarios: scenarios || [],
           characters: characters || [],

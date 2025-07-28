@@ -1,9 +1,11 @@
+
 import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Message, ScenarioInstance, Scenario } from '@/types/chat';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
+import { config } from '@/lib/config';
 
 export const useMessageHandling = (
   instanceId: string,
@@ -143,7 +145,8 @@ export const useMessageHandling = (
         logger.debug('Chat', 'Sending message to backend', {
           instanceId,
           messageLength: messageContent.length,
-          currentTurn: instance.current_turn
+          currentTurn: instance.current_turn,
+          apiUrl: config.api.baseUrl
         });
 
         // Build request payload with recent history to reduce backend DB lookups
@@ -162,16 +165,25 @@ export const useMessageHandling = (
         };
 
         const res = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/api/v1/chat/scenario-completions`,
+          `${config.api.baseUrl}/v1/chat/scenario-completions`,
           {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              ...(config.isDevelopment && { 'Access-Control-Allow-Origin': '*' })
+            },
             body: JSON.stringify(payload)
           }
         );
 
         if (!res.ok) {
-          throw new Error(await res.text());
+          const errorText = await res.text();
+          logger.error('Chat', 'API request failed', null, { 
+            status: res.status,
+            statusText: res.statusText,
+            errorText
+          });
+          throw new Error(`API request failed: ${res.status} ${res.statusText}`);
         }
 
         // Parse response to retrieve updated turn number so outer hooks stay in sync
