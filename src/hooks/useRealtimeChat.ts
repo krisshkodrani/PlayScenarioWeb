@@ -39,67 +39,96 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
     }
   }, [handleSendMessage, updateInstance]);
 
-  // Initialize everything in proper sequence
+  // Single initialization effect with timeout and comprehensive error handling
   useEffect(() => {
-    const init = async () => {
-      if (!user) return;
+    let timeoutId: NodeJS.Timeout;
+    let isCancelled = false;
+
+    const initializeChat = async () => {
+      if (!user) {
+        logger.debug('Chat', 'Waiting for user authentication');
+        setLoading(false);
+        return;
+      }
       
-      logger.info('Chat', 'Initializing realtime chat', { instanceId, scenarioId, userId: user.id });
+      logger.info('Chat', 'Starting chat initialization', { instanceId, scenarioId, userId: user.id });
       
       setLoading(true);
       setError(null);
       
       try {
-        // First, fetch instance and scenario data
+        // Set a timeout to prevent infinite loading
+        timeoutId = setTimeout(() => {
+          if (!isCancelled) {
+            logger.error('Chat', 'Chat initialization timed out');
+            setError('Chat initialization timed out. Please refresh and try again.');
+            setLoading(false);
+          }
+        }, 15000); // 15 second timeout
+
+        // Step 1: Fetch instance and scenario data
+        logger.debug('Chat', 'Fetching instance and scenario data');
         await Promise.all([
           fetchInstance(),
           fetchScenario()
         ]);
         
+        if (isCancelled) return;
         logger.debug('Chat', 'Instance and scenario data loaded successfully');
+
+        // Step 2: Wait for both instance and scenario to be available
+        let retries = 0;
+        while ((!instance || !scenario) && retries < 50 && !isCancelled) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          retries++;
+        }
+
+        if (isCancelled) return;
+        
+        if (!instance || !scenario) {
+          throw new Error('Failed to load instance or scenario data');
+        }
+
+        // Step 3: Initialize scenario and fetch messages
+        logger.debug('Chat', 'Initializing chat session', { 
+          instanceId: instance.id,
+          scenarioId: scenario.id,
+          currentTurn: instance.current_turn 
+        });
+        
+        await initializeScenario();
+        if (isCancelled) return;
+        
+        await fetchMessages();
+        if (isCancelled) return;
+        
+        logger.info('Chat', 'Chat initialization completed successfully', { 
+          instanceId: instance.id 
+        });
+        
+        clearTimeout(timeoutId);
+        setLoading(false);
+        
       } catch (err) {
+        if (isCancelled) return;
+        
         const errorMessage = err instanceof Error ? err.message : 'Failed to initialize chat';
-        logger.error('Chat', 'Failed to initialize chat data', err, { instanceId, scenarioId });
+        logger.error('Chat', 'Chat initialization failed', err, { instanceId, scenarioId });
         setError(errorMessage);
         setLoading(false);
-      }
-    };
-
-    init();
-  }, [user, fetchInstance, fetchScenario, instanceId, scenarioId]);
-
-  // Initialize chat after instance and scenario are loaded
-  useEffect(() => {
-    const initializeChat = async () => {
-      if (instance && scenario && user) {
-        try {
-          logger.debug('Chat', 'Initializing chat session', { 
-            instanceId: instance.id,
-            scenarioId: scenario.id,
-            currentTurn: instance.current_turn 
-          });
-          
-          // First initialize the scenario (create initial message if needed)
-          await initializeScenario();
-          
-          // Then fetch all messages (including the one we just created)
-          await fetchMessages();
-          
-          logger.info('Chat', 'Chat initialization completed successfully', { 
-            instanceId: instance.id 
-          });
-        } catch (err) {
-          const errorMessage = err instanceof Error ? err.message : 'Failed to initialize chat';
-          logger.error('Chat', 'Chat initialization failed', err, { instanceId });
-          setError(errorMessage);
-        } finally {
-          setLoading(false);
-        }
+        clearTimeout(timeoutId);
       }
     };
 
     initializeChat();
-  }, [instance, scenario, user, initializeScenario, fetchMessages, instanceId]);
+
+    return () => {
+      isCancelled = true;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [user, instanceId, scenarioId, instance, scenario, fetchInstance, fetchScenario, initializeScenario, fetchMessages]);
 
   return {
     messages,
