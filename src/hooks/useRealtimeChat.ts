@@ -45,8 +45,15 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
     let isCancelled = false;
 
     const initializeChat = async () => {
+      console.log('🔄 useRealtimeChat: Starting initialization', { 
+        user: !!user, 
+        userId: user?.id,
+        instanceId, 
+        scenarioId 
+      });
+
       if (!user) {
-        logger.debug('Chat', 'Waiting for user authentication');
+        console.log('❌ useRealtimeChat: No user found, stopping initialization');
         setLoading(false);
         return;
       }
@@ -60,6 +67,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
         // Set a timeout to prevent infinite loading
         timeoutId = setTimeout(() => {
           if (!isCancelled) {
+            console.log('⏰ useRealtimeChat: Initialization timed out');
             logger.error('Chat', 'Chat initialization timed out');
             setError('Chat initialization timed out. Please refresh and try again.');
             setLoading(false);
@@ -67,29 +75,54 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
         }, 15000); // 15 second timeout
 
         // Step 1: Fetch instance and scenario data
+        console.log('📊 useRealtimeChat: Fetching instance and scenario data');
         logger.debug('Chat', 'Fetching instance and scenario data');
+        
         await Promise.all([
-          fetchInstance(),
-          fetchScenario()
+          fetchInstance().catch(err => {
+            console.error('❌ useRealtimeChat: fetchInstance failed:', err);
+            throw err;
+          }),
+          fetchScenario().catch(err => {
+            console.error('❌ useRealtimeChat: fetchScenario failed:', err);
+            throw err;
+          })
         ]);
         
-        if (isCancelled) return;
+        if (isCancelled) {
+          console.log('🛑 useRealtimeChat: Cancelled after fetch');
+          return;
+        }
+        
+        console.log('✅ useRealtimeChat: Instance and scenario data fetched');
         logger.debug('Chat', 'Instance and scenario data loaded successfully');
 
         // Step 2: Wait for both instance and scenario to be available
+        console.log('⏳ useRealtimeChat: Waiting for instance and scenario data to be available');
         let retries = 0;
         while ((!instance || !scenario) && retries < 50 && !isCancelled) {
+          console.log(`⏳ useRealtimeChat: Retry ${retries + 1}/50 - Instance: ${!!instance}, Scenario: ${!!scenario}`);
           await new Promise(resolve => setTimeout(resolve, 100));
           retries++;
         }
 
-        if (isCancelled) return;
+        if (isCancelled) {
+          console.log('🛑 useRealtimeChat: Cancelled during wait');
+          return;
+        }
         
         if (!instance || !scenario) {
+          console.log('❌ useRealtimeChat: Timeout waiting for data - Instance:', !!instance, 'Scenario:', !!scenario);
           throw new Error('Failed to load instance or scenario data');
         }
 
+        console.log('✅ useRealtimeChat: Instance and scenario data available', {
+          instanceId: instance.id,
+          scenarioId: scenario.id
+        });
+
         // Step 3: Initialize scenario and fetch messages
+        console.log('🎬 useRealtimeChat: Initializing scenario');
         logger.debug('Chat', 'Initializing chat session', { 
           instanceId: instance.id,
           scenarioId: scenario.id,
@@ -97,11 +130,19 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
         });
         
         await initializeScenario();
-        if (isCancelled) return;
+        if (isCancelled) {
+          console.log('🛑 useRealtimeChat: Cancelled after initializeScenario');
+          return;
+        }
         
+        console.log('💬 useRealtimeChat: Fetching messages');
         await fetchMessages();
-        if (isCancelled) return;
+        if (isCancelled) {
+          console.log('🛑 useRealtimeChat: Cancelled after fetchMessages');
+          return;
+        }
         
+        console.log('🎉 useRealtimeChat: Initialization completed successfully');
         logger.info('Chat', 'Chat initialization completed successfully', { 
           instanceId: instance.id 
         });
@@ -110,8 +151,12 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
         setLoading(false);
         
       } catch (err) {
-        if (isCancelled) return;
+        if (isCancelled) {
+          console.log('🛑 useRealtimeChat: Cancelled during error handling');
+          return;
+        }
         
+        console.error('❌ useRealtimeChat: Initialization failed:', err);
         const errorMessage = err instanceof Error ? err.message : 'Failed to initialize chat';
         logger.error('Chat', 'Chat initialization failed', err, { instanceId, scenarioId });
         setError(errorMessage);
@@ -123,12 +168,13 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
     initializeChat();
 
     return () => {
+      console.log('🧹 useRealtimeChat: Cleanup');
       isCancelled = true;
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
     };
-  }, [user, instanceId, scenarioId, instance, scenario, fetchInstance, fetchScenario, initializeScenario, fetchMessages]);
+  }, [user, instanceId, scenarioId]);
 
   return {
     messages,
