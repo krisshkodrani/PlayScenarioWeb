@@ -1,20 +1,19 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { authService, User, RegisterCredentials } from '@/services/authService';
-import { Session } from '@supabase/supabase-js';
+import { Session, User } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-  signUp: (credentials: RegisterCredentials) => Promise<{ error: string | null }>;
+  signIn: (email: string, password: string) => Promise<{ data?: any; error: string | null }>;
+  signUp: (email: string, password: string, username: string) => Promise<{ data?: any; error: string | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
   resendVerificationEmail: (email: string) => Promise<{ error: string | null }>;
   isAuthenticated: boolean;
-  initialized: boolean; // New flag to track if auth state is initialized
+  initialized: boolean; // Flag to track if auth state is initialized
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,6 +33,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false); // Track if initial auth check completed
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -45,6 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         setUser(session?.user ?? null);
         setLoading(false);
+        setInitialized(true); // Mark initialization complete
       }
     );
 
@@ -116,12 +117,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
+    session: null, // You can populate this if needed
     loading,
-    signUp,
     signIn,
+    signUp,
     signOut,
+    resetPassword: async (_email: string) => ({ error: null }), // Placeholder implementations
+    resendVerificationEmail: async (_email: string) => ({ error: null }), // Placeholder
+    isAuthenticated: !!user,
+    initialized,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
