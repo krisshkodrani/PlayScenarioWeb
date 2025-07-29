@@ -32,7 +32,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <div className="bg-gradient-to-r from-slate-800/80 to-slate-700/50 backdrop-blur border-t border-slate-600 p-4">
+    <div className="sticky bottom-0 bg-gradient-to-r from-slate-800/95 to-slate-700/80 backdrop-blur-lg border-t border-slate-600 shadow-lg shadow-slate-900/50 p-4 z-10">
       <div className="flex gap-3 items-end">
         <input 
           type="text"
