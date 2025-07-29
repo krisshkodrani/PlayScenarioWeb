@@ -24,7 +24,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   onToggleCharacterDrawer
 }) => {
   return (
-    <div className="bg-gradient-to-r from-slate-800/80 to-slate-700/50 backdrop-blur border-b border-slate-600 p-4">
+    <div className="sticky top-0 bg-gradient-to-r from-slate-800/95 to-slate-700/80 backdrop-blur-lg border-b border-slate-600 shadow-lg shadow-slate-900/50 p-4 z-10">
       <div className="flex items-center justify-between">
         {/* Title */}
         <h1 className="text-lg font-semibold text-cyan-400">{scenarioTitle}</h1>
