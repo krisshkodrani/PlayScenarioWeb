@@ -1,12 +1,13 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Message } from '@/types/chat';
+import { Message, ScenarioInstance } from '@/types/chat';
 import { logger } from '@/lib/logger';
 
 export const useRealtimeSubscription = (
   instanceId: string,
-  onNewMessage: (message: Message) => void
+  onNewMessage: (message: Message) => void,
+  onInstanceUpdate?: (instance: Partial<ScenarioInstance>) => void
 ) => {
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastMessageCountRef = useRef(0);
@@ -60,9 +61,9 @@ export const useRealtimeSubscription = (
     // Clear processed messages when instance changes
     processedMessageIds.current.clear();
 
-    // Set up real-time subscription
+    // Set up real-time subscription for messages
     const channel = supabase
-      .channel(`messages:${instanceId}`)
+      .channel(`chat:${instanceId}`)
       .on(
         'postgres_changes',
         {
@@ -89,6 +90,24 @@ export const useRealtimeSubscription = (
             processedMessageIds.current.add(newMessage.id);
             onNewMessage(newMessage);
             lastMessageCountRef.current += 1;
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'scenario_instances',
+          filter: `id=eq.${instanceId}`
+        },
+        (payload) => {
+          if (onInstanceUpdate && payload.new) {
+            logger.debug('Chat', 'Instance update received', { 
+              instanceId,
+              updates: payload.new 
+            });
+            onInstanceUpdate(payload.new as Partial<ScenarioInstance>);
           }
         }
       )

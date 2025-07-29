@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Scenario, ScenarioInstance } from '@/types/chat';
 import { useAuth } from '@/contexts/AuthContext';
@@ -106,9 +106,34 @@ export const useScenarioData = (instanceId: string, scenarioId: string) => {
     setInstance(prev => prev ? { ...prev, ...updates } : null);
   }, []);
 
+  // Merge scenario objectives with instance progress
+  const objectivesWithProgress = useMemo(() => {
+    if (!scenario || !instance) return [];
+    
+    const staticObjectives = scenario.objectives || [];
+    const progressData = instance.objectives_progress || {};
+    
+    return staticObjectives.map((objective: any, index: number) => {
+      const objectiveKey = `objective_${objective.id || index + 1}`;
+      const progress = progressData[objectiveKey] || {};
+      
+      return {
+        id: objective.id || `obj_${index + 1}`,
+        title: objective.description || objective.title || `Objective ${index + 1}`,
+        description: objective.description || objective.title || '',
+        completion_percentage: progress.completion_percentage || 0,
+        status: progress.status || 'active',
+        priority: objective.priority || 'normal',
+        hints: progress.hints || ['Continue engaging with the scenario to progress'],
+        progress_notes: progress.progress_notes || 'No progress yet'
+      };
+    });
+  }, [scenario, instance]);
+
   return {
     instance,
     scenario,
+    objectivesWithProgress,
     fetchInstance,
     fetchScenario,
     updateInstance

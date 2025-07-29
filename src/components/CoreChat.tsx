@@ -47,6 +47,30 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     sendMessage
   } = useRealtimeChat({ instanceId, scenarioId });
 
+  // Transform objectives with progress data
+  const objectivesWithProgress = React.useMemo(() => {
+    if (!scenario || !instance) return [];
+    
+    const staticObjectives = scenario.objectives || [];
+    const progressData = instance.objectives_progress || {};
+    
+    return staticObjectives.map((objective: any, index: number) => {
+      const objectiveKey = `objective_${objective.id || index + 1}`;
+      const progress = progressData[objectiveKey] || {};
+      
+      return {
+        id: objective.id || `obj_${index + 1}`,
+        title: objective.description || objective.title || `Objective ${index + 1}`,
+        description: objective.description || objective.title || '',
+        completion_percentage: progress.completion_percentage || 0,
+        status: progress.status || 'active',
+        priority: objective.priority || 'normal',
+        hints: progress.hints || ['Continue engaging with the scenario to progress'],
+        progress_notes: progress.progress_notes || 'No progress yet'
+      };
+    });
+  }, [scenario, instance]);
+
   // Enhanced scroll handling
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current && isUserNearBottom) {
@@ -221,17 +245,6 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     );
   }
 
-  // Transform objectives for the drawer
-  const objectives = scenario.objectives?.map((obj: any, index: number) => ({
-    id: obj.id || `objective-${index}`,
-    title: obj.description || obj.title || 'Objective',
-    description: obj.description || obj.title || 'Complete this objective',
-    completion_percentage: 0, // This would need to be calculated based on progress
-    status: 'active' as const,
-    priority: obj.priority || 'normal' as const,
-    hints: [],
-    progress_notes: 'In progress...'
-  })) || [];
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
@@ -297,7 +310,9 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
       <ObjectiveDrawer
         isOpen={showObjectiveDrawer}
         onClose={() => setShowObjectiveDrawer(false)}
-        objectives={objectives}
+        objectives={objectivesWithProgress}
+        scenarioTitle={scenario?.title}
+        currentTurn={instance?.current_turn}
       />
 
       {/* Character Drawer */}

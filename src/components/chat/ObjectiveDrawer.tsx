@@ -17,9 +17,11 @@ interface ObjectiveDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   objectives: Objective[];
+  scenarioTitle?: string;
+  currentTurn?: number;
 }
 
-const ObjectiveDrawer: React.FC<ObjectiveDrawerProps> = ({ isOpen, onClose, objectives }) => {
+const ObjectiveDrawer: React.FC<ObjectiveDrawerProps> = ({ isOpen, onClose, objectives, scenarioTitle, currentTurn }) => {
   return (
     <>
       {/* Overlay Background */}
@@ -55,7 +57,9 @@ const ObjectiveDrawer: React.FC<ObjectiveDrawerProps> = ({ isOpen, onClose, obje
               <X className="w-6 h-6" />
             </button>
           </div>
-          <p className="text-sm text-slate-400 mt-1">Kobayashi Maru Simulation • Turn 1</p>
+          <p className="text-sm text-slate-400 mt-1">
+            {scenarioTitle || 'Active Scenario'} • Turn {currentTurn || 1}
+          </p>
         </div>
         
         {/* Scrollable Content - Key changes here */}
