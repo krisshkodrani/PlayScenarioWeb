@@ -248,12 +248,10 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
       />
       
       {/* Message List */}
-      <div 
-        ref={messagesContainerRef}
-        className="flex-1 overflow-hidden"
-        onScroll={checkScrollPosition}
-      >
+      <div className="flex-1">
         <MessagesList
+          ref={messagesContainerRef}
+          onScroll={checkScrollPosition}
           messages={messages.map(msg => ({
             id: msg.id,
             sender_name: msg.sender_name,

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { forwardRef } from 'react';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
 
@@ -26,16 +26,18 @@ interface MessagesListProps {
   characters: Character[];
   getCharacterById: (id: string) => Character | undefined;
   onSuggestionClick?: (suggestion: string) => void;
+  onScroll?: (event: React.UIEvent<HTMLDivElement>) => void;
 }
 
-const MessagesList: React.FC<MessagesListProps> = ({
+const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(({
   messages,
   isTyping,
   typingCharacter,
   characters,
   getCharacterById,
-  onSuggestionClick
-}) => {
+  onSuggestionClick,
+  onScroll
+}, ref) => {
   // Helper function to get character for AI messages
   const getMessageCharacter = (message: MockMessage) => {
     if (message.message_type === 'user_message') return undefined;
@@ -66,7 +68,11 @@ const MessagesList: React.FC<MessagesListProps> = ({
   })();
 
   return (
-    <div className="flex-1 overflow-y-auto scrollbar-hide p-4 space-y-6">
+    <div 
+      ref={ref}
+      className="flex-1 overflow-y-auto scrollbar-hide p-4 space-y-6"
+      onScroll={onScroll}
+    >
       {messages.map((message, index) => (
         <MessageBubble 
           key={message.id}
@@ -86,6 +92,8 @@ const MessagesList: React.FC<MessagesListProps> = ({
       )}
     </div>
   );
-};
+});
+
+MessagesList.displayName = 'MessagesList';
 
 export default MessagesList;
