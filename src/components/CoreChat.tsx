@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ChatHeader from './chat/ChatHeader';
 import MessagesList from './chat/MessagesList';
 import ChatInput from './chat/ChatInput';
@@ -34,6 +34,8 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [progressPercentage, setProgressPercentage] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [isUserNearBottom, setIsUserNearBottom] = useState(true);
 
   const {
     messages,
@@ -45,13 +47,48 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     sendMessage
   } = useRealtimeChat({ instanceId, scenarioId });
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  // Enhanced scroll handling
+  const scrollToBottom = useCallback(() => {
+    if (messagesEndRef.current && isUserNearBottom) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+  }, [isUserNearBottom]);
 
+  // Check if user is near bottom of scroll
+  const checkScrollPosition = useCallback(() => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const threshold = 100; // pixels from bottom
+      const nearBottom = scrollHeight - scrollTop - clientHeight < threshold;
+      setIsUserNearBottom(nearBottom);
+    }
+  }, []);
+
+  // Auto-scroll on initial load
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (messages.length > 0) {
+      // Always scroll to bottom on initial load
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        setIsUserNearBottom(true);
+      }, 100);
+    }
+  }, []); // Only run once on mount
+
+  // Auto-scroll for new messages and typing state changes
+  useEffect(() => {
+    if (isUserNearBottom) {
+      // Small delay to ensure DOM is updated
+      setTimeout(scrollToBottom, 50);
+    }
+  }, [messages, isTyping, scrollToBottom]);
+
+  // Auto-scroll when typing starts
+  useEffect(() => {
+    if (isTyping && isUserNearBottom) {
+      setTimeout(scrollToBottom, 100);
+    }
+  }, [isTyping, scrollToBottom]);
 
   // Fetch characters for this scenario
   useEffect(() => {
@@ -195,34 +232,40 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
       />
       
       {/* Message List */}
-      <MessagesList
-        messages={messages.map(msg => ({
-          id: msg.id,
-          sender_name: msg.sender_name,
-          message: msg.message,
-          message_type: msg.message_type as 'user_message' | 'ai_response' | 'system',
-          timestamp: new Date(msg.timestamp),
-          mode: msg.mode,
-          character_name: msg.character_name,
-          response_type: msg.response_type,
-          internal_state: msg.internal_state,
-          suggested_follow_ups: msg.suggested_follow_ups,
-          metrics: msg.metrics,
-          flags: msg.flags
-        }))}
-        isTyping={isTyping}
-        typingCharacter={characters[0] || {
-          id: 'default',
-          name: 'Assistant',
-          role: 'AI Assistant',
-          avatar_color: 'bg-blue-600',
-          personality: 'Helpful'
-        }}
-        getCharacterById={getCharacterById}
-        onSuggestionClick={handleSuggestionClick}
-      />
-      
-      <div ref={messagesEndRef} />
+      <div 
+        ref={messagesContainerRef}
+        className="flex-1 overflow-hidden"
+        onScroll={checkScrollPosition}
+      >
+        <MessagesList
+          messages={messages.map(msg => ({
+            id: msg.id,
+            sender_name: msg.sender_name,
+            message: msg.message,
+            message_type: msg.message_type as 'user_message' | 'ai_response' | 'system',
+            timestamp: new Date(msg.timestamp),
+            mode: msg.mode,
+            character_name: msg.character_name,
+            response_type: msg.response_type,
+            internal_state: msg.internal_state,
+            suggested_follow_ups: msg.suggested_follow_ups,
+            metrics: msg.metrics,
+            flags: msg.flags
+          }))}
+          isTyping={isTyping}
+          typingCharacter={characters[0] || {
+            id: 'default',
+            name: 'Assistant',
+            role: 'AI Assistant',
+            avatar_color: 'bg-blue-600',
+            personality: 'Helpful'
+          }}
+          characters={characters}
+          getCharacterById={getCharacterById}
+          onSuggestionClick={handleSuggestionClick}
+        />
+        <div ref={messagesEndRef} />
+      </div>
       
       {/* Message Input */}
       <ChatInput 

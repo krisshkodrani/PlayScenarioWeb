@@ -23,6 +23,7 @@ interface MessagesListProps {
   messages: MockMessage[];
   isTyping: boolean;
   typingCharacter: Character;
+  characters: Character[];
   getCharacterById: (id: string) => Character | undefined;
   onSuggestionClick?: (suggestion: string) => void;
 }
@@ -31,6 +32,7 @@ const MessagesList: React.FC<MessagesListProps> = ({
   messages,
   isTyping,
   typingCharacter,
+  characters,
   getCharacterById,
   onSuggestionClick
 }) => {
@@ -77,6 +79,7 @@ const MessagesList: React.FC<MessagesListProps> = ({
       {/* Typing Indicator */}
       {isTyping && (
         <TypingIndicator 
+          characters={characters}
           character={typingCharacter}
           characterName={typingCharacter?.name}
         />
