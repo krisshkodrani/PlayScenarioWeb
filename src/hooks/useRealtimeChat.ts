@@ -29,7 +29,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
     addMessage
   } = useMessageHandling(instanceId, instance, scenario);
 
-  useRealtimeSubscription(instanceId, addMessage);
+  useRealtimeSubscription(instanceId, addMessage, updateInstance);
 
   // Enhanced send message with instance update
   const sendMessage = useCallback(async (messageContent: string, mode: 'chat' | 'action' = 'chat') => {
