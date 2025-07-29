@@ -50,7 +50,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
   // Enhanced scroll handling
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current && isUserNearBottom) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      messagesEndRef.current.scrollIntoView({ behavior: 'instant', block: 'end' });
     }
   }, [isUserNearBottom]);
 
@@ -69,7 +69,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     if (messages.length > 0) {
       // Always scroll to bottom on initial load
       setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        messagesEndRef.current?.scrollIntoView({ behavior: 'instant', block: 'end' });
         setIsUserNearBottom(true);
       }, 100);
     }
@@ -173,12 +173,28 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     }
   };
 
+  // Loading message with patience
+  const [loadingStartTime] = useState(Date.now());
+  const [showPatientMessage, setShowPatientMessage] = useState(false);
+
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => {
+        setShowPatientMessage(true);
+      }, 10000); // Show patient message after 10 seconds
+      
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-slate-900 text-white">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4"></div>
-          <p className="text-slate-300">Loading scenario...</p>
+          <p className="text-slate-300">
+            {showPatientMessage ? 'The scenario is taking some time to load' : 'Loading scenario...'}
+          </p>
         </div>
       </div>
     );

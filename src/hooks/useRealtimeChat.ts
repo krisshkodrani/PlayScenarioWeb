@@ -72,7 +72,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
             setError('Chat initialization timed out. Please refresh and try again.');
             setLoading(false);
           }
-        }, 15000); // 15 second timeout
+        }, 45000); // 45 second timeout
 
         // Step 1: Fetch instance and scenario data
         console.log('📊 useRealtimeChat: Fetching instance and scenario data');
@@ -100,8 +100,8 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
         // Step 2: Wait for both instance and scenario to be available
         console.log('⏳ useRealtimeChat: Waiting for instance and scenario data to be available');
         let retries = 0;
-        while ((!instance || !scenario) && retries < 50 && !isCancelled) {
-          console.log(`⏳ useRealtimeChat: Retry ${retries + 1}/50 - Instance: ${!!instance}, Scenario: ${!!scenario}`);
+        while ((!instance || !scenario) && retries < 200 && !isCancelled) {
+          console.log(`⏳ useRealtimeChat: Retry ${retries + 1}/200 - Instance: ${!!instance}, Scenario: ${!!scenario}`);
           await new Promise(resolve => setTimeout(resolve, 100));
           retries++;
         }
