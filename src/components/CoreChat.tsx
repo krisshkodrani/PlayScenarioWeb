@@ -247,11 +247,13 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
         onToggleCharacterDrawer={toggleCharacterDrawer}
       />
       
-      {/* Message List */}
-      <div className="flex-1">
+      {/* Scroll Container */}
+      <div 
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto scrollbar-hide"
+        onScroll={checkScrollPosition}
+      >
         <MessagesList
-          ref={messagesContainerRef}
-          onScroll={checkScrollPosition}
           messages={messages.map(msg => ({
             id: msg.id,
             sender_name: msg.sender_name,

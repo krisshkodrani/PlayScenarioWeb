@@ -26,18 +26,16 @@ interface MessagesListProps {
   characters: Character[];
   getCharacterById: (id: string) => Character | undefined;
   onSuggestionClick?: (suggestion: string) => void;
-  onScroll?: (event: React.UIEvent<HTMLDivElement>) => void;
 }
 
-const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(({
+const MessagesList: React.FC<MessagesListProps> = ({
   messages,
   isTyping,
   typingCharacter,
   characters,
   getCharacterById,
-  onSuggestionClick,
-  onScroll
-}, ref) => {
+  onSuggestionClick
+}) => {
   // Helper function to get character for AI messages
   const getMessageCharacter = (message: MockMessage) => {
     if (message.message_type === 'user_message') return undefined;
@@ -68,11 +66,7 @@ const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(({
   })();
 
   return (
-    <div 
-      ref={ref}
-      className="flex-1 overflow-y-auto scrollbar-hide p-4 space-y-6"
-      onScroll={onScroll}
-    >
+    <div className="p-4 space-y-6">
       {messages.map((message, index) => (
         <MessageBubble 
           key={message.id}
@@ -92,8 +86,6 @@ const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(({
       )}
     </div>
   );
-});
-
-MessagesList.displayName = 'MessagesList';
+};
 
 export default MessagesList;
