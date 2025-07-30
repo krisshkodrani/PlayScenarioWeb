@@ -2,6 +2,8 @@
 import React, { forwardRef } from 'react';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
+import { predictRespondingCharacter } from '../../utils/characterPrediction';
+import { Message } from '../../types/chat';
 
 interface Character {
   id: string;
@@ -17,12 +19,13 @@ interface MockMessage {
   message: string;
   message_type: 'user_message' | 'ai_response' | 'system';
   timestamp: Date;
+  mode?: 'chat' | 'action';
 }
 
 interface MessagesListProps {
   messages: MockMessage[];
   isTyping: boolean;
-  typingCharacter: Character;
+  typingCharacter?: Character;
   characters: Character[];
   getCharacterById: (id: string) => Character | undefined;
   onSuggestionClick?: (suggestion: string) => void;
@@ -44,8 +47,10 @@ const MessagesList: React.FC<MessagesListProps> = ({
     try {
       const parsed = JSON.parse(message.message);
       if (parsed.character_name) {
-        // Find character by name or return undefined to use default avatar
-        const foundCharacter = getCharacterById(parsed.character_name.toLowerCase());
+        // Find character by name (case insensitive)
+        const foundCharacter = characters.find(c => 
+          c.name.toLowerCase() === parsed.character_name.toLowerCase()
+        );
         return foundCharacter;
       }
     } catch {
@@ -54,6 +59,30 @@ const MessagesList: React.FC<MessagesListProps> = ({
     
     return getCharacterById('spock') || undefined;
   };
+
+  // Convert MockMessage to Message for character prediction
+  const convertedMessages: Message[] = messages.map(msg => ({
+    id: msg.id,
+    sender_name: msg.sender_name,
+    message: msg.message,
+    turn_number: 0,
+    message_type: msg.message_type,
+    timestamp: msg.timestamp.toISOString(),
+    mode: msg.mode,
+    character_name: msg.message_type === 'ai_response' ? getMessageCharacter(msg)?.name : undefined
+  }));
+
+  // Get the last user message to help with prediction
+  const lastUserMessage = convertedMessages
+    .filter(msg => msg.message_type === 'user_message')
+    .pop();
+
+  // Predict which character should be typing if none is specified
+  const predictedCharacter = typingCharacter || predictRespondingCharacter({
+    messages: convertedMessages,
+    characters,
+    lastUserMessage
+  });
 
   // Find the index of the last AI message
   const lastAiMessageIndex = (() => {
@@ -76,12 +105,14 @@ const MessagesList: React.FC<MessagesListProps> = ({
         />
       ))}
       
-      {/* Typing Indicator */}
+      {/* Enhanced Typing Indicator */}
       {isTyping && (
         <TypingIndicator 
+          character={predictedCharacter}
           characters={characters}
-          character={typingCharacter}
-          characterName={typingCharacter?.name}
+          recentMessages={convertedMessages.slice(-10)}
+          messageMode={lastUserMessage?.mode || 'chat'}
+          isSystemResponse={false}
         />
       )}
     </div>
