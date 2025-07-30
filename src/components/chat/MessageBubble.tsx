@@ -98,13 +98,18 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     setFeedbackType(type);
     setShowFeedbackModal(true);
   };
+  // Map frontend feedback type to database reaction type
+  const mapFeedbackTypeToReaction = (feedbackType: string): 'like' | 'dislike' => {
+    return feedbackType === 'positive' ? 'like' : 'dislike';
+  };
+
   const handleFeedbackSubmit = async (type: string, details?: string) => {
     try {
       setIsSubmittingFeedback(true);
       
       await reactionService.submitMessageReaction({
         messageId: message.id,
-        reactionType: type as 'like' | 'dislike',
+        reactionType: mapFeedbackTypeToReaction(type),
         feedbackDetails: details
       });
       
