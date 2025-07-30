@@ -5,6 +5,8 @@ import FeedbackModal from './FeedbackModal';
 import FollowUpSuggestions from './FollowUpSuggestions';
 import EmotionIndicator from './EmotionIndicator';
 import MetricsDisplay from './MetricsDisplay';
+import { reactionService } from '@/services/reactionService';
+import { useToast } from '@/hooks/use-toast';
 interface Character {
   id: string;
   name: string;
@@ -48,6 +50,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 }) => {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackType, setFeedbackType] = useState<'positive' | 'negative'>('positive');
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+  const { toast } = useToast();
   const messageType = message.message_type;
 
   // Parse JSON message for AI responses
@@ -94,13 +98,34 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     setFeedbackType(type);
     setShowFeedbackModal(true);
   };
-  const handleFeedbackSubmit = (type: string, details?: string) => {
-    console.log('Feedback submitted:', {
-      type,
-      details,
-      messageId: message.id
-    });
-    // Here you would typically send the feedback to your backend
+  const handleFeedbackSubmit = async (type: string, details?: string) => {
+    try {
+      setIsSubmittingFeedback(true);
+      
+      await reactionService.submitMessageReaction({
+        messageId: message.id,
+        reactionType: type as 'like' | 'dislike',
+        feedbackDetails: details
+      });
+      
+      setShowFeedbackModal(false);
+      setFeedbackType('positive');
+      
+      // Show success feedback to user
+      toast({
+        title: "Feedback submitted",
+        description: "Thank you for your feedback!",
+      });
+    } catch (error) {
+      console.error('Failed to submit feedback:', error);
+      toast({
+        title: "Failed to submit feedback",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingFeedback(false);
+    }
   };
   // User message - right aligned
   if (messageType === 'user_message') {
@@ -208,7 +233,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         isOpen={showFeedbackModal} 
         onClose={() => setShowFeedbackModal(false)} 
         onSubmit={handleFeedbackSubmit} 
-        feedbackType={feedbackType} 
+        feedbackType={feedbackType}
+        isSubmitting={isSubmittingFeedback}
       />
     </div>
   );

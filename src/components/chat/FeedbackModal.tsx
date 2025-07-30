@@ -8,20 +8,21 @@ interface FeedbackModalProps {
   onClose: () => void;
   onSubmit: (feedback: string, details?: string) => void;
   feedbackType: 'positive' | 'negative';
+  isSubmitting?: boolean;
 }
 
 const FeedbackModal: React.FC<FeedbackModalProps> = ({ 
   isOpen, 
   onClose, 
   onSubmit, 
-  feedbackType 
+  feedbackType,
+  isSubmitting = false
 }) => {
   const [details, setDetails] = useState('');
 
   const handleSubmit = () => {
     onSubmit(feedbackType, details.trim() || undefined);
     setDetails('');
-    onClose();
   };
 
   const handleCancel = () => {
@@ -87,9 +88,10 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
           </Button>
           <Button
             onClick={handleSubmit}
-            className="bg-cyan-400 text-slate-900 hover:bg-cyan-300 font-medium"
+            disabled={isSubmitting}
+            className="bg-cyan-400 text-slate-900 hover:bg-cyan-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Submit
+            {isSubmitting ? 'Submitting...' : 'Submit'}
           </Button>
         </div>
       </div>

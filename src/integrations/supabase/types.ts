@@ -189,6 +189,7 @@ export type Database = {
       message_reactions: {
         Row: {
           created_at: string
+          feedback_details: string | null
           id: string
           message_id: string
           reaction_type: string
@@ -196,6 +197,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          feedback_details?: string | null
           id?: string
           message_id: string
           reaction_type: string
@@ -203,6 +205,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          feedback_details?: string | null
           id?: string
           message_id?: string
           reaction_type?: string
