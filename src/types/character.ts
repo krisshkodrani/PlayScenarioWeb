@@ -48,6 +48,7 @@ export interface Character {
   role: string;
   personality: string;
   expertise_keywords: string[];
+  avatar_url?: string;
   created_at: string;
   scenario_count: number;
   total_responses: number;

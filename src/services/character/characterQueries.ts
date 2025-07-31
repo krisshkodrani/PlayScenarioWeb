@@ -93,6 +93,7 @@ export const characterQueries = {
       role: char.role,
       personality: char.personality,
       expertise_keywords: char.expertise_keywords,
+      avatar_url: char.avatar_url,
       created_at: char.created_at,
       scenario_count: 0, // TODO: Calculate from actual usage
       total_responses: 0, // TODO: Get from character_usage_stats

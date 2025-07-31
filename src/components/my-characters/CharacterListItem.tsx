@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Edit, Copy, Trash2, Star } from 'lucide-react';
 import { Character } from '@/types/character';
 
@@ -34,6 +34,7 @@ const CharacterListItem: React.FC<CharacterListItemProps> = ({
         {/* Character Info */}
         <div className="col-span-4 flex items-center gap-3">
           <Avatar className="w-10 h-10">
+            <AvatarImage src={character.avatar_url} alt={character.name} />
             <AvatarFallback className={`${character.avatar_color} text-white font-semibold text-sm`}>
               {getInitials(character.name)}
             </AvatarFallback>

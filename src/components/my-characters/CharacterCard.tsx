@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Edit, Copy, Trash2, Star, Calendar } from 'lucide-react';
 import { Character } from '@/types/character';
 import { formatDistanceToNow } from 'date-fns';
@@ -41,6 +41,7 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
         {/* Header with Avatar and Name */}
         <div className="flex items-start gap-4 mb-4">
           <Avatar className="w-12 h-12">
+            <AvatarImage src={character.avatar_url} alt={character.name} />
             <AvatarFallback className={`${character.avatar_color} text-white font-semibold`}>
               {getInitials(character.name)}
             </AvatarFallback>

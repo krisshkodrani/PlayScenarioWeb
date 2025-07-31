@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Star, Calendar } from 'lucide-react';
 import { Character } from '@/types/character';
@@ -47,6 +47,7 @@ const SelectableCharacterCard: React.FC<SelectableCharacterCardProps> = ({
           />
           <div className="flex items-start gap-3 flex-1">
             <Avatar className="w-10 h-10">
+              <AvatarImage src={character.avatar_url} alt={character.name} />
               <AvatarFallback className={`${character.avatar_color} text-white font-semibold text-sm`}>
                 {getInitials(character.name)}
               </AvatarFallback>

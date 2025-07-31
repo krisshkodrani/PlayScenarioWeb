@@ -8,6 +8,7 @@ interface Character {
   name: string;
   role: string;
   avatar_color: string;
+  avatar_url?: string;
   personality: string;
 }
 
