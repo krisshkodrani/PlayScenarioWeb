@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getCharacterColor } from '../../utils/characterColors';
 
 interface Character {
@@ -8,6 +9,7 @@ interface Character {
   role: string;
   avatar_color: string;
   personality: string;
+  avatar_url?: string;
 }
 
 interface CharacterAvatarProps {
@@ -42,13 +44,15 @@ const CharacterAvatar: React.FC<CharacterAvatarProps> = ({ character, characterN
   // Use either provided character or characterName
   const name = character?.name || characterName || 'Unknown';
   const avatarColor = character?.avatar_color || getCharacterColor(name);
+  const avatarUrl = character?.avatar_url;
 
   return (
-    <div 
-      className={`${sizeClasses[size]} ${avatarColor} rounded-full flex items-center justify-center text-white font-semibold ${textSizeClasses[size]} shrink-0 shadow-lg`}
-    >
-      {getInitials(name)}
-    </div>
+    <Avatar className={`${sizeClasses[size]} shrink-0 shadow-lg`}>
+      <AvatarImage src={avatarUrl} alt={name} />
+      <AvatarFallback className={`${avatarColor} text-white font-semibold ${textSizeClasses[size]}`}>
+        {getInitials(name)}
+      </AvatarFallback>
+    </Avatar>
   );
 };
 

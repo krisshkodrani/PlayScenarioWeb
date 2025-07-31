@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { User, HelpCircle } from 'lucide-react';
 import { CharacterData, CharacterContext } from '@/types/character';
+import AvatarUploadSection from './AvatarUploadSection';
 
 interface SimplifiedBasicInfoProps {
   characterData: CharacterData;
@@ -31,6 +32,13 @@ const SimplifiedBasicInfo: React.FC<SimplifiedBasicInfoProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Avatar Upload */}
+        <AvatarUploadSection
+          characterName={characterData.name || 'New Character'}
+          avatarUrl={characterData.avatar_url}
+          onAvatarChange={(avatarUrl) => setCharacterData(prev => ({ ...prev, avatar_url: avatarUrl }))}
+        />
+
         {/* Character Name - Required */}
         <div className="space-y-2">
           <Label className="text-white">Character Name *</Label>

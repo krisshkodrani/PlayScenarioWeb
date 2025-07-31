@@ -342,6 +342,7 @@ export type Database = {
       }
       scenario_characters: {
         Row: {
+          avatar_url: string | null
           blocked_at: string | null
           blocked_by: string | null
           blocked_reason: string | null
@@ -357,6 +358,7 @@ export type Database = {
           status: string | null
         }
         Insert: {
+          avatar_url?: string | null
           blocked_at?: string | null
           blocked_by?: string | null
           blocked_reason?: string | null
@@ -372,6 +374,7 @@ export type Database = {
           status?: string | null
         }
         Update: {
+          avatar_url?: string | null
           blocked_at?: string | null
           blocked_by?: string | null
           blocked_reason?: string | null

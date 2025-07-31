@@ -4,6 +4,7 @@ export interface CharacterData {
   personality: string;             // Maps to database personality TEXT NOT NULL  
   expertise_keywords: string[];    // Maps to database expertise_keywords TEXT[]
   is_player_character: boolean;    // Maps to database is_player_character BOOLEAN
+  avatar_url?: string;             // Maps to database avatar_url TEXT
 }
 
 // Helper interface for UI context

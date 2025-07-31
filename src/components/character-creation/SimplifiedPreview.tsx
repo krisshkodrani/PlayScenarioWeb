@@ -2,8 +2,10 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Brain, Lightbulb } from 'lucide-react';
 import { CharacterData } from '@/types/character';
+import { getCharacterColor } from '@/utils/characterColors';
 
 interface SimplifiedPreviewProps {
   characterData: CharacterData;
@@ -19,8 +21,19 @@ const SimplifiedPreview: React.FC<SimplifiedPreviewProps> = ({ characterData }) 
     ];
     
     const completed = requirements.filter(Boolean).length;
-    return (completed / requirements.length) * 100;
+  return (completed / requirements.length) * 100;
   };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) || '?';
+  };
+
+  const avatarColor = getCharacterColor(characterData.name);
 
   return (
     <Card className="sticky top-4 bg-gradient-to-br from-slate-800/80 to-slate-700/50 backdrop-blur border border-slate-600">
@@ -31,14 +44,24 @@ const SimplifiedPreview: React.FC<SimplifiedPreviewProps> = ({ characterData }) 
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Character Name */}
-        <div className="text-center">
-          <h3 className="text-lg font-semibold text-white">
-            {characterData.name || 'Unnamed Character'}
-          </h3>
-          <Badge variant={characterData.is_player_character ? "default" : "secondary"} className="mt-2">
-            {characterData.is_player_character ? 'Player Character' : 'AI Character'}
-          </Badge>
+        {/* Character Avatar and Name */}
+        <div className="text-center space-y-3">
+          <div className="flex justify-center">
+            <Avatar className="w-16 h-16">
+              <AvatarImage src={characterData.avatar_url} alt={characterData.name} />
+              <AvatarFallback className={`${avatarColor} text-white font-semibold text-lg`}>
+                {getInitials(characterData.name || 'Unnamed Character')}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-white">
+              {characterData.name || 'Unnamed Character'}
+            </h3>
+            <Badge variant={characterData.is_player_character ? "default" : "secondary"} className="mt-2">
+              {characterData.is_player_character ? 'Player Character' : 'AI Character'}
+            </Badge>
+          </div>
         </div>
 
         {/* Personality Preview */}

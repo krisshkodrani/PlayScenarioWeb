@@ -8,6 +8,7 @@ export interface DatabaseCharacter {
   creator_id: string;
   created_at: string;
   is_player_character: boolean;
+  avatar_url?: string;
 }
 
 export interface CharacterCreateData {
@@ -16,6 +17,7 @@ export interface CharacterCreateData {
   expertise_keywords: string[];
   is_player_character: boolean;
   role?: string;
+  avatar_url?: string;
 }
 
 export interface CharacterUpdateData {
@@ -24,4 +26,5 @@ export interface CharacterUpdateData {
   expertise_keywords?: string[];
   is_player_character?: boolean;
   role?: string;
+  avatar_url?: string;
 }
