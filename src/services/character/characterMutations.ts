@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { CharacterData } from '@/types/character';
 import { DatabaseCharacter, CharacterCreateData, CharacterUpdateData } from './characterTypes';
@@ -11,19 +10,18 @@ export const characterMutations = {
 
     const createData: CharacterCreateData = {
       name: characterData.name,
+      role: characterData.role || 'Character',
       personality: characterData.personality,
       expertise_keywords: characterData.expertise_keywords,
-      is_player_character: characterData.is_player_character,
-      role: 'Character', // Use simplified default role
       avatar_url: characterData.avatar_url,
+      is_public: characterData.is_public || false,
     };
 
     const { data, error } = await supabase
-      .from('scenario_characters')
+      .from('characters')
       .insert({
         ...createData,
         creator_id: user.id,
-        scenario_id: null // This will be set when character is used in a scenario
       })
       .select()
       .single();
@@ -44,13 +42,14 @@ export const characterMutations = {
     const updateData: CharacterUpdateData = {};
     
     if (updates.name) updateData.name = updates.name;
+    if (updates.role) updateData.role = updates.role;
     if (updates.personality) updateData.personality = updates.personality;
     if (updates.expertise_keywords) updateData.expertise_keywords = updates.expertise_keywords;
-    if (updates.is_player_character !== undefined) updateData.is_player_character = updates.is_player_character;
     if (updates.avatar_url !== undefined) updateData.avatar_url = updates.avatar_url;
+    if (updates.is_public !== undefined) updateData.is_public = updates.is_public;
 
     const { data, error } = await supabase
-      .from('scenario_characters')
+      .from('characters')
       .update(updateData)
       .eq('id', characterId)
       .eq('creator_id', user.id)
@@ -71,7 +70,7 @@ export const characterMutations = {
     if (!user) throw new Error('User not authenticated');
 
     const { error } = await supabase
-      .from('scenario_characters')
+      .from('characters')
       .delete()
       .eq('id', characterId)
       .eq('creator_id', user.id);
@@ -89,7 +88,7 @@ export const characterMutations = {
 
     // First, get the original character
     const { data: original, error: fetchError } = await supabase
-      .from('scenario_characters')
+      .from('characters')
       .select('*')
       .eq('id', characterId)
       .eq('creator_id', user.id)
@@ -107,19 +106,18 @@ export const characterMutations = {
     // Create a duplicate with a modified name
     const duplicateData: CharacterCreateData = {
       name: `${original.name} (Copy)`,
+      role: original.role,
       personality: original.personality,
       expertise_keywords: original.expertise_keywords,
-      is_player_character: original.is_player_character,
-      role: original.role,
       avatar_url: original.avatar_url,
+      is_public: original.is_public,
     };
 
     const { data, error } = await supabase
-      .from('scenario_characters')
+      .from('characters')
       .insert({
         ...duplicateData,
         creator_id: user.id,
-        scenario_id: null
       })
       .select()
       .single();

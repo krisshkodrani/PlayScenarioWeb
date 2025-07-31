@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { User, HelpCircle } from 'lucide-react';
+import { User, HelpCircle, Eye, EyeOff } from 'lucide-react';
 import { CharacterData, CharacterContext } from '@/types/character';
 import AvatarUploadSection from './AvatarUploadSection';
 
@@ -64,6 +65,33 @@ const SimplifiedBasicInfo: React.FC<SimplifiedBasicInfoProps> = ({
           <p className="text-xs text-slate-400">
             Helps provide better personality and expertise suggestions
           </p>
+        </div>
+
+        {/* Privacy Setting */}
+        <div className="space-y-3 p-4 bg-slate-700/30 rounded-lg border border-slate-600">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {characterData.is_public ? (
+                <Eye className="w-4 h-4 text-cyan-400" />
+              ) : (
+                <EyeOff className="w-4 h-4 text-slate-400" />
+              )}
+              <Label htmlFor="is-public" className="text-white font-medium">
+                Make Character Public
+              </Label>
+            </div>
+            <Switch
+              id="is-public"
+              checked={characterData.is_public || false}
+              onCheckedChange={(checked) => setCharacterData(prev => ({ ...prev, is_public: checked }))}
+            />
+          </div>
+          <div className="text-xs text-slate-400">
+            {characterData.is_public 
+              ? "🌍 Public characters can be discovered and used by other users in their scenarios"
+              : "🔒 Private characters are only visible to you and can only be used in your scenarios"
+            }
+          </div>
         </div>
       </CardContent>
     </Card>

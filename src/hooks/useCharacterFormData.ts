@@ -20,7 +20,7 @@ export const useCharacterFormData = () => {
     name: '',
     personality: '',
     expertise_keywords: [],
-    is_player_character: false
+    is_public: false
   });
   const [characterContext, setCharacterContext] = useState<CharacterContext>({
     role: ''
@@ -36,7 +36,8 @@ export const useCharacterFormData = () => {
           name: character.name,
           personality: character.personality,
           expertise_keywords: character.expertise_keywords,
-          is_player_character: character.is_player_character
+          avatar_url: character.avatar_url,
+          is_public: character.is_public
         });
         setCharacterContext({
           role: character.role || ''
@@ -72,7 +73,8 @@ export const useCharacterFormData = () => {
           name: `${character.name} (Copy)`,
           personality: character.personality,
           expertise_keywords: character.expertise_keywords,
-          is_player_character: character.is_player_character
+          avatar_url: character.avatar_url,
+          is_public: character.is_public
         });
         setCharacterContext({
           role: character.role || ''

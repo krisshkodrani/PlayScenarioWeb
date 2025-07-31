@@ -58,8 +58,8 @@ const SimplifiedPreview: React.FC<SimplifiedPreviewProps> = ({ characterData }) 
             <h3 className="text-lg font-semibold text-white">
               {characterData.name || 'Unnamed Character'}
             </h3>
-            <Badge variant={characterData.is_player_character ? "default" : "secondary"} className="mt-2">
-              {characterData.is_player_character ? 'Player Character' : 'AI Character'}
+            <Badge variant={characterData.is_public ? "default" : "secondary"} className="mt-2">
+              {characterData.is_public ? 'Public Character' : 'Private Character'}
             </Badge>
           </div>
         </div>

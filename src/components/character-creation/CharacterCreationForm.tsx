@@ -30,7 +30,7 @@ const CharacterCreationForm = () => {
       setCharacterData={setCharacterData}
       characterContext={characterContext}
       setCharacterContext={setCharacterContext}
-      onSave={() => handleSaveCharacter(characterData)}
+      onSave={() => handleSaveCharacter(characterData, characterContext)}
       saving={saving}
       isEditMode={isEditMode}
       isDuplicateMode={isDuplicateMode}

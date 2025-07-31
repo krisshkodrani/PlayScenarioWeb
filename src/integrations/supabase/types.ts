@@ -94,6 +94,57 @@ export type Database = {
           },
         ]
       }
+      characters: {
+        Row: {
+          avatar_url: string | null
+          blocked_at: string | null
+          blocked_by: string | null
+          blocked_reason: string | null
+          created_at: string
+          creator_id: string
+          expertise_keywords: string[]
+          id: string
+          is_public: boolean
+          name: string
+          personality: string
+          role: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
+          created_at?: string
+          creator_id: string
+          expertise_keywords?: string[]
+          id?: string
+          is_public?: boolean
+          name: string
+          personality: string
+          role?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
+          created_at?: string
+          creator_id?: string
+          expertise_keywords?: string[]
+          id?: string
+          is_public?: boolean
+          name?: string
+          personality?: string
+          role?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       connection_metrics_logs: {
         Row: {
           active_connections: number | null
@@ -333,6 +384,48 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "scenario_bookmarks_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scenario_character_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string
+          character_id: string
+          id: string
+          is_player_character: boolean
+          scenario_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by: string
+          character_id: string
+          id?: string
+          is_player_character?: boolean
+          scenario_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string
+          character_id?: string
+          id?: string
+          is_player_character?: boolean
+          scenario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scenario_character_assignments_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scenario_character_assignments_scenario_id_fkey"
             columns: ["scenario_id"]
             isOneToOne: false
             referencedRelation: "scenarios"

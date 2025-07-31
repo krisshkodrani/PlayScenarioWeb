@@ -1,8 +1,7 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Character, CharacterStats, CharacterFilters } from '@/types/character';
 import { DatabaseCharacter } from './characterTypes';
-import { generateAvatarColor } from './characterUtils';
+import { getCharacterColor } from '@/utils/characterColors';
 
 export const characterQueries = {
   // Get a single character by ID
@@ -11,13 +10,16 @@ export const characterQueries = {
     if (!user) throw new Error('User not authenticated');
 
     const { data, error } = await supabase
-      .from('scenario_characters')
+      .from('characters')
       .select('*')
       .eq('id', characterId)
       .eq('creator_id', user.id)
       .single();
 
     if (error) {
+      if (error.code === 'PGRST116') {
+        return null; // Character not found
+      }
       console.error('Error fetching character:', error);
       throw error;
     }
@@ -34,9 +36,10 @@ export const characterQueries = {
     if (!user) throw new Error('User not authenticated');
 
     let query = supabase
-      .from('scenario_characters')
+      .from('characters')
       .select('*', { count: 'exact' })
-      .eq('creator_id', user.id);
+      .eq('creator_id', user.id)
+      .eq('status', 'active');
 
     // Apply filters
     if (filters?.search) {
@@ -94,7 +97,7 @@ export const characterQueries = {
       scenario_count: 0, // TODO: Calculate from actual usage
       total_responses: 0, // TODO: Get from character_usage_stats
       average_rating: 0, // TODO: Get from character_usage_stats
-      avatar_color: generateAvatarColor(char.name),
+      avatar_color: getCharacterColor(char.name),
       last_used: char.created_at // TODO: Get from character_usage_stats
     }));
 
@@ -110,9 +113,10 @@ export const characterQueries = {
     if (!user) throw new Error('User not authenticated');
 
     const { data, error } = await supabase
-      .from('scenario_characters')
+      .from('characters')
       .select('id, name, created_at')
-      .eq('creator_id', user.id);
+      .eq('creator_id', user.id)
+      .eq('status', 'active');
 
     if (error) {
       console.error('Error fetching character stats:', error);
