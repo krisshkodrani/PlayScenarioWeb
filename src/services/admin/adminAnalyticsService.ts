@@ -52,7 +52,7 @@ class AdminAnalyticsService {
       const [usersResult, scenariosResult, charactersResult, gamesResult] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact', head: true }),
         supabase.from('scenarios').select('id', { count: 'exact', head: true }),
-        supabase.from('scenario_characters').select('id', { count: 'exact', head: true }),
+        supabase.from('characters').select('id', { count: 'exact', head: true }),
         supabase.from('scenario_instances').select('id', { count: 'exact', head: true })
       ]);
 
@@ -169,7 +169,7 @@ class AdminAnalyticsService {
       const [adminActionsResult, blockedScenariosResult, blockedCharactersResult] = await Promise.all([
         supabase.from('admin_actions').select('*').gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
         supabase.from('scenarios').select('id', { count: 'exact', head: true }).eq('status', 'blocked'),
-        supabase.from('scenario_characters').select('id', { count: 'exact', head: true }).eq('status', 'blocked')
+        supabase.from('characters').select('id', { count: 'exact', head: true }).eq('status', 'blocked')
       ]);
 
       const adminActions = adminActionsResult.data || [];

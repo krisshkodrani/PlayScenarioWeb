@@ -7,12 +7,16 @@ export const buildScenarioQuery = (isPublic?: boolean) => {
     .from('scenarios')
     .select(`
       *,
-      scenario_characters(
-        id,
-        name,
-        role,
-        personality,
-        expertise_keywords
+      scenario_character_assignments(
+        *,
+        character:characters(
+          id,
+          name,
+          role,
+          personality,
+          expertise_keywords,
+          avatar_url
+        )
       )
     `, { count: 'exact' });
 };

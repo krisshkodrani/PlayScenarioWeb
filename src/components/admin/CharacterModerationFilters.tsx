@@ -22,7 +22,6 @@ export const CharacterModerationFilters: React.FC<CharacterModerationFiltersProp
     filters.status !== 'all' || 
     filters.creator || 
     filters.role ||
-    filters.is_player_character !== 'all' ||
     filters.dateFrom || 
     filters.dateTo;
 
@@ -72,20 +71,6 @@ export const CharacterModerationFilters: React.FC<CharacterModerationFiltersProp
           </SelectContent>
         </Select>
 
-        {/* Character Type */}
-        <Select 
-          value={filters.is_player_character} 
-          onValueChange={(value) => onFiltersChange({ ...filters, is_player_character: value as any })}
-        >
-          <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-            <SelectValue placeholder="Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="true">Player Character</SelectItem>
-            <SelectItem value="false">NPC</SelectItem>
-          </SelectContent>
-        </Select>
 
         {/* Creator */}
         <Input
