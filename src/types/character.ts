@@ -6,6 +6,12 @@ export interface CharacterData {
   expertise_keywords: string[];    // Maps to database expertise_keywords TEXT[]
   avatar_url?: string;             // Maps to database avatar_url TEXT
   is_public?: boolean;             // Maps to database is_public BOOLEAN DEFAULT false
+  // Extended fields for AI assistance
+  background?: string;             // Character background and history
+  appearance?: string;             // Physical appearance description
+  goals?: string;                  // Character goals and motivations
+  fears?: string;                  // Character fears and vulnerabilities
+  notable_quotes?: string;         // Example quotes or phrases
 }
 
 // Database character interface

@@ -10,8 +10,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Wand2, Sparkles } from 'lucide-react';
+import { Wand2, Sparkles, AlertCircle } from 'lucide-react';
 import { CharacterData, CharacterContext } from '@/types/character';
+import { useCharacterHelper } from '@/hooks/useCharacterHelper';
 
 interface AIAssistanceModalProps {
   isOpen: boolean;
@@ -29,83 +30,75 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
   onApplyChanges
 }) => {
   const [prompt, setPrompt] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const { createCharacter, enhanceCharacter } = useCharacterHelper();
 
-  const mockAIResponse = (userPrompt: string): Partial<CharacterData> => {
-    const lowerPrompt = userPrompt.toLowerCase();
-    
-    if (lowerPrompt.includes('funny') || lowerPrompt.includes('humorous') || lowerPrompt.includes('comedic')) {
-      return {
-        name: characterData.name || 'Witty McJokester',
-        personality: 'A quick-witted and humorous character who loves to make people laugh. Always ready with a clever comeback or a well-timed joke. Has an optimistic outlook on life and uses humor to lighten tense situations. Speaks with playful banter and enjoys wordplay.',
-        expertise_keywords: ['comedy', 'entertainment', 'public speaking', 'improvisation', 'storytelling']
-      };
-    }
-    
-    if (lowerPrompt.includes('serious') || lowerPrompt.includes('professional') || lowerPrompt.includes('business')) {
-      return {
-        name: characterData.name || 'Alexandra Sterling',
-        personality: 'A highly professional and analytical character with strong leadership qualities. Methodical in approach, values efficiency and clear communication. Maintains composure under pressure and provides thoughtful, well-reasoned advice. Speaks with authority and precision.',
-        expertise_keywords: ['leadership', 'strategy', 'analysis', 'project management', 'decision making']
-      };
-    }
-    
-    if (lowerPrompt.includes('creative') || lowerPrompt.includes('artistic') || lowerPrompt.includes('imaginative')) {
-      return {
-        name: characterData.name || 'Luna Artwright',
-        personality: 'An imaginative and expressive character with a passion for creative pursuits. Thinks outside the box and approaches problems with innovative solutions. Enthusiastic about sharing ideas and inspiring others. Speaks with vivid imagery and emotional depth.',
-        expertise_keywords: ['creativity', 'design', 'innovation', 'brainstorming', 'artistic expression']
-      };
-    }
-    
-    if (lowerPrompt.includes('technical') || lowerPrompt.includes('engineer') || lowerPrompt.includes('developer')) {
-      return {
-        name: characterData.name || 'Alex Codewright',
-        personality: 'A logical and detail-oriented character with strong problem-solving skills. Enjoys breaking down complex technical concepts into understandable parts. Patient when explaining difficult topics and always eager to learn new technologies. Speaks with precision and uses clear examples.',
-        expertise_keywords: ['programming', 'systems design', 'troubleshooting', 'technology', 'problem solving']
-      };
-    }
-    
-    // Default enhancement based on role context
-    if (characterContext.role) {
-      return {
-        name: characterData.name || `${characterContext.role} Character`,
-        personality: `An experienced ${characterContext.role.toLowerCase()} with deep knowledge in their field. Professional, knowledgeable, and helpful. Communicates clearly and provides practical advice based on real-world experience.`,
-        expertise_keywords: [characterContext.role.toLowerCase(), 'expertise', 'guidance', 'best practices', 'problem solving']
-      };
-    }
-    
-    // Generic enhancement
-    return {
-      name: characterData.name || 'Enhanced Character',
-      personality: (characterData.personality || 'A well-rounded character') + ' Enhanced with AI to be more engaging, detailed, and consistent in their responses and interactions.',
-      expertise_keywords: characterData.expertise_keywords.length > 0 ? characterData.expertise_keywords : ['communication', 'problem solving', 'collaboration', 'adaptability']
-    };
-  };
+  // Determine if we're creating or editing based on whether character has meaningful data
+  const isEditMode = characterData.name?.trim() || characterData.personality?.trim() || characterData.expertise_keywords?.length > 0;
+  
+  // Get appropriate mutation based on mode
+  const mutation = isEditMode ? enhanceCharacter : createCharacter;
 
   const handleApplyAI = async () => {
     if (!prompt.trim()) return;
     
-    setIsProcessing(true);
-    
-    // Simulate AI processing delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const aiUpdates = mockAIResponse(prompt);
-    onApplyChanges(aiUpdates);
-    
-    setIsProcessing(false);
-    setPrompt('');
-    onClose();
+    try {
+      let response;
+      
+      if (isEditMode) {
+        // Enhance existing character
+        response = await enhanceCharacter.mutateAsync({
+          userRequest: prompt,
+          currentCharacterData: {
+            name: characterData.name,
+            role: characterData.role,
+            personality: characterData.personality,
+            expertise_keywords: characterData.expertise_keywords,
+            background: characterData.background,
+            appearance: characterData.appearance,
+            goals: characterData.goals,
+            fears: characterData.fears,
+            notable_quotes: characterData.notable_quotes,
+          }
+        });
+      } else {
+        // Create new character
+        response = await createCharacter.mutateAsync({
+          userRequest: prompt
+        });
+      }
+      
+      // Apply the AI response to the form
+      onApplyChanges({
+        name: response.name,
+        role: response.role,
+        personality: response.personality,
+        expertise_keywords: response.expertise_keywords,
+        background: response.background,
+        appearance: response.appearance,
+        goals: response.goals,
+        fears: response.fears,
+        notable_quotes: response.notable_quotes,
+      });
+      
+      setPrompt('');
+      onClose();
+      
+    } catch (error) {
+      console.error('AI assistance failed:', error);
+      // Error is handled by the mutation hook
+    }
   };
 
   const suggestionPrompts = [
     "Make this character more funny and humorous",
-    "Add professional business expertise",
+    "Add professional business expertise", 
     "Enhance with creative and artistic traits",
     "Make them more technical and analytical",
     "Add leadership and mentoring qualities"
   ];
+  
+  const isProcessing = mutation.isPending;
+  const error = mutation.error;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -113,10 +106,13 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
         <DialogHeader>
           <DialogTitle className="text-cyan-400 flex items-center gap-2">
             <Wand2 className="w-5 h-5" />
-            AI Character Assistant
+            AI Character Assistant {isEditMode ? '(Enhancement Mode)' : '(Creation Mode)'}
           </DialogTitle>
           <DialogDescription className="text-slate-300">
-            Describe how you'd like to improve or modify your character. AI will enhance their personality and traits automatically.
+            {isEditMode 
+              ? 'Describe how you\'d like to improve or modify your character. AI will enhance their existing traits.'
+              : 'Describe the character you want to create. AI will generate complete character details for you.'
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -135,6 +131,16 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
             />
             <p className="text-xs text-slate-400">{prompt.length}/500 characters</p>
           </div>
+
+          {error && (
+            <div className="bg-red-900/50 border border-red-600 rounded-lg p-3 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-red-200">
+                <p className="font-medium">AI assistance failed</p>
+                <p className="text-red-300">{error.message}</p>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-3">
             <Label className="text-slate-300">Quick Suggestions:</Label>
@@ -156,13 +162,16 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
           <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="w-4 h-4 text-violet-400" />
-              <span className="text-sm font-medium text-violet-400">AI Will Enhance:</span>
+              <span className="text-sm font-medium text-violet-400">
+                {isEditMode ? 'AI Will Enhance:' : 'AI Will Generate:'}
+              </span>
             </div>
             <ul className="text-sm text-slate-300 space-y-1">
-              <li>• Character name (if not set)</li>
-              <li>• Personality traits and behavior</li>
-              <li>• Areas of expertise</li>
-              <li>• Communication style and tone</li>
+              <li>• Character name and role</li>
+              <li>• Detailed personality and behavior</li>
+              <li>• Areas of expertise and skills</li>
+              <li>• Background story and appearance</li>
+              <li>• Goals, fears, and notable quotes</li>
             </ul>
           </div>
 
@@ -183,12 +192,12 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
               {isProcessing ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Processing...
+                  {isEditMode ? 'Enhancing...' : 'Creating...'}
                 </>
               ) : (
                 <>
                   <Wand2 className="w-4 h-4 mr-2" />
-                  Apply AI Enhancement
+                  {isEditMode ? 'Apply AI Enhancement' : 'Create with AI'}
                 </>
               )}
             </Button>
