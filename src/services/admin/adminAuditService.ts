@@ -112,7 +112,7 @@ export const adminAuditService = {
             }
           } else if (action.target_type === 'character') {
             const { data } = await supabase
-              .from('scenario_characters')
+              .from('characters')
               .select('name')
               .eq('id', action.target_id)
               .single();

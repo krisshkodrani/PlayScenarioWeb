@@ -40,15 +40,19 @@ export const mapDatabaseScenario = (dbScenario: any): Scenario => {
   };
 };
 
-export const enrichScenarioWithCharacters = (scenario: Scenario, characters: any[]): Scenario => {
-  const mappedCharacters: Character[] = characters.map(char => ({
-    id: char.id,
-    name: char.name,
-    role: char.role || 'Team Member',
-    personality: char.personality,
-    expertise_keywords: char.expertise_keywords || [],
-    avatar_color: getAvatarColor(char.name)
-  }));
+export const enrichScenarioWithCharacters = (scenario: Scenario, characterAssignments: any[]): Scenario => {
+  const mappedCharacters: Character[] = characterAssignments.map(assignment => {
+    const char = assignment.character || assignment; // Handle both assignment objects and direct character objects
+    return {
+      id: char.id,
+      name: char.name,
+      role: char.role || 'Team Member',
+      personality: char.personality,
+      expertise_keywords: char.expertise_keywords || [],
+      avatar_color: getAvatarColor(char.name),
+      avatar_url: char.avatar_url
+    };
+  });
 
   return {
     ...scenario,
