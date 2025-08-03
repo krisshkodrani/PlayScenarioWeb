@@ -48,7 +48,7 @@ export const createScenario = async (scenarioData: ScenarioData): Promise<Scenar
     
     for (const char of scenarioData.characters) {
       // First, create or find the character in characters table
-      let characterId = (char as any).id;
+      let characterId = char.id;
       
       if (!characterId) {
         // Create new character
@@ -81,7 +81,7 @@ export const createScenario = async (scenarioData: ScenarioData): Promise<Scenar
         .insert({
           scenario_id: data.id,
           character_id: characterId,
-          is_player_character: (char as any).is_player_character,
+            is_player_character: char.is_player_character,
           assigned_by: user.id
         });
 
@@ -163,7 +163,7 @@ export const updateScenario = async (scenarioId: string, updates: Partial<Scenar
     // Create new character assignments if any exist
     if (characters.length > 0) {
       for (const char of characters) {
-        let characterId = (char as any).id;
+        let characterId = char.id;
         
         if (!characterId) {
           // Create new character
@@ -195,7 +195,7 @@ export const updateScenario = async (scenarioId: string, updates: Partial<Scenar
           .insert({
             scenario_id: scenarioId,
             character_id: characterId,
-            is_player_character: (char as any).is_player_character,
+            is_player_character: char.is_player_character,
             assigned_by: user.id
           });
 

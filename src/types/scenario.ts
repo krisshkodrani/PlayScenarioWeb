@@ -6,6 +6,7 @@ export interface ObjectiveData {
 }
 
 export interface CharacterData {
+  id?: string; // Optional for new characters, required for existing
   name: string;
   personality: string;
   expertise_keywords: string[];
