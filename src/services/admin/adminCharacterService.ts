@@ -10,7 +10,6 @@ export interface AdminCharacter {
   creator_id: string;
   creator_username: string;
   status: 'active' | 'blocked' | 'pending_review';
-  is_player_character: boolean;
   created_at: string;
   blocked_at: string | null;
   blocked_by: string | null;
@@ -26,7 +25,6 @@ export interface AdminCharacterFilters {
   status: 'all' | 'active' | 'blocked' | 'pending_review';
   creator: string;
   role: string;
-  is_player_character: 'all' | 'true' | 'false';
   dateFrom: string;
   dateTo: string;
 }
@@ -45,7 +43,7 @@ class AdminCharacterService {
     pageSize: number = 10
   ): Promise<CharacterModerationResult> {
     let query = supabase
-      .from('scenario_characters')
+      .from('characters')
       .select(`
         *,
         profiles!creator_id(username),
@@ -69,9 +67,6 @@ class AdminCharacterService {
       query = query.ilike('role', `%${filters.role}%`);
     }
 
-    if (filters.is_player_character !== 'all') {
-      query = query.eq('is_player_character', filters.is_player_character === 'true');
-    }
 
     if (filters.dateFrom) {
       query = query.gte('created_at', filters.dateFrom);
@@ -105,7 +100,6 @@ class AdminCharacterService {
       creator_id: character.creator_id,
       creator_username: (character.profiles as any)?.username || 'Unknown',
       status: (character.status || 'active') as 'active' | 'blocked' | 'pending_review',
-      is_player_character: character.is_player_character,
       created_at: character.created_at,
       blocked_at: character.blocked_at,
       blocked_by: character.blocked_by,
@@ -129,7 +123,7 @@ class AdminCharacterService {
     if (!adminUser.user) throw new Error('Not authenticated');
 
     const { error: blockError } = await supabase
-      .from('scenario_characters')
+      .from('characters')
       .update({
         status: 'blocked',
         blocked_at: new Date().toISOString(),
@@ -149,7 +143,7 @@ class AdminCharacterService {
     if (!adminUser.user) throw new Error('Not authenticated');
 
     const { error: unblockError } = await supabase
-      .from('scenario_characters')
+      .from('characters')
       .update({
         status: 'active',
         blocked_at: null,
@@ -169,7 +163,7 @@ class AdminCharacterService {
     if (!adminUser.user) throw new Error('Not authenticated');
 
     const { error } = await supabase
-      .from('scenario_characters')
+      .from('characters')
       .update({
         status: 'pending_review'
       })
@@ -187,7 +181,7 @@ class AdminCharacterService {
     if (!adminUser.user) throw new Error('Not authenticated');
 
     const { error } = await supabase
-      .from('scenario_characters')
+      .from('characters')
       .update({
         status: 'blocked',
         blocked_at: new Date().toISOString(),
@@ -217,7 +211,7 @@ class AdminCharacterService {
     if (!adminUser.user) throw new Error('Not authenticated');
 
     const { error } = await supabase
-      .from('scenario_characters')
+      .from('characters')
       .update({
         status: 'active',
         blocked_at: null,
@@ -246,7 +240,7 @@ class AdminCharacterService {
     if (!adminUser.user) throw new Error('Not authenticated');
 
     const { error } = await supabase
-      .from('scenario_characters')
+      .from('characters')
       .update({
         status: 'pending_review'
       })

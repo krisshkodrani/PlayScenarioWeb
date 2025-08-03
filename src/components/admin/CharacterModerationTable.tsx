@@ -66,19 +66,6 @@ export const CharacterModerationTable: React.FC<CharacterModerationTableProps> =
     }
   };
 
-  const getCharacterTypeBadge = (isPlayerCharacter: boolean) => {
-    return isPlayerCharacter ? (
-      <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-        <Users className="w-3 h-3 mr-1" />
-        Player Character
-      </Badge>
-    ) : (
-      <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
-        <Users className="w-3 h-3 mr-1" />
-        NPC
-      </Badge>
-    );
-  };
 
   const handleAction = async () => {
     if (!selectedCharacter || !actionType) return;
@@ -207,7 +194,6 @@ export const CharacterModerationTable: React.FC<CharacterModerationTableProps> =
                   />
                 </TableHead>
                 <TableHead className="text-slate-300">Character</TableHead>
-                <TableHead className="text-slate-300">Type</TableHead>
                 <TableHead className="text-slate-300">Creator</TableHead>
                 <TableHead className="text-slate-300">Status</TableHead>
                 <TableHead className="text-slate-300">Stats</TableHead>
@@ -234,9 +220,6 @@ export const CharacterModerationTable: React.FC<CharacterModerationTableProps> =
                         {character.expertise_keywords.length > 3 && '...'}
                       </div>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    {getCharacterTypeBadge(character.is_player_character)}
                   </TableCell>
                   <TableCell>
                     <div className="text-slate-300">{character.creator_username}</div>

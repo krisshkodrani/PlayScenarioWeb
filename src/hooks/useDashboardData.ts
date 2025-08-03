@@ -40,7 +40,7 @@ export const useDashboardData = () => {
 
         // Fetch characters created by user  
         const { data: characters, error: charactersError } = await supabase
-          .from('scenario_characters')
+          .from('characters')
           .select('*')
           .eq('creator_id', user.id)
           .order('created_at', { ascending: false });

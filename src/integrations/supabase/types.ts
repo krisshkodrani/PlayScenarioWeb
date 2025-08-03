@@ -89,7 +89,7 @@ export type Database = {
             foreignKeyName: "character_usage_stats_character_id_fkey"
             columns: ["character_id"]
             isOneToOne: true
-            referencedRelation: "scenario_characters"
+            referencedRelation: "characters"
             referencedColumns: ["id"]
           },
         ]
@@ -433,21 +433,21 @@ export type Database = {
           },
         ]
       }
-      scenario_characters: {
+      scenario_characters_backup: {
         Row: {
           avatar_url: string | null
           blocked_at: string | null
           blocked_by: string | null
           blocked_reason: string | null
-          created_at: string
-          creator_id: string
-          expertise_keywords: string[]
-          id: string
-          is_player_character: boolean
-          name: string
-          personality: string
-          role: string
-          scenario_id: string
+          created_at: string | null
+          creator_id: string | null
+          expertise_keywords: string[] | null
+          id: string | null
+          is_player_character: boolean | null
+          name: string | null
+          personality: string | null
+          role: string | null
+          scenario_id: string | null
           status: string | null
         }
         Insert: {
@@ -455,15 +455,15 @@ export type Database = {
           blocked_at?: string | null
           blocked_by?: string | null
           blocked_reason?: string | null
-          created_at?: string
-          creator_id: string
-          expertise_keywords?: string[]
-          id?: string
-          is_player_character?: boolean
-          name: string
-          personality: string
-          role?: string
-          scenario_id: string
+          created_at?: string | null
+          creator_id?: string | null
+          expertise_keywords?: string[] | null
+          id?: string | null
+          is_player_character?: boolean | null
+          name?: string | null
+          personality?: string | null
+          role?: string | null
+          scenario_id?: string | null
           status?: string | null
         }
         Update: {
@@ -471,26 +471,18 @@ export type Database = {
           blocked_at?: string | null
           blocked_by?: string | null
           blocked_reason?: string | null
-          created_at?: string
-          creator_id?: string
-          expertise_keywords?: string[]
-          id?: string
-          is_player_character?: boolean
-          name?: string
-          personality?: string
-          role?: string
-          scenario_id?: string
+          created_at?: string | null
+          creator_id?: string | null
+          expertise_keywords?: string[] | null
+          id?: string | null
+          is_player_character?: boolean | null
+          name?: string | null
+          personality?: string | null
+          role?: string | null
+          scenario_id?: string | null
           status?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "scenario_characters_scenario_id_fkey"
-            columns: ["scenario_id"]
-            isOneToOne: false
-            referencedRelation: "scenarios"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       scenario_instances: {
         Row: {

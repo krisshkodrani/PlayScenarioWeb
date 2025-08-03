@@ -46,29 +46,51 @@ export const createScenario = async (scenarioData: ScenarioData): Promise<Scenar
   if (scenarioData.characters && scenarioData.characters.length > 0) {
     console.log('Creating characters for scenario:', data.id);
     
-    const charactersToInsert = scenarioData.characters.map(char => ({
-      scenario_id: data.id,
-      name: char.name,
-      personality: char.personality,
-      expertise_keywords: char.expertise_keywords,
-      is_player_character: char.is_player_character,
-      creator_id: user.id,
-      role: 'Team Member'
-    }));
+    for (const char of scenarioData.characters) {
+      // First, create or find the character in characters table
+      let characterId = char.id;
+      
+      if (!characterId) {
+        // Create new character
+        const { data: newCharacter, error: charError } = await supabase
+          .from('characters')
+          .insert({
+            name: char.name,
+            personality: char.personality,
+            expertise_keywords: char.expertise_keywords,
+            creator_id: user.id,
+            role: (char as any).role || 'Team Member',
+            avatar_url: (char as any).avatar_url,
+            is_public: false // Characters created within scenarios are private by default
+          })
+          .select()
+          .single();
 
-    console.log('Characters to insert:', charactersToInsert);
+        if (charError) {
+          console.error('Error creating character:', charError);
+          continue; // Skip this character and continue with others
+        }
+        
+        characterId = newCharacter.id;
+        console.log('Character created successfully:', newCharacter);
+      }
 
-    const { error: charactersError, data: charactersData } = await supabase
-      .from('scenario_characters')
-      .insert(charactersToInsert)
-      .select();
+      // Then assign the character to the scenario
+      const { error: assignError } = await supabase
+        .from('scenario_character_assignments')
+        .insert({
+          scenario_id: data.id,
+          character_id: characterId,
+            is_player_character: char.is_player_character,
+          assigned_by: user.id
+        });
 
-    if (charactersError) {
-      console.error('Error creating scenario characters:', charactersError);
-      // Don't throw error here, let the scenario save succeed even if characters fail
-      // We can retry character creation later
-    } else {
-      console.log('Characters created successfully:', charactersData);
+      if (assignError) {
+        console.error('Error assigning character to scenario:', assignError);
+        // Continue with other characters
+      } else {
+        console.log('Character assigned to scenario successfully');
+      }
     }
   } else {
     console.log('No characters to create for this scenario');
@@ -125,43 +147,61 @@ export const updateScenario = async (scenarioId: string, updates: Partial<Scenar
   if (characters !== undefined) {
     console.log('Updating characters for scenario:', scenarioId);
     
-    // Delete existing characters
+    // Delete existing character assignments
     const { error: deleteError } = await supabase
-      .from('scenario_characters')
+      .from('scenario_character_assignments')
       .delete()
       .eq('scenario_id', scenarioId);
 
     if (deleteError) {
-      console.error('Error deleting existing characters:', deleteError);
-      // Continue anyway - we'll try to create the new characters
+      console.error('Error deleting existing character assignments:', deleteError);
+      // Continue anyway - we'll try to create the new assignments
     } else {
-      console.log('Existing characters deleted successfully');
+      console.log('Existing character assignments deleted successfully');
     }
 
-    // Create new characters if any exist
+    // Create new character assignments if any exist
     if (characters.length > 0) {
-      const charactersToInsert = characters.map(char => ({
-        scenario_id: scenarioId,
-        name: char.name,
-        personality: char.personality,
-        expertise_keywords: char.expertise_keywords,
-        is_player_character: char.is_player_character,
-        creator_id: user.id,
-        role: 'Team Member'
-      }));
+      for (const char of characters) {
+        let characterId = char.id;
+        
+        if (!characterId) {
+          // Create new character
+          const { data: newCharacter, error: charError } = await supabase
+            .from('characters')
+            .insert({
+              name: char.name,
+              personality: char.personality,
+              expertise_keywords: char.expertise_keywords,
+              creator_id: user.id,
+              role: (char as any).role || 'Team Member',
+              avatar_url: (char as any).avatar_url,
+              is_public: false
+            })
+            .select()
+            .single();
 
-      console.log('Characters to insert:', charactersToInsert);
+          if (charError) {
+            console.error('Error creating character:', charError);
+            continue;
+          }
+          
+          characterId = newCharacter.id;
+        }
 
-      const { error: charactersError, data: charactersData } = await supabase
-        .from('scenario_characters')
-        .insert(charactersToInsert)
-        .select();
+        // Assign character to scenario
+        const { error: assignError } = await supabase
+          .from('scenario_character_assignments')
+          .insert({
+            scenario_id: scenarioId,
+            character_id: characterId,
+            is_player_character: char.is_player_character,
+            assigned_by: user.id
+          });
 
-      if (charactersError) {
-        console.error('Error creating updated scenario characters:', charactersError);
-        // Don't throw error here, let the scenario update succeed even if characters fail
-      } else {
-        console.log('Updated characters created successfully:', charactersData);
+        if (assignError) {
+          console.error('Error assigning character to scenario:', assignError);
+        }
       }
     }
   }
@@ -173,9 +213,9 @@ export const deleteScenario = async (scenarioId: string): Promise<void> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
-  // Delete associated characters first
+  // Delete associated character assignments first
   await supabase
-    .from('scenario_characters')
+    .from('scenario_character_assignments')
     .delete()
     .eq('scenario_id', scenarioId);
 
@@ -212,12 +252,15 @@ export const duplicateScenario = async (scenarioId: string): Promise<Scenario | 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
-  // Get original scenario with characters
+  // Get original scenario with character assignments
   const { data: original, error: fetchError } = await supabase
     .from('scenarios')
     .select(`
       *,
-      scenario_characters(*)
+      scenario_character_assignments(
+        *,
+        character:characters(*)
+      )
     `)
     .eq('id', scenarioId)
     .single();
@@ -249,24 +292,41 @@ export const duplicateScenario = async (scenarioId: string): Promise<Scenario | 
     throw insertError;
   }
 
-  // Duplicate characters
-  if (original.scenario_characters && original.scenario_characters.length > 0) {
-    const charactersToInsert = original.scenario_characters.map((char: any) => ({
-      scenario_id: newScenario.id,
-      name: char.name,
-      personality: char.personality,
-      expertise_keywords: char.expertise_keywords,
-      is_player_character: char.is_player_character,
-      role: char.role,
-      backstory: char.backstory,
-      motivations: char.motivations,
-      speech_patterns: char.speech_patterns,
-      creator_id: user.id
-    }));
+  // Duplicate character assignments
+  if (original.scenario_character_assignments && original.scenario_character_assignments.length > 0) {
+    for (const assignment of original.scenario_character_assignments) {
+      const originalChar = assignment.character;
+      
+      // Create a duplicate of the character
+      const { data: duplicatedChar, error: dupCharError } = await supabase
+        .from('characters')
+        .insert({
+          name: `${originalChar.name} (Copy)`,
+          personality: originalChar.personality,
+          expertise_keywords: originalChar.expertise_keywords,
+          role: originalChar.role,
+          avatar_url: originalChar.avatar_url,
+          creator_id: user.id,
+          is_public: false
+        })
+        .select()
+        .single();
 
-    await supabase
-      .from('scenario_characters')
-      .insert(charactersToInsert);
+      if (dupCharError) {
+        console.error('Error duplicating character:', dupCharError);
+        continue;
+      }
+
+      // Assign the duplicated character to the new scenario
+      await supabase
+        .from('scenario_character_assignments')
+        .insert({
+          scenario_id: newScenario.id,
+          character_id: duplicatedChar.id,
+          is_player_character: assignment.is_player_character,
+          assigned_by: user.id
+        });
+    }
   }
 
   return mapDatabaseScenario(newScenario);

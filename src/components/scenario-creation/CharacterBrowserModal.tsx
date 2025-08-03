@@ -74,6 +74,7 @@ const CharacterBrowserModal: React.FC<CharacterBrowserModalProps> = ({
 
     // Convert Character format to CharacterData format
     const characterData: CharacterData[] = selectedCharacters.map(char => ({
+      id: char.id, // Preserve the character ID for existing characters
       name: char.name,
       personality: char.personality,
       expertise_keywords: char.expertise_keywords,

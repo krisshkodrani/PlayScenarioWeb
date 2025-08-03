@@ -1,11 +1,13 @@
 // Backend-aligned character interface for creation/editing
 export interface CharacterData {
+  id?: string;                     // Optional ID for existing characters
   name: string;                    // Maps to database name TEXT NOT NULL
   role?: string;                   // Maps to database role TEXT DEFAULT 'Character'
   personality: string;             // Maps to database personality TEXT NOT NULL  
   expertise_keywords: string[];    // Maps to database expertise_keywords TEXT[]
   avatar_url?: string;             // Maps to database avatar_url TEXT
   is_public?: boolean;             // Maps to database is_public BOOLEAN DEFAULT false
+  is_player_character?: boolean;   // For scenario character assignments
   // Extended fields for AI assistance
   background?: string;             // Character background and history
   appearance?: string;             // Physical appearance description

@@ -26,7 +26,6 @@ const CharacterModeration: React.FC = () => {
     status: 'all',
     creator: '',
     role: '',
-    is_player_character: 'all',
     dateFrom: '',
     dateTo: ''
   });
@@ -114,7 +113,7 @@ const CharacterModeration: React.FC = () => {
       status: 'all',
       creator: '',
       role: '',
-      is_player_character: 'all',
+      
       dateFrom: '',
       dateTo: ''
     });

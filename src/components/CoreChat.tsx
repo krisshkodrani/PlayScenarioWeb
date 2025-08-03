@@ -121,18 +121,22 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
 
       try {
         const { data, error } = await supabase
-          .from('scenario_characters')
-          .select('*')
+          .from('scenario_character_assignments')
+          .select(`
+            *,
+            character:characters(*)
+          `)
           .eq('scenario_id', scenarioId);
 
         if (error) throw error;
 
-        const formattedCharacters = data?.map(char => ({
-          id: char.id,
-          name: char.name,
-          role: char.role || 'Character',
+        const formattedCharacters = data?.map(assignment => ({
+          id: assignment.character.id,
+          name: assignment.character.name,
+          role: assignment.character.role || 'Character',
           avatar_color: 'bg-blue-600', // Default color, could be randomized
-          personality: char.personality
+          personality: assignment.character.personality,
+          avatar_url: assignment.character.avatar_url
         })) || [];
 
         setCharacters(formattedCharacters);

@@ -27,7 +27,8 @@ export const getUserScenarios = async (
 
   const scenarios = (data || []).map(scenario => {
     const mappedScenario = mapDatabaseScenario(scenario);
-    return enrichScenarioWithCharacters(mappedScenario, scenario.scenario_characters || []);
+    const characters = scenario.scenario_character_assignments?.map((assignment: any) => assignment.character) || [];
+    return enrichScenarioWithCharacters(mappedScenario, characters);
   });
 
   return {
@@ -73,7 +74,10 @@ export const getScenarioById = async (scenarioId: string): Promise<Scenario | nu
     .from('scenarios')
     .select(`
       *,
-      scenario_characters(*)
+      scenario_character_assignments(
+        *,
+        character:characters(*)
+      )
     `)
     .eq('id', scenarioId)
     .single();
@@ -95,7 +99,8 @@ export const getScenarioById = async (scenarioId: string): Promise<Scenario | nu
   }
 
   const scenario = mapDatabaseScenario(data);
-  const enrichedScenario = enrichScenarioWithCharacters(scenario, data.scenario_characters || []);
+  const characters = data.scenario_character_assignments?.map((assignment: any) => assignment.character) || [];
+  const enrichedScenario = enrichScenarioWithCharacters(scenario, characters);
   
   // Add username if available
   if (profileData) {
@@ -144,7 +149,8 @@ const enrichScenariosWithUserData = async (scenarios: any[]): Promise<Scenario[]
   if (!user || scenarios.length === 0) {
     return scenarios.map(s => {
       const mappedScenario = mapDatabaseScenario(s);
-      return enrichScenarioWithCharacters(mappedScenario, s.scenario_characters || []);
+      const characters = s.scenario_character_assignments?.map((assignment: any) => assignment.character) || [];
+      return enrichScenarioWithCharacters(mappedScenario, characters);
     });
   }
 
@@ -177,7 +183,8 @@ const enrichScenariosWithUserData = async (scenarios: any[]): Promise<Scenario[]
 
   return scenarios.map(scenario => {
     const mappedScenario = mapDatabaseScenario(scenario);
-    const enrichedScenario = enrichScenarioWithCharacters(mappedScenario, scenario.scenario_characters || []);
+    const characters = scenario.scenario_character_assignments?.map((assignment: any) => assignment.character) || [];
+    const enrichedScenario = enrichScenarioWithCharacters(mappedScenario, characters);
     
     // Add username from profiles
     enrichedScenario.created_by = profileMap.get(scenario.creator_id) || 'Unknown';

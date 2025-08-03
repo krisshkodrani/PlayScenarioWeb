@@ -46,7 +46,7 @@ const ContentAnalytics: React.FC = () => {
         // Load basic content stats
         const [scenariosResult, charactersResult, activeResult, creatorsResult] = await Promise.all([
           supabase.from('scenarios').select('id', { count: 'exact', head: true }),
-          supabase.from('scenario_characters').select('id', { count: 'exact', head: true }),
+          supabase.from('characters').select('id', { count: 'exact', head: true }),
           supabase.from('scenarios').select('id', { count: 'exact', head: true }).eq('status', 'active'),
           supabase.from('scenarios').select('creator_id').neq('creator_id', null)
         ]);
