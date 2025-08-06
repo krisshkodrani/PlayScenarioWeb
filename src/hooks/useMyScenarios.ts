@@ -73,7 +73,7 @@ export const useMyScenarios = () => {
     }
   }, [filters, pagination.page, pagination.limit]);
 
-  // Update URL params when filters change
+  // Update URL params when filters change (only if they actually changed)
   useEffect(() => {
     const params = new URLSearchParams();
     
@@ -82,8 +82,14 @@ export const useMyScenarios = () => {
     if (filters.sortBy !== 'created_desc') params.set('sortBy', filters.sortBy);
     if (pagination.page !== 1) params.set('page', pagination.page.toString());
     
-    setSearchParams(params, { replace: true });
-  }, [filters, pagination.page, setSearchParams]);
+    // Only update URL if the params actually changed
+    const currentParams = searchParams.toString();
+    const newParams = params.toString();
+    
+    if (currentParams !== newParams) {
+      setSearchParams(params, { replace: true });
+    }
+  }, [filters, pagination.page, searchParams, setSearchParams]);
 
   // Fetch scenarios when filters change
   useEffect(() => {

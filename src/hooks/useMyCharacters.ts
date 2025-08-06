@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Character, CharacterStats, CharacterFilters } from '@/types/character';
 import { characterService } from '@/services/characterService';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +21,7 @@ interface UseMyCharactersReturn {
 }
 
 export const useMyCharacters = (): UseMyCharactersReturn => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   
   const [characters, setCharacters] = useState<Character[]>([]);
@@ -33,14 +35,14 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
   const [error, setError] = useState<string | null>(null);
   
   const [filters, setFilters] = useState<CharacterFilters>({
-    search: '',
-    role: '',
-    expertise: '',
-    sortBy: 'created'
+    search: searchParams.get('search') || '',
+    role: searchParams.get('role') || '',
+    expertise: searchParams.get('expertise') || '',
+    sortBy: (searchParams.get('sortBy') as CharacterFilters['sortBy']) || 'created'
   });
   
   const [pagination, setPagination] = useState({
-    page: 1,
+    page: parseInt(searchParams.get('page') || '1'),
     limit: 12,
     total: 0
   });
@@ -105,6 +107,25 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
       });
     }
   }, [toast, fetchCharacters]);
+
+  // Update URL params when filters change (only if they actually changed)
+  useEffect(() => {
+    const params = new URLSearchParams();
+    
+    if (filters.search) params.set('search', filters.search);
+    if (filters.role) params.set('role', filters.role);
+    if (filters.expertise) params.set('expertise', filters.expertise);
+    if (filters.sortBy !== 'created') params.set('sortBy', filters.sortBy);
+    if (pagination.page !== 1) params.set('page', pagination.page.toString());
+    
+    // Only update URL if the params actually changed
+    const currentParams = searchParams.toString();
+    const newParams = params.toString();
+    
+    if (currentParams !== newParams) {
+      setSearchParams(params, { replace: true });
+    }
+  }, [filters, pagination.page, searchParams, setSearchParams]);
 
   // Initial data fetch
   useEffect(() => {
