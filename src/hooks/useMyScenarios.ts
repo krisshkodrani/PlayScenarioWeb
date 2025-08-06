@@ -34,22 +34,23 @@ export const useMyScenarios = () => {
     total: 0
   });
 
-  const fetchScenarios = useCallback(async () => {
+  // Stable fetch function that doesn't recreate on filter changes
+  const fetchScenarios = useCallback(async (currentFilters: FilterState, currentPage: number, currentLimit: number) => {
     setLoading(true);
     setError(null);
     
     try {
       // Convert FilterState to ScenarioFilters
       const scenarioFilters: ScenarioFilters = {
-        search: filters.search,
+        search: currentFilters.search,
         category: 'all',
         difficulty: '',
-        isPublic: filters.status === 'published' ? true : filters.status === 'private' ? false : undefined,
-        sortBy: filters.sortBy
+        isPublic: currentFilters.status === 'published' ? true : currentFilters.status === 'private' ? false : undefined,
+        sortBy: currentFilters.sortBy
       };
 
       const [scenariosResult, statsResult] = await Promise.all([
-        scenarioService.getUserScenarios(scenarioFilters, pagination.page, pagination.limit),
+        scenarioService.getUserScenarios(scenarioFilters, currentPage, currentLimit),
         scenarioService.getScenarioStats()
       ]);
 
@@ -71,30 +72,34 @@ export const useMyScenarios = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters, pagination.page, pagination.limit]);
+  }, []); // No dependencies - stable function
 
-  // Update URL params when filters change (only if they actually changed)
+  // Debounced URL update
   useEffect(() => {
-    const params = new URLSearchParams();
-    
-    if (filters.status !== 'all') params.set('status', filters.status);
-    if (filters.search) params.set('search', filters.search);
-    if (filters.sortBy !== 'created_desc') params.set('sortBy', filters.sortBy);
-    if (pagination.page !== 1) params.set('page', pagination.page.toString());
-    
-    // Only update URL if the params actually changed
-    const currentParams = searchParams.toString();
-    const newParams = params.toString();
-    
-    if (currentParams !== newParams) {
-      setSearchParams(params, { replace: true });
-    }
+    const timeoutId = setTimeout(() => {
+      const params = new URLSearchParams();
+      
+      if (filters.status !== 'all') params.set('status', filters.status);
+      if (filters.search) params.set('search', filters.search);
+      if (filters.sortBy !== 'created_desc') params.set('sortBy', filters.sortBy);
+      if (pagination.page !== 1) params.set('page', pagination.page.toString());
+      
+      // Only update URL if the params actually changed
+      const currentParams = searchParams.toString();
+      const newParams = params.toString();
+      
+      if (currentParams !== newParams) {
+        setSearchParams(params, { replace: true });
+      }
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
   }, [filters, pagination.page, searchParams, setSearchParams]);
 
-  // Fetch scenarios when filters change
+  // Fetch scenarios when filters or pagination change
   useEffect(() => {
-    fetchScenarios();
-  }, [fetchScenarios]);
+    fetchScenarios(filters, pagination.page, pagination.limit);
+  }, [fetchScenarios, filters, pagination.page, pagination.limit]);
 
   const handleFilterChange = (newFilters: Partial<FilterState>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
@@ -133,7 +138,7 @@ export const useMyScenarios = () => {
       await scenarioService.duplicateScenario(scenarioId);
       
       // Refresh scenarios list
-      await fetchScenarios();
+      await fetchScenarios(filters, pagination.page, pagination.limit);
       
       toast({
         title: "Scenario Duplicated",

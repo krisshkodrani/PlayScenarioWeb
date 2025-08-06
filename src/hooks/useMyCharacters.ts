@@ -47,15 +47,15 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
     total: 0
   });
 
-  // Fetch characters data from Supabase
-  const fetchCharacters = useCallback(async () => {
+  // Stable fetch function that doesn't recreate on filter changes
+  const fetchCharacters = useCallback(async (currentFilters: CharacterFilters, currentPage: number, currentLimit: number) => {
     try {
       setLoading(true);
       setError(null);
 
       // Fetch characters and stats simultaneously
       const [charactersResult, statsResult] = await Promise.all([
-        characterService.getUserCharacters(filters, pagination.page, pagination.limit),
+        characterService.getUserCharacters(currentFilters, currentPage, currentLimit),
         characterService.getCharacterStats()
       ]);
 
@@ -71,7 +71,7 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
     } finally {
       setLoading(false);
     }
-  }, [filters, pagination.page, pagination.limit]);
+  }, []); // No dependencies - stable function
 
   // Handle filter changes
   const handleFilterChange = useCallback((newFilters: Partial<CharacterFilters>) => {
@@ -97,7 +97,7 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
       });
       
       // Refresh the list
-      await fetchCharacters();
+      await fetchCharacters(filters, pagination.page, pagination.limit);
     } catch (error) {
       console.error('Error deleting character:', error);
       toast({
@@ -106,31 +106,35 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
         variant: "destructive",
       });
     }
-  }, [toast, fetchCharacters]);
+  }, [toast, fetchCharacters, filters, pagination.page, pagination.limit]);
 
-  // Update URL params when filters change (only if they actually changed)
+  // Debounced URL update
   useEffect(() => {
-    const params = new URLSearchParams();
-    
-    if (filters.search) params.set('search', filters.search);
-    if (filters.role) params.set('role', filters.role);
-    if (filters.expertise) params.set('expertise', filters.expertise);
-    if (filters.sortBy !== 'created') params.set('sortBy', filters.sortBy);
-    if (pagination.page !== 1) params.set('page', pagination.page.toString());
-    
-    // Only update URL if the params actually changed
-    const currentParams = searchParams.toString();
-    const newParams = params.toString();
-    
-    if (currentParams !== newParams) {
-      setSearchParams(params, { replace: true });
-    }
+    const timeoutId = setTimeout(() => {
+      const params = new URLSearchParams();
+      
+      if (filters.search) params.set('search', filters.search);
+      if (filters.role) params.set('role', filters.role);
+      if (filters.expertise) params.set('expertise', filters.expertise);
+      if (filters.sortBy !== 'created') params.set('sortBy', filters.sortBy);
+      if (pagination.page !== 1) params.set('page', pagination.page.toString());
+      
+      // Only update URL if the params actually changed
+      const currentParams = searchParams.toString();
+      const newParams = params.toString();
+      
+      if (currentParams !== newParams) {
+        setSearchParams(params, { replace: true });
+      }
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
   }, [filters, pagination.page, searchParams, setSearchParams]);
 
-  // Initial data fetch
+  // Fetch characters when filters or pagination change
   useEffect(() => {
-    fetchCharacters();
-  }, [fetchCharacters]);
+    fetchCharacters(filters, pagination.page, pagination.limit);
+  }, [fetchCharacters, filters, pagination.page, pagination.limit]);
 
   return {
     characters,
