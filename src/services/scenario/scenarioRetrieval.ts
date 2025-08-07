@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Scenario } from '@/types/scenario';
 import { ScenarioFilters, ScenarioPaginationResult, ScenarioStats } from './scenarioTypes';
-import { buildScenarioQuery, applyScenarioFilters, applySorting, applyPagination } from './scenarioQueries';
+import { buildScenarioQuery, applyScenarioFilters, applySorting, applyPagination, getUserInteractionIds } from './scenarioQueries';
 import { mapDatabaseScenario, enrichScenarioWithCharacters } from './scenarioTransforms';
 
 export const getUserScenarios = async (
@@ -13,8 +13,11 @@ export const getUserScenarios = async (
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
+  // Pre-fetch user interaction IDs if needed
+  const { likedIds, bookmarkedIds } = await getUserInteractionIds(user.id, filters);
+
   let query = buildScenarioQuery().eq('creator_id', user.id);
-  query = await applyScenarioFilters(query, filters, user.id);
+  query = applyScenarioFilters(query, filters, likedIds, bookmarkedIds);
   query = applySorting(query, filters.sortBy);
   query = applyPagination(query, page, limit);
 
@@ -45,8 +48,13 @@ export const getPublicScenarios = async (
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
+    // Pre-fetch user interaction IDs if needed and user is authenticated
+    const { likedIds, bookmarkedIds } = user?.id 
+      ? await getUserInteractionIds(user.id, filters)
+      : { likedIds: undefined, bookmarkedIds: undefined };
+    
     let query = buildScenarioQuery().eq('is_public', true);
-    query = await applyScenarioFilters(query, filters, user?.id);
+    query = applyScenarioFilters(query, filters, likedIds, bookmarkedIds);
     query = applySorting(query, filters.sortBy);
     query = applyPagination(query, page, limit);
 

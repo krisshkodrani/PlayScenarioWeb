@@ -21,7 +21,7 @@ export const buildScenarioQuery = (isPublic?: boolean) => {
     `, { count: 'exact' });
 };
 
-export const applyScenarioFilters = async (query: any, filters: ScenarioFilters, userId?: string) => {
+export const applyScenarioFilters = (query: any, filters: ScenarioFilters, likedIds?: string[], bookmarkedIds?: string[]) => {
   // Validate that we have a proper query object
   if (!query || typeof query.or !== 'function') {
     console.error('Invalid query object passed to applyScenarioFilters:', query);
@@ -43,49 +43,59 @@ export const applyScenarioFilters = async (query: any, filters: ScenarioFilters,
     query = query.eq('is_public', filters.isPublic);
   }
 
-  // Apply liked filter - only if user is authenticated
-  if (filters.showLikedOnly && userId) {
-    try {
-      const { data: likedScenarios } = await supabase
-        .from('scenario_likes')
-        .select('scenario_id')
-        .eq('user_id', userId);
-      
-      const likedIds = likedScenarios?.map(item => item.scenario_id) || [];
-      if (likedIds.length > 0) {
-        query = query.in('id', likedIds);
-      } else {
-        // Filter by impossible ID to return no results while maintaining query chain
-        query = query.eq('id', '00000000-0000-0000-0000-000000000000');
-      }
-    } catch (error) {
-      console.error('Error fetching liked scenarios:', error);
-      // Don't modify query if there's an error - just continue with existing query
+  // Apply liked filter using pre-fetched IDs
+  if (filters.showLikedOnly && likedIds !== undefined) {
+    if (likedIds.length > 0) {
+      query = query.in('id', likedIds);
+    } else {
+      // Filter by impossible ID to return no results while maintaining query chain
+      query = query.eq('id', '00000000-0000-0000-0000-000000000000');
     }
   }
 
-  // Apply bookmarked filter - only if user is authenticated
-  if (filters.showBookmarkedOnly && userId) {
-    try {
-      const { data: bookmarkedScenarios } = await supabase
-        .from('scenario_bookmarks')
-        .select('scenario_id')
-        .eq('user_id', userId);
-      
-      const bookmarkedIds = bookmarkedScenarios?.map(item => item.scenario_id) || [];
-      if (bookmarkedIds.length > 0) {
-        query = query.in('id', bookmarkedIds);
-      } else {
-        // Filter by impossible ID to return no results while maintaining query chain
-        query = query.eq('id', '00000000-0000-0000-0000-000000000000');
-      }
-    } catch (error) {
-      console.error('Error fetching bookmarked scenarios:', error);
-      // Don't modify query if there's an error - just continue with existing query
+  // Apply bookmarked filter using pre-fetched IDs
+  if (filters.showBookmarkedOnly && bookmarkedIds !== undefined) {
+    if (bookmarkedIds.length > 0) {
+      query = query.in('id', bookmarkedIds);
+    } else {
+      // Filter by impossible ID to return no results while maintaining query chain
+      query = query.eq('id', '00000000-0000-0000-0000-000000000000');
     }
   }
 
   return query;
+};
+
+// Helper function to pre-fetch user interaction IDs
+export const getUserInteractionIds = async (userId: string, filters: ScenarioFilters) => {
+  try {
+    let likedIds: string[] | undefined = undefined;
+    let bookmarkedIds: string[] | undefined = undefined;
+    
+    if (filters.showLikedOnly) {
+      const { data: likedScenarios } = await supabase
+        .from('scenario_likes')
+        .select('scenario_id')
+        .eq('user_id', userId);
+      likedIds = likedScenarios?.map(item => item.scenario_id) || [];
+    }
+    
+    if (filters.showBookmarkedOnly) {
+      const { data: bookmarkedScenarios } = await supabase
+        .from('scenario_bookmarks')
+        .select('scenario_id')
+        .eq('user_id', userId);
+      bookmarkedIds = bookmarkedScenarios?.map(item => item.scenario_id) || [];
+    }
+    
+    return { likedIds, bookmarkedIds };
+  } catch (error) {
+    console.error('Error fetching user interaction IDs:', error);
+    return { 
+      likedIds: filters.showLikedOnly ? [] : undefined, 
+      bookmarkedIds: filters.showBookmarkedOnly ? [] : undefined 
+    };
+  }
 };
 
 export const applySorting = (query: any, sortBy: string) => {
