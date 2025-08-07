@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, memo, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, ArrowLeft, LayoutDashboard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +12,66 @@ import EmptyScenarios from '@/components/my-scenarios/EmptyScenarios';
 import NoSearchResults from '@/components/my-scenarios/NoSearchResults';
 import { useMyScenarios } from '@/hooks/useMyScenarios';
 import { useMyScenariosActions } from '@/components/my-scenarios/MyScenariosActions';
+
+// Memoized header component to prevent reloading during search
+const ScenariosHeader = memo<{
+  scenarioStats: any;
+  onCreateNew: () => void;
+  onNavigateToDashboard: () => void;
+}>(({ scenarioStats, onCreateNew, onNavigateToDashboard }) => (
+  <div className="sticky top-0 z-10 bg-slate-900 border-b border-slate-800">
+    <div className="container mx-auto px-4 py-4">
+      {/* Single row with dashboard link, title, stats, and create button */}
+      <div className="flex items-center justify-between gap-4">
+        {/* Left: Dashboard link and title */}
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onNavigateToDashboard}
+            className="text-slate-400 hover:text-cyan-400 hover:bg-slate-800"
+          >
+            <LayoutDashboard className="w-4 h-4 mr-2" />
+            Dashboard
+          </Button>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-white">My Scenarios</h1>
+            {scenarioStats.totalScenarios > 0 && (
+              <span className="bg-slate-700 text-cyan-400 px-2 py-1 rounded-full text-sm font-medium">
+                {scenarioStats.totalScenarios}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Center: Compact Stats (hidden on mobile) */}
+        <div className="hidden lg:flex items-center gap-4">
+          <div className="flex items-center gap-1 text-sm">
+            <span className="text-slate-400">Total:</span>
+            <span className="text-cyan-400 font-semibold">{scenarioStats.totalScenarios}</span>
+          </div>
+          <div className="flex items-center gap-1 text-sm">
+            <span className="text-slate-400">Published:</span>
+            <span className="text-emerald-400 font-semibold">{scenarioStats.publishedScenarios}</span>
+          </div>
+          <div className="flex items-center gap-1 text-sm">
+            <span className="text-slate-400">Plays:</span>
+            <span className="text-violet-400 font-semibold">{scenarioStats.totalPlays}</span>
+          </div>
+        </div>
+
+        {/* Right: Create button */}
+        <Button 
+          onClick={onCreateNew}
+          className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-medium"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Create Scenario
+        </Button>
+      </div>
+    </div>
+  </div>
+));
 
 const MyScenarios: React.FC = () => {
   const navigate = useNavigate();
@@ -81,69 +141,27 @@ const MyScenarios: React.FC = () => {
   const hasScenarios = scenarios.length > 0;
   const hasSearchResults = filters.search ? scenarios.length > 0 : true;
 
+  // Memoize navigation functions to prevent header re-renders
+  const handleNavigateToDashboard = useMemo(() => () => navigate('/dashboard'), [navigate]);
+
   return (
     <div className="h-screen bg-slate-900 flex flex-col">
-      {/* Compact Sticky Header - Single Row */}
-      <div className="sticky top-0 z-10 bg-slate-900 border-b border-slate-800">
+      {/* Memoized Header - Won't reload during search */}
+      <ScenariosHeader
+        scenarioStats={scenarioStats}
+        onCreateNew={handleCreateNew}
+        onNavigateToDashboard={handleNavigateToDashboard}
+      />
+
+      {/* Filters section - separate from header */}
+      <div className="border-b border-slate-800 bg-slate-900">
         <div className="container mx-auto px-4 py-4">
-          {/* Single row with dashboard link, title, stats, and create button */}
-          <div className="flex items-center justify-between gap-4">
-            {/* Left: Dashboard link and title */}
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/dashboard')}
-                className="text-slate-400 hover:text-cyan-400 hover:bg-slate-800"
-              >
-                <LayoutDashboard className="w-4 h-4 mr-2" />
-                Dashboard
-              </Button>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-white">My Scenarios</h1>
-                {scenarioStats.totalScenarios > 0 && (
-                  <span className="bg-slate-700 text-cyan-400 px-2 py-1 rounded-full text-sm font-medium">
-                    {scenarioStats.totalScenarios}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Center: Compact Stats (hidden on mobile) */}
-            <div className="hidden lg:flex items-center gap-4">
-              <div className="flex items-center gap-1 text-sm">
-                <span className="text-slate-400">Total:</span>
-                <span className="text-cyan-400 font-semibold">{scenarioStats.totalScenarios}</span>
-              </div>
-              <div className="flex items-center gap-1 text-sm">
-                <span className="text-slate-400">Published:</span>
-                <span className="text-emerald-400 font-semibold">{scenarioStats.publishedScenarios}</span>
-              </div>
-              <div className="flex items-center gap-1 text-sm">
-                <span className="text-slate-400">Plays:</span>
-                <span className="text-violet-400 font-semibold">{scenarioStats.totalPlays}</span>
-              </div>
-            </div>
-
-            {/* Right: Create button */}
-            <Button 
-              onClick={handleCreateNew}
-              className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-medium"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create Scenario
-            </Button>
-          </div>
-
-          {/* Filters row (always visible) */}
-          <div className="mt-4">
-            <ScenarioFilters
-              filters={filters}
-              onFilterChange={handleFilterChange}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-            />
-          </div>
+          <ScenarioFilters
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
         </div>
       </div>
 
