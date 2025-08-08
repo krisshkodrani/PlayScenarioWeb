@@ -97,6 +97,9 @@ const MyScenarios: React.FC = () => {
     handleView,
   } = useMyScenariosActions();
 
+  // Must be declared before any conditional returns to keep hooks order stable
+  const handleNavigateToDashboard = useMemo(() => () => navigate('/dashboard'), [navigate]);
+
   // Render loading state
   if (loading) {
     return (
@@ -142,7 +145,6 @@ const MyScenarios: React.FC = () => {
   const hasSearchResults = filters.search ? scenarios.length > 0 : true;
 
   // Memoize navigation functions to prevent header re-renders
-  const handleNavigateToDashboard = useMemo(() => () => navigate('/dashboard'), [navigate]);
 
   return (
     <div className="h-screen bg-slate-900 flex flex-col">
