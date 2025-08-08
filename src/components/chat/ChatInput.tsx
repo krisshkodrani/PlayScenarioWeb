@@ -19,13 +19,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
   mode,
   onModeToggle
 }) => {
-  const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       onSend();
     }
     // Toggle mode with Ctrl/Cmd + T
-    if (e.key === 't' && (e.ctrlKey || e.metaKey)) {
+    if ((e.key === 't' || e.key === 'T') && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       onModeToggle();
     }
@@ -38,7 +38,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyDown}
           disabled={disabled}
           className={`flex-1 bg-gradient-to-br from-slate-700/50 to-slate-800/50 backdrop-blur border rounded-lg px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${
             mode === 'focused' 

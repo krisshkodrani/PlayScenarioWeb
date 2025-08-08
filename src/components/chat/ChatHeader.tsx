@@ -109,4 +109,4 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   );
 };
 
-export default ChatHeader;
+export default React.memo(ChatHeader);

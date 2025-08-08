@@ -1,8 +1,9 @@
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import ChatHeader from './chat/ChatHeader';
 import MessagesList from './chat/MessagesList';
 import ChatInput from './chat/ChatInput';
+import MessagesSkeleton from './chat/MessagesSkeleton';
 import ObjectiveDrawer from './chat/ObjectiveDrawer';
 import CharacterDrawer from './chat/CharacterDrawer';
 import { useAuth } from '@/contexts/AuthContext';
@@ -71,11 +72,12 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     });
   }, [scenario, instance]);
 
-  // Enhanced scroll handling
-  const scrollToBottom = useCallback(() => {
-    if (messagesEndRef.current && isUserNearBottom) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'instant', block: 'end' });
-    }
+// Enhanced scroll handling
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+    if (!messagesEndRef.current || !isUserNearBottom) return;
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
+    });
   }, [isUserNearBottom]);
 
   // Check if user is near bottom of scroll
@@ -88,31 +90,26 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     }
   }, []);
 
-  // Auto-scroll on initial load
-  useEffect(() => {
-    if (messages.length > 0) {
-      // Always scroll to bottom on initial load
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'instant', block: 'end' });
-        setIsUserNearBottom(true);
-      }, 100);
-    }
-  }, []); // Only run once on mount
+// Smooth auto-scroll for new messages and typing indicator
+  useLayoutEffect(() => {
+    if (!isUserNearBottom) return;
+    if (!messagesEndRef.current) return;
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    });
+  }, [messages.length, isTyping, isUserNearBottom]);
 
-  // Auto-scroll for new messages and typing state changes
+  // Observe container resize to keep view stuck to bottom when near bottom
   useEffect(() => {
-    if (isUserNearBottom) {
-      // Small delay to ensure DOM is updated
-      setTimeout(scrollToBottom, 50);
-    }
-  }, [messages, isTyping, scrollToBottom]);
-
-  // Auto-scroll when typing starts
-  useEffect(() => {
-    if (isTyping && isUserNearBottom) {
-      setTimeout(scrollToBottom, 100);
-    }
-  }, [isTyping, scrollToBottom]);
+    if (!messagesContainerRef.current) return;
+    const ro = new ResizeObserver(() => {
+      if (isUserNearBottom) {
+        scrollToBottom('smooth');
+      }
+    });
+    ro.observe(messagesContainerRef.current);
+    return () => ro.disconnect();
+  }, [isUserNearBottom, scrollToBottom]);
 
   // Fetch characters for this scenario
   useEffect(() => {
@@ -160,17 +157,21 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     return characters.find(char => char.id === id);
   };
 
-  const handleSendMessage = async () => {
+const handleSendMessage = async () => {
     if (!inputValue.trim() || isTyping) return;
 
     // Add prefix based on mode
     const prefix = chatMode === 'focused' ? 'CHAT ' : 'ACTION ';
     const messageContent = prefix + inputValue;
     setInputValue('');
+    // Optimistic scroll
+    scrollToBottom('smooth');
     
     // Map focus states to message modes
     const messageMode = chatMode === 'focused' ? 'chat' : 'action';
     await sendMessage(messageContent, messageMode);
+    // Ensure we stick to bottom after message lands
+    scrollToBottom('smooth');
   };
 
   const toggleMode = () => {
@@ -215,15 +216,32 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     }
   }, [loading]);
 
-  if (loading) {
+if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-slate-900 text-white">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4"></div>
-          <p className="text-slate-300">
-            {showPatientMessage ? 'The scenario is taking some time to load' : 'Loading scenario...'}
-          </p>
+      <div className="flex flex-col h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+        {/* Header skeleton */}
+        <div className="sticky top-0 bg-gradient-to-r from-slate-800 to-slate-700/95 backdrop-blur-lg border-b-2 border-cyan-400/30 shadow-xl shadow-slate-900/80 p-4 z-30 min-h-[80px]">
+          <div className="flex items-center justify-between">
+            <div className="h-6 w-48 bg-slate-700/70 rounded-md animate-pulse" />
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-slate-700/70 animate-pulse" />
+              <div className="w-12 h-12 rounded-full bg-slate-700/70 animate-pulse" />
+            </div>
+          </div>
         </div>
+        {/* Messages skeleton */}
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto">
+          <MessagesSkeleton rows={8} />
+        </div>
+        {/* Input disabled */}
+        <ChatInput 
+          value={inputValue}
+          onChange={setInputValue}
+          onSend={() => {}}
+          disabled
+          mode={chatMode}
+          onModeToggle={() => {}}
+        />
       </div>
     );
   }
