@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, LayoutDashboard } from 'lucide-react';
+import { Plus, LayoutDashboard, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/navigation/PageHeader';
 import CharacterStatsCards from '@/components/my-characters/CharacterStatsCards';
@@ -16,11 +16,15 @@ import { useMyCharactersActions } from '@/components/my-characters/MyCharactersA
 const MyCharacters: React.FC = () => {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  // Stable navigation function prevents header re-renders
+  const handleNavigateToDashboard = useMemo(() => () => navigate('/dashboard'), [navigate]);
   
   const {
     characters,
     characterStats,
     loading,
+    isFiltering,
     error,
     filters,
     pagination,
@@ -91,7 +95,7 @@ const MyCharacters: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/dashboard')}
+                onClick={handleNavigateToDashboard}
                 className="text-slate-400 hover:text-cyan-400 hover:bg-slate-800"
               >
                 <LayoutDashboard className="w-4 h-4 mr-2" />
@@ -135,12 +139,21 @@ const MyCharacters: React.FC = () => {
 
           {/* Filters row (always visible) */}
           <div className="mt-4">
-            <CharacterFilters
-              filters={filters}
-              onFilterChange={handleFilterChange}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-            />
+            <div className="flex items-center justify-between gap-4">
+              <CharacterFilters
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+              />
+              {isFiltering && (
+                <div className="flex items-center gap-2 text-sm text-slate-400">
+                  <Loader2 className="w-4 h-4 animate-spin text-cyan-400" aria-hidden="true" />
+                  <span className="sr-only">Filtering characters...</span>
+                  <span aria-hidden="true">Filtering...</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

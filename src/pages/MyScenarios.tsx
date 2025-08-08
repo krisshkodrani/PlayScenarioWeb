@@ -1,7 +1,7 @@
 
 import React, { useState, memo, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, ArrowLeft, LayoutDashboard } from 'lucide-react';
+import { Plus, ArrowLeft, LayoutDashboard, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/navigation/PageHeader';
 import ScenarioStatsCards from '@/components/my-scenarios/ScenarioStatsCards';
@@ -81,6 +81,7 @@ const MyScenarios: React.FC = () => {
     scenarios,
     scenarioStats,
     loading,
+    isFiltering,
     error,
     filters,
     pagination,
@@ -158,15 +159,23 @@ const MyScenarios: React.FC = () => {
       {/* Filters section - separate from header */}
       <div className="border-b border-slate-800 bg-slate-900">
         <div className="container mx-auto px-4 py-4">
-          <ScenarioFilters
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-          />
+          <div className="flex items-center justify-between gap-4">
+            <ScenarioFilters
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+            />
+            {isFiltering && (
+              <div className="flex items-center gap-2 text-sm text-slate-400">
+                <Loader2 className="w-4 h-4 animate-spin text-cyan-400" aria-hidden="true" />
+                <span className="sr-only">Filtering scenarios...</span>
+                <span aria-hidden="true">Filtering...</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-
       {/* Scrollable Content Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="container mx-auto px-4 py-6">

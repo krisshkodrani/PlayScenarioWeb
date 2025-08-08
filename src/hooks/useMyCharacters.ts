@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Character, CharacterStats, CharacterFilters } from '@/types/character';
 import { characterService } from '@/services/characterService';
@@ -8,6 +8,7 @@ interface UseMyCharactersReturn {
   characters: Character[];
   characterStats: CharacterStats;
   loading: boolean;
+  isFiltering: boolean;
   error: string | null;
   filters: CharacterFilters;
   pagination: {
@@ -33,6 +34,8 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFiltering, setIsFiltering] = useState(false);
+  const isFirstLoadRef = useRef(true);
   
   const [filters, setFilters] = useState<CharacterFilters>({
     search: searchParams.get('search') || '',
@@ -41,6 +44,15 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
     sortBy: (searchParams.get('sortBy') as CharacterFilters['sortBy']) || 'created'
   });
   
+  // Debounced search term for fetching
+  const [debouncedSearch, setDebouncedSearch] = useState<string>(filters.search);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(filters.search);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [filters.search]);
+
   const [pagination, setPagination] = useState({
     page: parseInt(searchParams.get('page') || '1'),
     limit: 12,
@@ -50,13 +62,19 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
   // Stable fetch function that doesn't recreate on filter changes
   const fetchCharacters = useCallback(async (currentFilters: CharacterFilters, currentPage: number, currentLimit: number) => {
     try {
-      setLoading(true);
+      if (isFirstLoadRef.current) {
+        setLoading(true);
+      } else {
+        setIsFiltering(true);
+      }
       setError(null);
 
-      // Fetch characters and stats simultaneously
+      const shouldFetchStats = isFirstLoadRef.current;
+
+      // Fetch characters and stats simultaneously (stats only on first load)
       const [charactersResult, statsResult] = await Promise.all([
         characterService.getUserCharacters(currentFilters, currentPage, currentLimit),
-        characterService.getCharacterStats()
+        shouldFetchStats ? characterService.getCharacterStats() : Promise.resolve(null)
       ]);
 
       setCharacters(charactersResult.characters);
@@ -64,12 +82,17 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
         ...prev,
         total: charactersResult.total
       }));
-      setCharacterStats(statsResult);
+      if (statsResult) setCharacterStats(statsResult);
     } catch (err) {
       console.error('Error fetching characters:', err);
       setError('Failed to load characters. Please try again.');
     } finally {
-      setLoading(false);
+      if (isFirstLoadRef.current) {
+        setLoading(false);
+        isFirstLoadRef.current = false;
+      } else {
+        setIsFiltering(false);
+      }
     }
   }, []); // No dependencies - stable function
 
@@ -129,17 +152,18 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
     }, 300); // 300ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [filters, pagination.page, searchParams, setSearchParams]);
+  }, [filters.search, filters.role, filters.expertise, filters.sortBy, pagination.page, searchParams, setSearchParams]);
 
   // Fetch characters when filters or pagination change
   useEffect(() => {
     fetchCharacters(filters, pagination.page, pagination.limit);
-  }, [fetchCharacters, filters, pagination.page, pagination.limit]);
+  }, [fetchCharacters, filters.search, filters.role, filters.expertise, filters.sortBy, pagination.page, pagination.limit]);
 
   return {
     characters,
     characterStats,
     loading,
+    isFiltering,
     error,
     filters,
     pagination,

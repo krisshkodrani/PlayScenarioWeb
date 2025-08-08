@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Scenario } from '@/types/scenario';
@@ -21,12 +21,23 @@ export const useMyScenarios = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFiltering, setIsFiltering] = useState(false);
+  const isFirstLoadRef = useRef(true);
   
   const [filters, setFilters] = useState<FilterState>({
     status: (searchParams.get('status') as FilterState['status']) || 'all',
     search: searchParams.get('search') || '',
     sortBy: (searchParams.get('sortBy') as FilterState['sortBy']) || 'created_desc'
   });
+
+  // Debounced search term for fetching
+  const [debouncedSearch, setDebouncedSearch] = useState<string>(searchParams.get('search') || '');
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(filters.search);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [filters.search]);
 
   const [pagination, setPagination] = useState<PaginationState>({
     page: parseInt(searchParams.get('page') || '1'),
@@ -36,7 +47,12 @@ export const useMyScenarios = () => {
 
   // Stable fetch function that doesn't recreate on filter changes
   const fetchScenarios = useCallback(async (currentFilters: FilterState, currentPage: number, currentLimit: number) => {
-    setLoading(true);
+    // Distinguish initial load vs subsequent filtering/pagination
+    if (isFirstLoadRef.current) {
+      setLoading(true);
+    } else {
+      setIsFiltering(true);
+    }
     setError(null);
     
     try {
@@ -49,28 +65,36 @@ export const useMyScenarios = () => {
         sortBy: currentFilters.sortBy
       };
 
+      const shouldFetchStats = isFirstLoadRef.current;
+
       const [scenariosResult, statsResult] = await Promise.all([
         scenarioService.getUserScenarios(scenarioFilters, currentPage, currentLimit),
-        scenarioService.getScenarioStats()
+        shouldFetchStats ? scenarioService.getScenarioStats() : Promise.resolve(null)
       ]);
 
       setScenarios(scenariosResult.scenarios);
       setPagination(prev => ({ ...prev, total: scenariosResult.total }));
       
-      // Map stats format
-      setScenarioStats({
-        totalScenarios: statsResult.totalScenarios,
-        publishedScenarios: statsResult.publicScenarios,
-        draftScenarios: statsResult.privateScenarios,
-        totalPlays: statsResult.totalPlays,
-        totalLikes: statsResult.totalLikes,
-        averageRating: statsResult.averageRating
-      });
+      if (statsResult) {
+        setScenarioStats({
+          totalScenarios: statsResult.totalScenarios,
+          publishedScenarios: statsResult.publicScenarios,
+          draftScenarios: statsResult.privateScenarios,
+          totalPlays: statsResult.totalPlays,
+          totalLikes: statsResult.totalLikes,
+          averageRating: statsResult.averageRating
+        });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load scenarios');
       console.error('Scenario fetch error:', err);
     } finally {
-      setLoading(false);
+      if (isFirstLoadRef.current) {
+        setLoading(false);
+        isFirstLoadRef.current = false;
+      } else {
+        setIsFiltering(false);
+      }
     }
   }, []); // No dependencies - stable function
 
@@ -98,8 +122,9 @@ export const useMyScenarios = () => {
 
   // Fetch scenarios when filters or pagination change
   useEffect(() => {
-    fetchScenarios(filters, pagination.page, pagination.limit);
-  }, [fetchScenarios, filters, pagination.page, pagination.limit]);
+    const effectiveFilters = { ...filters, search: debouncedSearch } as FilterState;
+    fetchScenarios(effectiveFilters, pagination.page, pagination.limit);
+  }, [fetchScenarios, debouncedSearch, filters.status, filters.sortBy, pagination.page, pagination.limit]);
 
   const handleFilterChange = (newFilters: Partial<FilterState>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
@@ -182,6 +207,7 @@ export const useMyScenarios = () => {
     scenarios,
     scenarioStats,
     loading,
+    isFiltering,
     error,
     filters,
     pagination,
