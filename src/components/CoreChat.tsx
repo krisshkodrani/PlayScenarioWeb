@@ -73,8 +73,9 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
   }, [scenario, instance]);
 
 // Enhanced scroll handling
-  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
-    if (!messagesEndRef.current || !isUserNearBottom) return;
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth', force: boolean = false) => {
+    if (!messagesEndRef.current) return;
+    if (!force && !isUserNearBottom) return;
     requestAnimationFrame(() => {
       messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
     });
@@ -226,6 +227,17 @@ const handleSendMessage = async () => {
       }, 10000); // Show patient message after 10 seconds
       
       return () => clearTimeout(timer);
+    }
+  }, [loading]);
+
+  // After loading finishes, jump to bottom once without animation to resume like a normal chat
+  useEffect(() => {
+    if (!loading) {
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
+        initialScrollDone.current = true;
+        setIsUserNearBottom(true);
+      });
     }
   }, [loading]);
 
