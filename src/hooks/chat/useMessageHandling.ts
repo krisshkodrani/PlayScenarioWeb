@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Message, ScenarioInstance, Scenario } from '@/types/chat';
@@ -145,7 +144,22 @@ export const useMessageHandling = (
     async (messageContent: string, mode: 'chat' | 'action' = 'chat') => {
       if (!instance || !user) return;
 
+      // Pre-generate optimistic ID so we can remove on failure
+      const optimisticId = `user-${Date.now()}`;
+
       try {
+        // Optimistically render the user's message immediately
+        const optimisticUserMessage: Message = {
+          id: optimisticId,
+          sender_name: (user as any)?.user_metadata?.username || 'You',
+          message: messageContent,
+          turn_number: instance.current_turn,
+          message_type: 'user_message',
+          timestamp: new Date().toISOString(),
+          mode
+        };
+        setMessages(prev => [...prev, optimisticUserMessage]);
+
         setIsTyping(true);
 
         logger.debug('Chat', 'Sending message to backend', {
@@ -228,6 +242,9 @@ export const useMessageHandling = (
         return { current_turn: data.current_turn || data.turn_number };
       
       } catch (err) {
+        // Remove optimistic message on failure
+        setMessages(prev => prev.filter(m => m.id !== optimisticId));
+
         logger.error('Chat', 'Failed to send message', err, { instanceId });
         toast({
           title: 'Error',
@@ -244,6 +261,24 @@ export const useMessageHandling = (
 
   const addMessage = useCallback((newMessage: Message) => {
     setMessages(prev => {
+      // If a real user message arrives, replace any matching optimistic one to avoid duplicates
+      if (newMessage.message_type === 'user_message') {
+        const reverseIndex = [...prev].reverse().findIndex(m =>
+          m.message_type === 'user_message' &&
+          typeof m.id === 'string' && m.id.startsWith('user-') &&
+          m.message === newMessage.message
+        );
+        if (reverseIndex !== -1) {
+          const idx = prev.length - 1 - reverseIndex;
+          const next = [...prev.slice(0, idx), ...prev.slice(idx + 1)];
+          if (!next.find(msg => msg.id === newMessage.id)) {
+            logger.debug('Chat', 'Replacing optimistic user message with server message', { optimisticReplacedIndex: idx });
+            return [...next, newMessage];
+          }
+          return next;
+        }
+      }
+
       // Check for exact duplicates by ID
       if (prev.find(msg => msg.id === newMessage.id)) {
         logger.debug('Chat', 'Duplicate message ignored', { messageId: newMessage.id });

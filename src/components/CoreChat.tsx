@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import ChatHeader from './chat/ChatHeader';
 import MessagesList from './chat/MessagesList';
@@ -172,20 +171,22 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
   };
 
 const handleSendMessage = async () => {
-    if (!inputValue.trim() || isTyping) return;
+    // Allow sending while AI is typing
+    if (!inputValue.trim()) return;
 
-    // Add prefix based on mode
     const prefix = chatMode === 'focused' ? 'CHAT ' : 'ACTION ';
     const messageContent = prefix + inputValue;
     setInputValue('');
-    // Optimistic scroll
-    scrollToBottom('smooth');
+
+    // Force jump to bottom as soon as user sends (so user sees their message immediately)
+    scrollToBottom('auto', true);
     
     // Map focus states to message modes
     const messageMode = chatMode === 'focused' ? 'chat' : 'action';
     await sendMessage(messageContent, messageMode);
-    // Ensure we stick to bottom after message lands
-    scrollToBottom('smooth');
+
+    // After AI responses are added, ensure smooth scroll to the latest
+    scrollToBottom('smooth', true);
   };
 
   const toggleMode = () => {
@@ -241,7 +242,7 @@ const handleSendMessage = async () => {
     }
   }, [loading]);
 
-if (loading) {
+  if (loading) {
     return (
       <div className="flex flex-col h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
         {/* Header skeleton */}
@@ -329,13 +330,7 @@ if (loading) {
             flags: msg.flags
           }))}
           isTyping={isTyping}
-          typingCharacter={characters[0] || {
-            id: 'default',
-            name: 'Assistant',
-            role: 'AI Assistant',
-            avatar_color: 'bg-blue-600',
-            personality: 'Helpful'
-          }}
+          typingCharacter={undefined}
           characters={characters}
           getCharacterById={getCharacterById}
           onSuggestionClick={handleSuggestionClick}
