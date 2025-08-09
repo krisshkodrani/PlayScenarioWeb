@@ -45,6 +45,7 @@ export const useScenarioData = (instanceId: string, scenarioId: string) => {
 
       console.log('✅ fetchInstance: Setting instance data', instanceData);
       setInstance(instanceData);
+      return instanceData;
     } catch (err) {
       console.error('❌ fetchInstance: Error:', err);
       throw err;
@@ -96,6 +97,7 @@ export const useScenarioData = (instanceId: string, scenarioId: string) => {
 
       console.log('✅ fetchScenario: Setting scenario data', formattedScenario);
       setScenario(formattedScenario);
+      return formattedScenario;
     } catch (err) {
       console.error('❌ fetchScenario: Error:', err);
       throw err;

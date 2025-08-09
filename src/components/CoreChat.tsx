@@ -90,13 +90,26 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     }
   }, []);
 
-// Smooth auto-scroll for new messages and typing indicator
+  // Smooth auto-scroll with instant first paint
+  const initialScrollDone = useRef(false);
   useLayoutEffect(() => {
-    if (!isUserNearBottom) return;
     if (!messagesEndRef.current) return;
-    requestAnimationFrame(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    });
+
+    // First render after load: jump to bottom without animation
+    if (!initialScrollDone.current && (messages.length > 0 || isTyping)) {
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
+        initialScrollDone.current = true;
+      });
+      return;
+    }
+
+    // Subsequent updates: only smooth scroll if user is near bottom
+    if (isUserNearBottom) {
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      });
+    }
   }, [messages.length, isTyping, isUserNearBottom]);
 
   // Observe container resize to keep view stuck to bottom when near bottom

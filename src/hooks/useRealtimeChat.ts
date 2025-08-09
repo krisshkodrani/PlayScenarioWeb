@@ -78,7 +78,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
         console.log('📊 useRealtimeChat: Fetching instance and scenario data');
         logger.debug('Chat', 'Fetching instance and scenario data');
         
-        await Promise.all([
+        const [fetchedInstance, fetchedScenario] = await Promise.all([
           fetchInstance().catch(err => {
             console.error('❌ useRealtimeChat: fetchInstance failed:', err);
             throw err;
@@ -97,36 +97,31 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
         console.log('✅ useRealtimeChat: Instance and scenario data fetched');
         logger.debug('Chat', 'Instance and scenario data loaded successfully');
 
-        // Step 2: Wait for both instance and scenario to be available
-        console.log('⏳ useRealtimeChat: Waiting for instance and scenario data to be available');
-        let retries = 0;
-        while ((!instance || !scenario) && retries < 200 && !isCancelled) {
-          console.log(`⏳ useRealtimeChat: Retry ${retries + 1}/200 - Instance: ${!!instance}, Scenario: ${!!scenario}`);
-          await new Promise(resolve => setTimeout(resolve, 100));
-          retries++;
-        }
+        // Step 2: Validate data without stale state polling
+        const currentInstance = fetchedInstance ?? instance;
+        const currentScenario = fetchedScenario ?? scenario;
 
         if (isCancelled) {
-          console.log('🛑 useRealtimeChat: Cancelled during wait');
+          console.log('🛑 useRealtimeChat: Cancelled during validation');
           return;
         }
         
-        if (!instance || !scenario) {
-          console.log('❌ useRealtimeChat: Timeout waiting for data - Instance:', !!instance, 'Scenario:', !!scenario);
+        if (!currentInstance || !currentScenario) {
+          console.log('❌ useRealtimeChat: Missing data after fetch - Instance:', !!currentInstance, 'Scenario:', !!currentScenario);
           throw new Error('Failed to load instance or scenario data');
         }
 
         console.log('✅ useRealtimeChat: Instance and scenario data available', {
-          instanceId: instance.id,
-          scenarioId: scenario.id
+          instanceId: currentInstance.id,
+          scenarioId: currentScenario.id
         });
 
         // Step 3: Initialize scenario and fetch messages
         console.log('🎬 useRealtimeChat: Initializing scenario');
         logger.debug('Chat', 'Initializing chat session', { 
-          instanceId: instance.id,
-          scenarioId: scenario.id,
-          currentTurn: instance.current_turn 
+          instanceId: currentInstance.id,
+          scenarioId: currentScenario.id,
+          currentTurn: currentInstance.current_turn 
         });
         
         await initializeScenario();
@@ -144,7 +139,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
         
         console.log('🎉 useRealtimeChat: Initialization completed successfully');
         logger.info('Chat', 'Chat initialization completed successfully', { 
-          instanceId: instance.id 
+          instanceId: (fetchedInstance ?? instance)?.id 
         });
         
         clearTimeout(timeoutId);
