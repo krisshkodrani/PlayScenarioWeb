@@ -36,6 +36,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [isUserNearBottom, setIsUserNearBottom] = useState(true);
+  const lastMsgIdRef = useRef<string | null>(null);
 
   const {
     messages,
@@ -71,7 +72,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     });
   }, [scenario, instance]);
 
-// Enhanced scroll handling
+  // Enhanced scroll handling
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth', force: boolean = false) => {
     if (!messagesEndRef.current) return;
     if (!force && !isUserNearBottom) return;
@@ -96,7 +97,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     if (!messagesEndRef.current) return;
 
     // First render after load: jump to bottom without animation
-    if (!initialScrollDone.current && (messages.length > 0 || isTyping)) {
+    if (!initialScrollDone.current && (messages.length > 0)) {
       requestAnimationFrame(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
         initialScrollDone.current = true;
@@ -104,13 +105,17 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
       return;
     }
 
-    // Subsequent updates: only smooth scroll if user is near bottom
-    if (isUserNearBottom) {
-      requestAnimationFrame(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      });
+    // Scroll only when a new message actually appears (avoid reacting to isTyping)
+    const last = messages[messages.length - 1];
+    if (last && lastMsgIdRef.current !== last.id) {
+      lastMsgIdRef.current = last.id;
+      if (isUserNearBottom) {
+        requestAnimationFrame(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        });
+      }
     }
-  }, [messages.length, isTyping, isUserNearBottom]);
+  }, [messages, isUserNearBottom]);
 
   // Observe container resize to keep view stuck to bottom when near bottom
   useEffect(() => {
@@ -170,7 +175,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     return characters.find(char => char.id === id);
   };
 
-const handleSendMessage = async () => {
+  const handleSendMessage = async () => {
     // Allow sending while AI is typing
     if (!inputValue.trim()) return;
 
@@ -178,15 +183,14 @@ const handleSendMessage = async () => {
     const messageContent = prefix + inputValue;
     setInputValue('');
 
-    // Force jump to bottom as soon as user sends (so user sees their message immediately)
+    // Jump to bottom immediately so the just-sent message is visible
     scrollToBottom('auto', true);
     
     // Map focus states to message modes
     const messageMode = chatMode === 'focused' ? 'chat' : 'action';
     await sendMessage(messageContent, messageMode);
 
-    // After AI responses are added, ensure smooth scroll to the latest
-    scrollToBottom('smooth', true);
+    // No extra scroll here; useLayoutEffect will handle after messages update
   };
 
   const toggleMode = () => {

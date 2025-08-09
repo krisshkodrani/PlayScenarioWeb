@@ -1,10 +1,19 @@
 import { useState, useCallback, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Message, ScenarioInstance, Scenario } from '@/types/chat';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import { config } from '@/lib/config';
+
+// Helper to infer mode based on message content prefix when backend omits mode
+const inferModeFromContent = (text?: string): 'chat' | 'action' => {
+  const t = (text || '').trim().toUpperCase();
+  if (t.startsWith('ACTION ')) return 'action';
+  if (t.startsWith('CHAT ')) return 'chat';
+  return 'chat';
+};
 
 export const useMessageHandling = (
   instanceId: string,
@@ -17,6 +26,8 @@ export const useMessageHandling = (
   const [isTyping, setIsTyping] = useState(false);
   const initializationRef = useRef<Promise<void> | null>(null);
   const isInitializedRef = useRef(false);
+  // Track the expected AI turn if the response content will arrive later via realtime
+  const pendingTurnRef = useRef<number | null>(null);
 
   // Fetch existing messages
   const fetchMessages = useCallback(async () => {
@@ -37,7 +48,7 @@ export const useMessageHandling = (
       const deduplicatedData = data?.reduce((acc: any[], current: any) => {
         // For system messages, check for duplicates by content and turn_number
         if (current.message_type === 'system') {
-          const isDuplicate = acc.some(msg => 
+          const isDuplicate = acc.some((msg: any) => 
             msg.message_type === 'system' && 
             msg.message === current.message &&
             msg.turn_number === current.turn_number
@@ -50,11 +61,13 @@ export const useMessageHandling = (
           }
         } else {
           // For non-system messages, check by ID
-          const isDuplicate = acc.some(msg => msg.id === current.id);
+          const isDuplicate = acc.some((msg: any) => msg.id === current.id);
           if (!isDuplicate) {
             acc.push({
               ...current,
-              message_type: current.message_type as 'user_message' | 'ai_response' | 'system'
+              message_type: current.message_type as 'user_message' | 'ai_response' | 'system',
+              // Ensure mode exists (infer from content if missing)
+              mode: current.mode ?? inferModeFromContent(current.message)
             });
           }
         }
@@ -144,8 +157,8 @@ export const useMessageHandling = (
     async (messageContent: string, mode: 'chat' | 'action' = 'chat') => {
       if (!instance || !user) return;
 
-      // Pre-generate optimistic ID so we can remove on failure
       const optimisticId = `user-${Date.now()}`;
+      let typingHandledSynchronously = false;
 
       try {
         // Optimistically render the user's message immediately
@@ -216,17 +229,18 @@ export const useMessageHandling = (
           newTurn: data.turn_number || data.current_turn
         });
 
-        // Check if response contains rich character data
+        // Determine the expected turn for the AI response
+        const expectedTurn = data.current_turn || data.turn_number || (instance?.current_turn || 0) + 1;
+
         if (data.character_name && data.content) {
-          // Create enhanced message with character data
           const enhancedMessage: Message = {
             id: `ai-${Date.now()}`,
             sender_name: data.character_name,
             message: data.content,
-            turn_number: data.current_turn || data.turn_number || (instance?.current_turn || 0) + 1,
+            turn_number: expectedTurn,
             message_type: 'ai_response',
             timestamp: new Date().toISOString(),
-            mode: mode, // Include the mode for AI responses
+            mode,
             character_name: data.character_name,
             response_type: data.response_type,
             internal_state: data.internal_state,
@@ -235,15 +249,29 @@ export const useMessageHandling = (
             flags: data.flags
           };
 
-          // Add the enhanced message immediately
-          addMessage(enhancedMessage);
+          // Add AI message and hide typing in one sync commit to avoid gaps
+          flushSync(() => {
+            setMessages(prev => {
+              if (prev.find(msg => msg.id === enhancedMessage.id)) return prev;
+              return [...prev, enhancedMessage];
+            });
+            setIsTyping(false);
+          });
+          typingHandledSynchronously = true;
+        } else {
+          // No content returned; wait for realtime AI message to arrive
+          pendingTurnRef.current = expectedTurn;
+          typingHandledSynchronously = true; // prevent finally from hiding typing too early
         }
 
-        return { current_turn: data.current_turn || data.turn_number };
-      
+        return { current_turn: expectedTurn };
       } catch (err) {
-        // Remove optimistic message on failure
-        setMessages(prev => prev.filter(m => m.id !== optimisticId));
+        // Remove optimistic and hide typing together to avoid visual jump
+        flushSync(() => {
+          setMessages(prev => prev.filter(m => m.id !== optimisticId));
+          setIsTyping(false);
+        });
+        typingHandledSynchronously = true;
 
         logger.error('Chat', 'Failed to send message', err, { instanceId });
         toast({
@@ -253,15 +281,33 @@ export const useMessageHandling = (
         });
         throw err;
       } finally {
-        setIsTyping(false);
+        // Only hide typing here if we didn't already and we're not awaiting an external AI message
+        if (!typingHandledSynchronously && pendingTurnRef.current == null) {
+          setIsTyping(false);
+        }
       }
     },
     [instance, user, instanceId, messages, toast]
   );
 
   const addMessage = useCallback((newMessage: Message) => {
+    logger.debug('Chat', 'addMessage called', {
+      messageId: newMessage.id,
+      messageType: newMessage.message_type,
+      sender: newMessage.sender_name,
+      currentIsTyping: isTyping
+    });
+
+    // For AI/system messages, immediately end typing state first
+    if (newMessage.message_type !== 'user_message') {
+      logger.debug('Chat', 'Ending typing for non-user message');
+      setIsTyping(false);
+      pendingTurnRef.current = null;
+    }
+
+    // Then update messages in a separate state update
     setMessages(prev => {
-      // If a real user message arrives, replace any matching optimistic one to avoid duplicates
+      // Replace optimistic user message with server one if applicable
       if (newMessage.message_type === 'user_message') {
         const reverseIndex = [...prev].reverse().findIndex(m =>
           m.message_type === 'user_message' &&
@@ -270,46 +316,52 @@ export const useMessageHandling = (
         );
         if (reverseIndex !== -1) {
           const idx = prev.length - 1 - reverseIndex;
+          const optimistic = prev[idx];
           const next = [...prev.slice(0, idx), ...prev.slice(idx + 1)];
           if (!next.find(msg => msg.id === newMessage.id)) {
-            logger.debug('Chat', 'Replacing optimistic user message with server message', { optimisticReplacedIndex: idx });
-            return [...next, newMessage];
+            // Preserve optimistic.mode or infer if server did not send it
+            const mergedUserMessage: Message = {
+              ...newMessage,
+              mode: newMessage.mode ?? optimistic.mode ?? inferModeFromContent(newMessage.message)
+            };
+            logger.debug('Chat', 'Replacing optimistic user message with server message', { optimisticReplacedIndex: idx, mode: mergedUserMessage.mode });
+            return [...next, mergedUserMessage];
           }
           return next;
         }
       }
 
-      // Check for exact duplicates by ID
+      // Deduplicate by ID
       if (prev.find(msg => msg.id === newMessage.id)) {
         logger.debug('Chat', 'Duplicate message ignored', { messageId: newMessage.id });
         return prev;
       }
-      
-      // For system messages, also check for content duplicates
+
+      // Deduplicate system messages by content/turn
       if (newMessage.message_type === 'system') {
-        const contentDuplicate = prev.find(msg => 
+        const dup = prev.find(msg => 
           msg.message_type === 'system' && 
           msg.message === newMessage.message &&
           msg.turn_number === newMessage.turn_number
         );
-        if (contentDuplicate) {
-          logger.debug('Chat', 'Duplicate system message ignored', { 
-            messageType: newMessage.message_type,
-            turnNumber: newMessage.turn_number 
-          });
-          return prev;
-        }
+        if (dup) return prev;
       }
-      
-      logger.debug('Chat', 'New message added', { 
+
+      logger.debug('Chat', 'New message added to list', {
         messageId: newMessage.id,
         messageType: newMessage.message_type,
-        sender: newMessage.sender_name 
+        sender: newMessage.sender_name
       });
-      
-      return [...prev, newMessage];
+
+      // For server user messages without mode, infer it to keep styling consistent
+      const safeMessage: Message =
+        newMessage.message_type === 'user_message'
+          ? { ...newMessage, mode: newMessage.mode ?? inferModeFromContent(newMessage.message) }
+          : newMessage;
+
+      return [...prev, safeMessage];
     });
-  }, []);
+  }, [isTyping]);
 
   return {
     messages,
