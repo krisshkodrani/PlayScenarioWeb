@@ -15,7 +15,7 @@ interface MockMessage {
   id: string;
   sender_name: string;
   message: string;
-  message_type: 'user_message' | 'ai_response' | 'system';
+  message_type: 'user_message' | 'ai_response' | 'system' | 'narration';
   timestamp: Date;
   mode?: 'chat' | 'action';
 }

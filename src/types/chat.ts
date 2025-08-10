@@ -1,11 +1,11 @@
-
 export interface Message {
   id: string;
   sender_name: string;
   message: string;
   turn_number: number;
-  message_type: 'user_message' | 'ai_response' | 'system';
+  message_type: 'user_message' | 'ai_response' | 'system' | 'narration';
   timestamp: string;
+  sequence_number?: number; // New field for perfect ordering
   mode?: 'chat' | 'action'; // New field for message mode
   // Enhanced fields for rich AI responses
   character_name?: string;
@@ -52,4 +52,27 @@ export interface Scenario {
 export interface UseRealtimeChatProps {
   instanceId: string;
   scenarioId: string;
+}
+
+// NEW: shape of enhanced chat response the frontend consumes
+export interface EnhancedChatCompletionResponse {
+  character_responses: Array<{
+    character_id: string;
+    character_name: string;
+    message: string;
+    strategy_used: string;
+    response_metadata: Record<string, any>;
+  }>;
+  moderator_analysis: {
+    selected_characters: string[];
+    reasoning: string;
+    confidence: number;
+  };
+  turn_number: number;
+  turn_progressed: boolean;
+  objectives_progress?: Record<string, any> | null;
+  safety_check: Record<string, any>;
+  scenario_completed: boolean;
+  completion_reason?: string | null;
+  narrator_message?: string | null;
 }

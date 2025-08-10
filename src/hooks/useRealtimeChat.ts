@@ -131,10 +131,44 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
         }
         
         console.log('💬 useRealtimeChat: Fetching messages');
-        await fetchMessages();
+        const messageCount = await fetchMessages();
         if (isCancelled) {
           console.log('🛑 useRealtimeChat: Cancelled after fetchMessages');
           return;
+        }
+
+        // Fallback: If no messages exist, call initialization endpoint
+        if (messageCount === 0 && currentScenario?.initial_scene_prompt) {
+          console.log('🔄 useRealtimeChat: No messages found, initializing instance');
+          logger.info('Chat', 'No messages found, calling initialization endpoint', { instanceId });
+          
+          try {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/instances/${instanceId}/initialize`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (response.ok) {
+              const result = await response.json();
+              console.log('✅ useRealtimeChat: Instance initialization completed', result);
+              logger.info('Chat', 'Instance initialization completed', { 
+                instanceId,
+                narratorCreated: result.narrator_message_created
+              });
+              
+              // Re-fetch messages to get the narrator message
+              await fetchMessages();
+            } else {
+              console.error('❌ useRealtimeChat: Failed to initialize instance', response.status);
+              logger.error('Chat', 'Failed to initialize instance', null, { 
+                instanceId,
+                status: response.status 
+              });
+            }
+          } catch (err) {
+            console.error('❌ useRealtimeChat: Error calling initialization endpoint:', err);
+            logger.error('Chat', 'Error calling initialization endpoint', err, { instanceId });
+          }
         }
         
         console.log('🎉 useRealtimeChat: Initialization completed successfully');

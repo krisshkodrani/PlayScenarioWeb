@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef } from 'react';
-import { flushSync } from 'react-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Message, ScenarioInstance, Scenario } from '@/types/chat';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,6 +28,23 @@ export const useMessageHandling = (
   // Track the expected AI turn if the response content will arrive later via realtime
   const pendingTurnRef = useRef<number | null>(null);
 
+  // Single source of truth for message ordering
+  const sortMessages = useCallback((messages: Message[]): Message[] => {
+    return messages.sort((a, b) => {
+      // Primary: sequence_number (guaranteed unique per instance)
+      if (a.sequence_number && b.sequence_number) {
+        return a.sequence_number - b.sequence_number;
+      }
+      
+      // Fallback: timestamp + turn_number for messages without sequence
+      const timeA = new Date(a.timestamp).getTime();
+      const timeB = new Date(b.timestamp).getTime();
+      if (timeA !== timeB) return timeA - timeB;
+      
+      return a.turn_number - b.turn_number;
+    });
+  }, []);
+
   // Fetch existing messages
   const fetchMessages = useCallback(async () => {
     if (!instanceId) return;
@@ -40,32 +56,32 @@ export const useMessageHandling = (
         .from('instance_messages')
         .select('*')
         .eq('instance_id', instanceId)
-        .order('timestamp', { ascending: true });
+        .order('sequence_number', { ascending: true }); // Use sequence_number for perfect ordering
 
       if (error) throw error;
       
-      // Deduplicate messages by content and turn_number for system messages
+      // Deduplicate messages by content and turn_number for system & narration messages
       const deduplicatedData = data?.reduce((acc: any[], current: any) => {
-        // For system messages, check for duplicates by content and turn_number
-        if (current.message_type === 'system') {
+        const type = current.message_type;
+        if (type === 'system' || type === 'narration') {
           const isDuplicate = acc.some((msg: any) => 
-            msg.message_type === 'system' && 
+            msg.message_type === type && 
             msg.message === current.message &&
             msg.turn_number === current.turn_number
           );
           if (!isDuplicate) {
             acc.push({
               ...current,
-              message_type: current.message_type as 'user_message' | 'ai_response' | 'system'
+              message_type: current.message_type as 'user_message' | 'ai_response' | 'system' | 'narration'
             });
           }
         } else {
-          // For non-system messages, check by ID
+          // For non-system/narration messages, check by ID
           const isDuplicate = acc.some((msg: any) => msg.id === current.id);
           if (!isDuplicate) {
             acc.push({
               ...current,
-              message_type: current.message_type as 'user_message' | 'ai_response' | 'system',
+              message_type: current.message_type as 'user_message' | 'ai_response' | 'system' | 'narration',
               // Ensure mode exists (infer from content if missing)
               mode: current.mode ?? inferModeFromContent(current.message)
             });
@@ -80,64 +96,34 @@ export const useMessageHandling = (
         duplicatesRemoved: (data?.length || 0) - deduplicatedData.length
       });
 
-      setMessages(deduplicatedData);
-      return deduplicatedData.length;
+      // Apply sorting to ensure perfect ordering
+      const sortedMessages = sortMessages(deduplicatedData);
+      setMessages(sortedMessages);
+      return sortedMessages.length;
     } catch (err) {
       logger.error('Chat', 'Failed to fetch messages', err, { instanceId });
       throw err;
     }
-  }, [instanceId]);
+  }, [instanceId, sortMessages]);
 
-  // Initialize scenario with first message if no messages exist
+  // Initialize scenario - simplified since backend now handles initial narration seeding
   const initializeScenario = useCallback(async () => {
     if (!instance || !scenario || !user || isInitializedRef.current) return;
 
-    // If initialization is already in progress, wait for it
     if (initializationRef.current) {
       await initializationRef.current;
       return;
     }
 
-    // Start initialization
     initializationRef.current = (async () => {
       try {
-        logger.debug('Chat', 'Checking if scenario needs initialization', { 
+        logger.debug('Chat', 'Scenario initialization', { 
           instanceId, 
           scenarioId: scenario.id 
         });
         
-        // Check if any messages exist
-        const { count, error: countError } = await supabase
-          .from('instance_messages')
-          .select('*', { count: 'exact', head: true })
-          .eq('instance_id', instanceId);
-
-        if (countError) throw countError;
-
-        // If no messages exist, create the initial scene prompt message
-        if (count === 0) {
-          logger.info('Chat', 'Creating initial scenario message', { instanceId });
-          
-          const { error } = await supabase
-            .from('instance_messages')
-            .insert({
-              instance_id: instanceId,
-              sender_name: 'System',
-              message: scenario.initial_scene_prompt,
-              turn_number: 0,
-              message_type: 'system'
-            });
-
-          if (error) throw error;
-          
-          logger.info('Chat', 'Initial scenario message created successfully', { instanceId });
-        } else {
-          logger.debug('Chat', 'Messages already exist, skipping initialization', { 
-            instanceId, 
-            existingMessageCount: count 
-          });
-        }
-        
+        // Backend now handles initial scene seeding during API calls
+        // This just marks initialization as complete
         isInitializedRef.current = true;
       } catch (err) {
         logger.error('Chat', 'Failed to initialize scenario', err, { instanceId });
@@ -229,6 +215,39 @@ export const useMessageHandling = (
           newTurn: data.turn_number || data.current_turn
         });
 
+        // Legacy: Handle narrator_message from API response (now primarily comes via real-time subscription)
+        if (data.narrator_message) {
+          console.log('📖 Backend returned narrator_message (legacy):', data.narrator_message);
+          logger.info('Chat', 'Legacy narrator message received from API', { 
+            message: data.narrator_message,
+            turn_number: instance.current_turn
+          });
+          
+          const narrationMsg: Message = {
+            id: `narration-legacy-${Date.now()}`,
+            sender_name: 'Narrator',
+            message: data.narrator_message,
+            turn_number: instance.current_turn,
+            message_type: 'narration',
+            timestamp: new Date().toISOString()
+          };
+          setMessages(prev => {
+            // Avoid duplicate narration for same turn and content
+            const exists = prev.some(m => 
+              m.message_type === 'narration' && 
+              m.message === narrationMsg.message
+            );
+            if (exists) {
+              console.log('🔁 Duplicate narration ignored (legacy)');
+              return prev;
+            }
+            console.log('✅ Added legacy narration message');
+            return [...prev, narrationMsg];
+          });
+        } else {
+          console.log('📡 No narrator_message from API - expecting via real-time subscription');
+        }
+
         // Determine the expected turn for the AI response
         const expectedTurn = data.current_turn || data.turn_number || (instance?.current_turn || 0) + 1;
 
@@ -249,14 +268,12 @@ export const useMessageHandling = (
             flags: data.flags
           };
 
-          // Add AI message and hide typing in one sync commit to avoid gaps
-          flushSync(() => {
-            setMessages(prev => {
-              if (prev.find(msg => msg.id === enhancedMessage.id)) return prev;
-              return [...prev, enhancedMessage];
-            });
-            setIsTyping(false);
+          // Add AI message and hide typing with sequential state updates
+          setMessages(prev => {
+            if (prev.find(msg => msg.id === enhancedMessage.id)) return prev;
+            return sortMessages([...prev, enhancedMessage]);
           });
+          setIsTyping(false);
           typingHandledSynchronously = true;
         } else {
           // No content returned; wait for realtime AI message to arrive
@@ -266,11 +283,9 @@ export const useMessageHandling = (
 
         return { current_turn: expectedTurn };
       } catch (err) {
-        // Remove optimistic and hide typing together to avoid visual jump
-        flushSync(() => {
-          setMessages(prev => prev.filter(m => m.id !== optimisticId));
-          setIsTyping(false);
-        });
+        // Remove optimistic message and hide typing with sequential state updates
+        setMessages(prev => prev.filter(m => m.id !== optimisticId));
+        setIsTyping(false);
         typingHandledSynchronously = true;
 
         logger.error('Chat', 'Failed to send message', err, { instanceId });
@@ -287,7 +302,7 @@ export const useMessageHandling = (
         }
       }
     },
-    [instance, user, instanceId, messages, toast]
+    [instance, user, instanceId, messages, toast, sortMessages]
   );
 
   const addMessage = useCallback((newMessage: Message) => {
@@ -295,17 +310,18 @@ export const useMessageHandling = (
       messageId: newMessage.id,
       messageType: newMessage.message_type,
       sender: newMessage.sender_name,
+      sequence: newMessage.sequence_number,
       currentIsTyping: isTyping
     });
 
-    // For AI/system messages, immediately end typing state first
+    // For AI/system/narration messages, immediately end typing state first
     if (newMessage.message_type !== 'user_message') {
       logger.debug('Chat', 'Ending typing for non-user message');
       setIsTyping(false);
       pendingTurnRef.current = null;
     }
 
-    // Then update messages in a separate state update
+    // Then update messages with perfect ordering
     setMessages(prev => {
       // Replace optimistic user message with server one if applicable
       if (newMessage.message_type === 'user_message') {
@@ -324,10 +340,15 @@ export const useMessageHandling = (
               ...newMessage,
               mode: newMessage.mode ?? optimistic.mode ?? inferModeFromContent(newMessage.message)
             };
-            logger.debug('Chat', 'Replacing optimistic user message with server message', { optimisticReplacedIndex: idx, mode: mergedUserMessage.mode });
-            return [...next, mergedUserMessage];
+            logger.debug('Chat', 'Replacing optimistic user message with server message', { 
+              optimisticReplacedIndex: idx, 
+              mode: mergedUserMessage.mode,
+              sequence: mergedUserMessage.sequence_number
+            });
+            // Re-sort after replacement to ensure perfect ordering
+            return sortMessages([...next, mergedUserMessage]);
           }
-          return next;
+          return sortMessages(next);
         }
       }
 
@@ -337,10 +358,10 @@ export const useMessageHandling = (
         return prev;
       }
 
-      // Deduplicate system messages by content/turn
-      if (newMessage.message_type === 'system') {
+      // Deduplicate system/narration messages by content/turn
+      if (newMessage.message_type === 'system' || newMessage.message_type === 'narration') {
         const dup = prev.find(msg => 
-          msg.message_type === 'system' && 
+          msg.message_type === newMessage.message_type && 
           msg.message === newMessage.message &&
           msg.turn_number === newMessage.turn_number
         );
@@ -350,7 +371,8 @@ export const useMessageHandling = (
       logger.debug('Chat', 'New message added to list', {
         messageId: newMessage.id,
         messageType: newMessage.message_type,
-        sender: newMessage.sender_name
+        sender: newMessage.sender_name,
+        sequence: newMessage.sequence_number
       });
 
       // For server user messages without mode, infer it to keep styling consistent
@@ -359,9 +381,10 @@ export const useMessageHandling = (
           ? { ...newMessage, mode: newMessage.mode ?? inferModeFromContent(newMessage.message) }
           : newMessage;
 
-      return [...prev, safeMessage];
+      // Add and re-sort for perfect ordering
+      return sortMessages([...prev, safeMessage]);
     });
-  }, [isTyping]);
+  }, [isTyping, sortMessages]);
 
   return {
     messages,

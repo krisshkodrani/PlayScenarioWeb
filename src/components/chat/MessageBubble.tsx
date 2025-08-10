@@ -18,7 +18,7 @@ interface Message {
   id: string;
   sender_name: string;
   message: string;
-  message_type: 'user_message' | 'ai_response' | 'system';
+  message_type: 'user_message' | 'ai_response' | 'system' | 'narration';
   character_id?: string;
   timestamp: Date;
   mode?: 'chat' | 'action';
@@ -93,7 +93,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const displayContent = messageType === 'user_message' 
     ? removeMessagePrefix(message.message) 
     : parsedData?.content || message.message;
-  const displayName = parsedData?.character_name || message.character_name || character?.name || 'AI';
+  const displayName = parsedData?.character_name || message.character_name || character?.name || (messageType === 'narration' ? 'Narrator' : 'AI');
   const handleFeedback = (type: 'positive' | 'negative') => {
     setFeedbackType(type);
     setShowFeedbackModal(true);
@@ -173,6 +173,21 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       </div>
     );
   }
+
+  // Narration message - full width, centered with distinct styling
+  if (messageType === 'narration') {
+    return (
+      <div className="w-full">
+        <div className="bg-gradient-to-br from-indigo-500/20 to-purple-600/20 border border-indigo-400/30 text-indigo-200 px-6 py-4 rounded-xl mx-auto shadow-lg shadow-indigo-500/10">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-semibold uppercase tracking-wide text-indigo-300">Narrator</span>
+          </div>
+          <p className="text-sm md:text-base whitespace-pre-wrap">{message.message}</p>
+        </div>
+      </div>
+    );
+  }
+
   // AI response - left aligned with avatar and features
   const isActionResponse = message.mode === 'action';
   return (

@@ -249,21 +249,51 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
   if (loading) {
     return (
       <div className="flex flex-col h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-        {/* Header skeleton */}
+        {/* Header with scenario title if available */}
         <div className="sticky top-0 bg-gradient-to-r from-slate-800 to-slate-700/95 backdrop-blur-lg border-b-2 border-cyan-400/30 shadow-xl shadow-slate-900/80 p-4 z-30 min-h-[80px]">
           <div className="flex items-center justify-between">
-            <div className="h-6 w-48 bg-slate-700/70 rounded-md animate-pulse" />
+            <div className="flex flex-col">
+              {scenario?.title ? (
+                <h1 className="text-lg font-semibold text-cyan-400">{scenario.title}</h1>
+              ) : (
+                <div className="h-6 w-48 bg-slate-700/70 rounded-md animate-pulse" />
+              )}
+              <div className="text-sm text-slate-400 mt-1">Loading conversation...</div>
+            </div>
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full bg-slate-700/70 animate-pulse" />
               <div className="w-12 h-12 rounded-full bg-slate-700/70 animate-pulse" />
             </div>
           </div>
         </div>
-        {/* Messages skeleton */}
-        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto">
-          <MessagesSkeleton rows={8} />
+        
+        {/* Messages with narrator preview */}
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4">
+          {/* Show narrator message preview if available */}
+          {scenario?.initial_scene_prompt && (
+            <div className="mb-6">
+              <div className="animate-pulse">
+                <div className="bg-slate-700/30 rounded-lg p-4 max-w-4xl">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500"></div>
+                    <span className="font-medium text-slate-300">Narrator</span>
+                  </div>
+                  <p className="text-slate-300/80 leading-relaxed whitespace-pre-wrap">
+                    {scenario.initial_scene_prompt}
+                  </p>
+                </div>
+              </div>
+              <div className="text-center text-slate-400 text-sm mt-3">
+                {showPatientMessage ? "Still loading... This may take a moment." : "Setting up your scenario..."}
+              </div>
+            </div>
+          )}
+          
+          {/* Skeleton for additional messages */}
+          <MessagesSkeleton rows={3} />
         </div>
-        {/* Input disabled */}
+        
+        {/* Input disabled during loading */}
         <ChatInput 
           value={inputValue}
           onChange={setInputValue}
@@ -323,7 +353,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
             id: msg.id,
             sender_name: msg.sender_name,
             message: msg.message,
-            message_type: msg.message_type as 'user_message' | 'ai_response' | 'system',
+            message_type: msg.message_type as 'user_message' | 'ai_response' | 'system' | 'narration',
             timestamp: new Date(msg.timestamp),
             mode: msg.mode,
             character_name: msg.character_name,
