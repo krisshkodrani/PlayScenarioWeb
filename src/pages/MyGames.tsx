@@ -8,7 +8,7 @@ import GameInstanceCard from '@/components/my-games/GameInstanceCard';
 import EmptyGames from '@/components/my-games/EmptyGames';
 import { Loader2 } from 'lucide-react';
 import { logger } from '@/lib/logger';
-
+import { toast } from '@/components/ui/use-toast';
 interface GameInstance {
   id: string;
   scenario_id: string;
@@ -141,6 +141,36 @@ const MyGames: React.FC = () => {
     navigate(`/results/${instanceId}`);
   };
 
+  const handleDeleteGame = async (instanceId: string) => {
+    try {
+      logger.info('UI', 'Deleting in-progress game', { instanceId });
+      const { error } = await supabase
+        .from('scenario_instances')
+        .delete()
+        .eq('id', instanceId);
+
+      if (error) {
+        logger.error('API', 'Failed to delete game', error, { instanceId });
+        toast({
+          title: 'Deletion failed',
+          description: 'Could not delete this game. Please try again.',
+        });
+        return;
+      }
+
+      setGames((prev) => prev.filter((g) => g.id !== instanceId));
+      toast({
+        title: 'Game deleted',
+        description: 'Your in-progress game has been removed.',
+      });
+    } catch (err) {
+      logger.error('UI', 'Unexpected error deleting game', err, { instanceId });
+      toast({
+        title: 'Deletion failed',
+        description: 'An unexpected error occurred.',
+      });
+    }
+  };
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -177,6 +207,7 @@ const MyGames: React.FC = () => {
                 game={game}
                 onContinue={handleContinueGame}
                 onViewResults={handleViewResults}
+                onDelete={handleDeleteGame}
               />
             ))}
           </div>

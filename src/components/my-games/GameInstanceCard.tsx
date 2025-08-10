@@ -4,8 +4,19 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Play, Trophy, XCircle, Clock, Calendar, Target, Star } from 'lucide-react';
+import { Play, Trophy, XCircle, Clock, Calendar, Target, Star, Trash } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 
 interface GameInstance {
   id: string;
@@ -26,13 +37,21 @@ interface GameInstanceCardProps {
   game: GameInstance;
   onContinue: (instanceId: string, scenarioId: string) => void;
   onViewResults: (instanceId: string) => void;
+  onDelete?: (instanceId: string) => void;
 }
 
 const GameInstanceCard: React.FC<GameInstanceCardProps> = ({
   game,
   onContinue,
-  onViewResults
+  onViewResults,
+  onDelete
 }) => {
+  const handleConfirmDelete = () => {
+    if (typeof onDelete === 'function') {
+      onDelete(game.id);
+    }
+  };
+
   const getStatusBadge = () => {
     switch (game.status) {
       case 'playing':
@@ -119,14 +138,47 @@ const GameInstanceCard: React.FC<GameInstanceCardProps> = ({
           {/* Actions */}
           <div className="flex gap-2">
             {isInProgress && (
-              <Button
-                onClick={() => onContinue(game.id, game.scenario_id)}
-                className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white"
-                size="sm"
-              >
-                <Play className="w-4 h-4 mr-2" />
-                Continue
-              </Button>
+              <>
+                <Button
+                  onClick={() => onContinue(game.id, game.scenario_id)}
+                  className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white"
+                  size="sm"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Continue
+                </Button>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      aria-label="Delete in-progress game"
+                    >
+                      <Trash className="w-4 h-4 mr-2" />
+                      Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete this game?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently remove this in-progress game and its messages. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        type="button"
+                        onClick={handleConfirmDelete}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Confirm Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
             )}
             
             {isCompleted && (
