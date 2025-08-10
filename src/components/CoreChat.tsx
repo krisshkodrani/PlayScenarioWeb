@@ -33,6 +33,15 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
   const [hasCharacterUpdates, setHasCharacterUpdates] = useState(false);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [progressPercentage, setProgressPercentage] = useState(0);
+  const [progressNotifications, setProgressNotifications] = useState<Array<{
+    id: string;
+    objective: string;
+    change: number;
+    newPercentage: number;
+    status: string;
+    timestamp: number;
+  }>>([]);
+  const [previousProgress, setPreviousProgress] = useState<Record<string, number>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [isUserNearBottom, setIsUserNearBottom] = useState(true);
@@ -71,6 +80,52 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
       };
     });
   }, [scenario, instance]);
+
+  // Detect objective progress changes and show notifications
+  useEffect(() => {
+    if (!objectivesWithProgress.length) return;
+    
+    const newNotifications: typeof progressNotifications = [];
+    const currentProgress: Record<string, number> = {};
+    
+    objectivesWithProgress.forEach((objective) => {
+      const objKey = `objective_${objective.id}`;
+      const currentPercentage = objective.completion_percentage;
+      const previousPercentage = previousProgress[objKey] || 0;
+      
+      currentProgress[objKey] = currentPercentage;
+      
+      // Detect significant changes (10% or more increase)
+      const change = currentPercentage - previousPercentage;
+      if (change >= 10) {
+        newNotifications.push({
+          id: `${objKey}-${Date.now()}`,
+          objective: objective.title,
+          change,
+          newPercentage: currentPercentage,
+          status: objective.status,
+          timestamp: Date.now()
+        });
+      }
+    });
+    
+    // Update progress state and add notifications
+    setPreviousProgress(currentProgress);
+    
+    if (newNotifications.length > 0) {
+      setProgressNotifications(prev => [...prev, ...newNotifications]);
+      setHasObjectiveUpdates(true);
+      
+      // Auto-clear notifications after 5 seconds
+      newNotifications.forEach(notification => {
+        setTimeout(() => {
+          setProgressNotifications(prev => prev.filter(n => n.id !== notification.id));
+        }, 5000);
+      });
+      
+      console.log('🎯 Objective progress detected:', newNotifications);
+    }
+  }, [objectivesWithProgress, previousProgress]);
 
   // Enhanced scroll handling
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth', force: boolean = false) => {
@@ -163,13 +218,18 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     fetchCharacters();
   }, [scenarioId]);
 
-  // Calculate progress based on current turn vs max turns
+  // Calculate progress based on actual objective completion (not turns)
   useEffect(() => {
-    if (instance && scenario?.max_turns) {
-      const progress = Math.min((instance.current_turn / scenario.max_turns) * 100, 100);
-      setProgressPercentage(progress);
+    if (objectivesWithProgress.length > 0) {
+      // Calculate average completion percentage across all objectives
+      const totalProgress = objectivesWithProgress.reduce((sum, obj) => sum + obj.completion_percentage, 0);
+      const averageProgress = Math.round(totalProgress / objectivesWithProgress.length);
+      setProgressPercentage(averageProgress);
+    } else {
+      // Fallback to 0% if no objectives are loaded yet
+      setProgressPercentage(0);
     }
-  }, [instance, scenario]);
+  }, [objectivesWithProgress]);
 
   const getCharacterById = (id: string): Character | undefined => {
     return characters.find(char => char.id === id);
@@ -341,6 +401,29 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
         onToggleObjectiveDrawer={toggleObjectiveDrawer}
         onToggleCharacterDrawer={toggleCharacterDrawer}
       />
+      
+      {/* Progress Notifications */}
+      {progressNotifications.length > 0 && (
+        <div className="fixed top-20 right-4 z-40 space-y-2">
+          {progressNotifications.map((notification) => (
+            <div
+              key={notification.id}
+              className="bg-gradient-to-r from-emerald-600 to-green-500 text-white px-4 py-3 rounded-lg shadow-lg animate-in slide-in-from-right duration-300"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                <div className="font-medium text-sm">Objective Progress!</div>
+              </div>
+              <div className="text-sm opacity-90 mt-1">
+                {notification.objective}: +{notification.change}% ({notification.newPercentage}%)
+              </div>
+              <div className="text-xs opacity-75 mt-1 capitalize">
+                Status: {notification.status.replace(/_/g, ' ')}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
       
       {/* Scroll Container */}
       <div 

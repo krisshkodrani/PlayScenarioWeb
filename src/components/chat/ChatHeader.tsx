@@ -69,9 +69,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           {/* Objectives Progress Ring */}
           <button
             onClick={onToggleObjectiveDrawer}
-            className={`relative w-12 h-12 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded-full ${
-              hasObjectiveUpdates ? 'animate-pulse' : ''
-            }`}
+            className="relative w-12 h-12 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded-full"
             aria-label="View mission objectives"
           >
             <svg

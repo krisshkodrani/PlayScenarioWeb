@@ -7,7 +7,7 @@ interface Objective {
   title: string;
   description: string;
   completion_percentage: number;
-  status: 'active' | 'completed' | 'failed';
+  status: 'active' | 'completed' | 'failed' | 'inactive' | 'struggling' | 'nearly_complete' | 'significant_progress' | 'making_progress' | 'started' | 'not_started';
   priority: 'critical' | 'normal';
   hints: string[];
   progress_notes: string;
@@ -84,15 +84,35 @@ const ObjectiveDrawer: React.FC<ObjectiveDrawerProps> = ({ isOpen, onClose, obje
                   </div>
                 </div>
                 
-                {/* Progress Bar */}
+                {/* Progress Bar with Status */}
                 <div className="mb-4">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-slate-400">Progress</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-slate-400">Progress</span>
+                      <span className={`px-2 py-0.5 text-xs rounded-full font-medium capitalize ${
+                        objective.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' :
+                        objective.status === 'nearly_complete' ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' :
+                        objective.status === 'significant_progress' ? 'bg-blue-500/15 text-blue-300 border border-blue-500/30' :
+                        objective.status === 'making_progress' || objective.status === 'active' ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30' :
+                        objective.status === 'started' ? 'bg-yellow-500/15 text-yellow-300 border border-yellow-500/30' :
+                        objective.status === 'struggling' ? 'bg-orange-500/15 text-orange-300 border border-orange-500/30' :
+                        objective.status === 'inactive' || objective.status === 'not_started' ? 'bg-slate-500/15 text-slate-400 border border-slate-500/30' :
+                        'bg-red-500/15 text-red-300 border border-red-500/30'
+                      }`}>
+                        {objective.status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
                     <span className="text-sm font-bold text-cyan-400">{objective.completion_percentage}%</span>
                   </div>
-                  <div className="w-full bg-slate-600 rounded-full h-2">
+                  <div className="w-full bg-slate-600 rounded-full h-3">
                     <div 
-                      className="bg-gradient-to-r from-emerald-400 to-violet-500 h-2 rounded-full transition-all duration-500 shadow-lg"
+                      className={`h-3 rounded-full transition-all duration-500 shadow-lg ${
+                        objective.completion_percentage >= 85 ? 'bg-gradient-to-r from-emerald-400 to-green-500' :
+                        objective.completion_percentage >= 60 ? 'bg-gradient-to-r from-blue-400 to-emerald-400' :
+                        objective.completion_percentage >= 35 ? 'bg-gradient-to-r from-cyan-400 to-blue-400' :
+                        objective.completion_percentage >= 15 ? 'bg-gradient-to-r from-yellow-400 to-cyan-400' :
+                        'bg-gradient-to-r from-orange-400 to-yellow-400'
+                      }`}
                       style={{ width: `${objective.completion_percentage}%` }}
                     />
                   </div>
