@@ -37,7 +37,7 @@ interface GameInstanceCardProps {
   game: GameInstance;
   onContinue: (instanceId: string, scenarioId: string) => void;
   onViewResults: (instanceId: string) => void;
-  onDelete: (instanceId: string) => void;
+  onDelete?: (instanceId: string) => void;
 }
 
 const GameInstanceCard: React.FC<GameInstanceCardProps> = ({
@@ -46,6 +46,12 @@ const GameInstanceCard: React.FC<GameInstanceCardProps> = ({
   onViewResults,
   onDelete
 }) => {
+  const handleConfirmDelete = () => {
+    if (typeof onDelete === 'function') {
+      onDelete(game.id);
+    }
+  };
+
   const getStatusBadge = () => {
     switch (game.status) {
       case 'playing':
@@ -163,7 +169,8 @@ const GameInstanceCard: React.FC<GameInstanceCardProps> = ({
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => onDelete(game.id)}
+                        type="button"
+                        onClick={handleConfirmDelete}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
                         Confirm Delete
