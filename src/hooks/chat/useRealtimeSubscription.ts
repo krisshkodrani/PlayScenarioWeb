@@ -205,7 +205,7 @@ export const useRealtimeSubscription = (
           catchupTimeoutRef.current = setTimeout(performCatchupFetch, 1000);
         } else if (status === 'CLOSED') {
           connectionHealthy.current = false;
-          logger.warning('Chat', 'Real-time connection closed', { instanceId });
+          logger.warn('Chat', 'Real-time connection closed', { instanceId });
           console.warn('🔒 Real-time connection CLOSED for instance:', instanceId);
         } else {
           logger.debug('Chat', 'Unknown subscription status', { instanceId, status });
