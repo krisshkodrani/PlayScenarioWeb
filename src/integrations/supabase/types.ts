@@ -145,27 +145,6 @@ export type Database = {
         }
         Relationships: []
       }
-      connection_metrics_logs: {
-        Row: {
-          active_connections: number | null
-          id: number
-          log_time: string
-          total_connections: number | null
-        }
-        Insert: {
-          active_connections?: number | null
-          id?: number
-          log_time?: string
-          total_connections?: number | null
-        }
-        Update: {
-          active_connections?: number | null
-          id?: number
-          log_time?: string
-          total_connections?: number | null
-        }
-        Relationships: []
-      }
       credit_audit_logs: {
         Row: {
           created_at: string
@@ -202,6 +181,7 @@ export type Database = {
           message: string
           message_type: string
           sender_name: string
+          sequence_number: number
           timestamp: string
           turn_number: number
         }
@@ -213,6 +193,7 @@ export type Database = {
           message: string
           message_type?: string
           sender_name: string
+          sequence_number: number
           timestamp?: string
           turn_number: number
         }
@@ -224,6 +205,7 @@ export type Database = {
           message?: string
           message_type?: string
           sender_name?: string
+          sequence_number?: number
           timestamp?: string
           turn_number?: number
         }
@@ -308,30 +290,6 @@ export type Database = {
           show_email_publicly?: boolean | null
           updated_at?: string
           username?: string | null
-        }
-        Relationships: []
-      }
-      query_performance_logs: {
-        Row: {
-          duration_ms: number | null
-          id: number
-          log_time: string
-          query: string | null
-          user_id: string | null
-        }
-        Insert: {
-          duration_ms?: number | null
-          id?: number
-          log_time?: string
-          query?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          duration_ms?: number | null
-          id?: number
-          log_time?: string
-          query?: string | null
-          user_id?: string | null
         }
         Relationships: []
       }
@@ -432,57 +390,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      scenario_characters_backup: {
-        Row: {
-          avatar_url: string | null
-          blocked_at: string | null
-          blocked_by: string | null
-          blocked_reason: string | null
-          created_at: string | null
-          creator_id: string | null
-          expertise_keywords: string[] | null
-          id: string | null
-          is_player_character: boolean | null
-          name: string | null
-          personality: string | null
-          role: string | null
-          scenario_id: string | null
-          status: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          blocked_at?: string | null
-          blocked_by?: string | null
-          blocked_reason?: string | null
-          created_at?: string | null
-          creator_id?: string | null
-          expertise_keywords?: string[] | null
-          id?: string | null
-          is_player_character?: boolean | null
-          name?: string | null
-          personality?: string | null
-          role?: string | null
-          scenario_id?: string | null
-          status?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          blocked_at?: string | null
-          blocked_by?: string | null
-          blocked_reason?: string | null
-          created_at?: string | null
-          creator_id?: string | null
-          expertise_keywords?: string[] | null
-          id?: string | null
-          is_player_character?: boolean | null
-          name?: string | null
-          personality?: string | null
-          role?: string | null
-          scenario_id?: string | null
-          status?: string | null
-        }
-        Relationships: []
       }
       scenario_instances: {
         Row: {
