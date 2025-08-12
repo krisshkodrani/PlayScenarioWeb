@@ -329,25 +329,25 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
         
         {/* Messages with narrator preview */}
         <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4">
-          {/* Show narrator message preview if available */}
-          {scenario?.initial_scene_prompt && (
-            <div className="mb-6">
-              <div className="animate-pulse">
-                <div className="bg-slate-700/30 rounded-lg p-4 max-w-4xl">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500"></div>
-                    <span className="font-medium text-slate-300">Narrator</span>
-                  </div>
-                  <p className="text-slate-300/80 leading-relaxed whitespace-pre-wrap">
-                    {scenario.initial_scene_prompt}
-                  </p>
+          {/* Loading skeleton without showing initial scene text */}
+          <div className="mb-6">
+            <div className="animate-pulse">
+              <div className="bg-slate-700/30 rounded-lg p-4 max-w-4xl">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500"></div>
+                  <div className="h-5 w-20 bg-slate-600/50 rounded animate-pulse"></div>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-4 bg-slate-600/50 rounded w-full"></div>
+                  <div className="h-4 bg-slate-600/50 rounded w-3/4"></div>
+                  <div className="h-4 bg-slate-600/50 rounded w-5/6"></div>
                 </div>
               </div>
-              <div className="text-center text-slate-400 text-sm mt-3">
-                {showPatientMessage ? "Still loading... This may take a moment." : "Setting up your scenario..."}
-              </div>
             </div>
-          )}
+            <div className="text-center text-slate-400 text-sm mt-3">
+              {showPatientMessage ? "Still loading... This may take a moment." : "Setting up your scenario..."}
+            </div>
+          </div>
           
           {/* Skeleton for additional messages */}
           <MessagesSkeleton rows={3} />
