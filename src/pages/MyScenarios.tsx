@@ -2,7 +2,6 @@
 import React, { useState, memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/navigation/PageHeader';
 import ScenarioStatsCards from '@/components/my-scenarios/ScenarioStatsCards';
 import ScenarioFilters from '@/components/my-scenarios/ScenarioFilters';
@@ -66,7 +65,6 @@ const ScenariosHeader = memo<{
 ));
 
 const MyScenarios: React.FC = () => {
-  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
   const {
@@ -133,8 +131,6 @@ const MyScenarios: React.FC = () => {
 
   const hasScenarios = scenarios.length > 0;
   const hasSearchResults = filters.search ? scenarios.length > 0 : true;
-
-  // Memoize navigation functions to prevent header re-renders
 
   return (
     <div className="h-screen bg-slate-900 flex flex-col">
