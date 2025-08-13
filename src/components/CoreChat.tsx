@@ -329,7 +329,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
         
         {/* Messages with narrator preview */}
         <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4">
-          {/* Loading skeleton without showing initial scene text */}
+          {/* Loading skeleton with better status messages */}
           <div className="mb-6">
             <div className="animate-pulse">
               <div className="bg-slate-700/30 rounded-lg p-4 max-w-4xl">
@@ -345,8 +345,19 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
               </div>
             </div>
             <div className="text-center text-slate-400 text-sm mt-3">
-              {showPatientMessage ? "Still loading... This may take a moment." : "Setting up your scenario..."}
+              {showPatientMessage 
+                ? "Still loading... This may take a moment. Please be patient." 
+                : "Loading scenario and creating opening message..."}
             </div>
+            {/* Show scenario title and description if available during loading */}
+            {scenario && (
+              <div className="mt-4 p-3 bg-slate-800/50 rounded-lg border border-gray-700/50">
+                <h3 className="text-cyan-400 font-medium text-sm mb-1">{scenario.title}</h3>
+                {scenario.description && (
+                  <p className="text-slate-400 text-xs">{scenario.description}</p>
+                )}
+              </div>
+            )}
           </div>
           
           {/* Skeleton for additional messages */}
@@ -370,9 +381,24 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
   if (error) {
     return (
       <div className="flex items-center justify-center h-screen bg-slate-900 text-white">
-        <div className="text-center">
-          <p className="text-red-400 mb-4">Error: {error}</p>
-          <p className="text-slate-300">Unable to load scenario chat</p>
+        <div className="text-center max-w-md">
+          <div className="text-red-400 text-6xl mb-4">⚠️</div>
+          <h2 className="text-xl font-semibold text-red-400 mb-4">Chat Initialization Failed</h2>
+          <p className="text-slate-300 mb-6">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="bg-cyan-400 text-slate-900 px-6 py-3 rounded-lg font-medium hover:bg-cyan-300 transition-colors"
+          >
+            Refresh Page
+          </button>
+          
+          {/* Fallback: Show initial scene if available */}
+          {scenario?.initial_scene_prompt && (
+            <div className="mt-8 p-4 bg-slate-800 rounded-lg border border-gray-700">
+              <h3 className="text-cyan-400 font-medium mb-2">Scenario Overview</h3>
+              <p className="text-slate-300 text-sm">{scenario.initial_scene_prompt}</p>
+            </div>
+          )}
         </div>
       </div>
     );

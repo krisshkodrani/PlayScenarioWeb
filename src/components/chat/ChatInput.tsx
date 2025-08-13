@@ -51,21 +51,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
               : 'bg-amber-500/10 border-amber-400 text-amber-400'
           }`}
         >
-          <button
-            type="button"
-            onClick={() => onModeChange(mode === 'focused' ? 'unfocused' : 'focused')}
-            className="w-8 h-8 inline-flex items-center justify-center rounded-md hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-cyan-400"
-            aria-label="Previous mode"
-            title="Previous mode"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="h-8 px-2 inline-flex items-center gap-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-cyan-400 hover:bg-white/5"
+                className="h-8 px-3 inline-flex items-center gap-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-cyan-400 hover:bg-white/5"
                 aria-label="Select mode (Ctrl+T to toggle)"
                 title={`${mode === 'focused' ? 'CHAT' : 'ACTION'} mode (Ctrl+T to toggle)`}
               >
@@ -104,16 +94,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
-
-          <button
-            type="button"
-            onClick={() => onModeChange(mode === 'focused' ? 'unfocused' : 'focused')}
-            className="w-8 h-8 inline-flex items-center justify-center rounded-md hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-cyan-400"
-            aria-label="Next mode"
-            title="Next mode"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
         </div>
 
         {/* Text input */}

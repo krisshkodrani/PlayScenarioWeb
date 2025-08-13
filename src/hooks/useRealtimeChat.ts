@@ -72,7 +72,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
             setError('Chat initialization timed out. Please refresh and try again.');
             setLoading(false);
           }
-        }, 45000); // 45 second timeout
+        }, 30000); // Reduced to 30 second timeout
 
         // Step 1: Fetch instance and scenario data
         console.log('📊 useRealtimeChat: Fetching instance and scenario data');
@@ -113,36 +113,27 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
 
         console.log('✅ useRealtimeChat: Instance and scenario data available', {
           instanceId: currentInstance.id,
-          scenarioId: currentScenario.id
+          scenarioId: currentScenario.id,
+          initialScenePrompt: !!currentScenario.initial_scene_prompt
         });
 
-        // Step 3: Initialize scenario and fetch messages
-        console.log('🎬 useRealtimeChat: Initializing scenario');
-        logger.debug('Chat', 'Initializing chat session', { 
-          instanceId: currentInstance.id,
-          scenarioId: currentScenario.id,
-          currentTurn: currentInstance.current_turn 
-        });
-        
-        await initializeScenario();
-        if (isCancelled) {
-          console.log('🛑 useRealtimeChat: Cancelled after initializeScenario');
-          return;
-        }
-        
-        console.log('💬 useRealtimeChat: Fetching messages');
+        // Step 3: Fetch existing messages first
+        console.log('💬 useRealtimeChat: Fetching existing messages');
         const messageCount = await fetchMessages();
         if (isCancelled) {
           console.log('🛑 useRealtimeChat: Cancelled after fetchMessages');
           return;
         }
 
-        // Fallback: If no messages exist, call initialization endpoint
-        if (messageCount === 0 && currentScenario?.initial_scene_prompt) {
-          console.log('🔄 useRealtimeChat: No messages found, initializing instance');
-          logger.info('Chat', 'No messages found, calling initialization endpoint', { instanceId });
+        console.log(`📨 useRealtimeChat: Found ${messageCount} existing messages`);
+
+        // Step 4: Initialize scenario if no messages exist
+        if (messageCount === 0) {
+          console.log('🎬 useRealtimeChat: No messages found, initializing scenario');
+          logger.info('Chat', 'No messages found, initializing scenario', { instanceId });
           
           try {
+            // First, call the initialization endpoint to create the narrator message
             const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/instances/${instanceId}/initialize`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' }
@@ -156,19 +147,37 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
                 narratorCreated: result.narrator_message_created
               });
               
+              // Wait a moment for the message to be saved
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              
               // Re-fetch messages to get the narrator message
-              await fetchMessages();
+              const newMessageCount = await fetchMessages();
+              console.log(`📨 useRealtimeChat: After initialization, found ${newMessageCount} messages`);
             } else {
               console.error('❌ useRealtimeChat: Failed to initialize instance', response.status);
               logger.error('Chat', 'Failed to initialize instance', null, { 
                 instanceId,
                 status: response.status 
               });
+              
+              // Fallback: call initializeScenario for local setup
+              await initializeScenario();
             }
           } catch (err) {
             console.error('❌ useRealtimeChat: Error calling initialization endpoint:', err);
             logger.error('Chat', 'Error calling initialization endpoint', err, { instanceId });
+            
+            // Fallback: call initializeScenario for local setup
+            await initializeScenario();
           }
+        } else {
+          // Initialize scenario handling for existing messages
+          await initializeScenario();
+        }
+        
+        if (isCancelled) {
+          console.log('🛑 useRealtimeChat: Cancelled after initialization');
+          return;
         }
         
         console.log('🎉 useRealtimeChat: Initialization completed successfully');
@@ -203,7 +212,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
         clearTimeout(timeoutId);
       }
     };
-  }, [user, instanceId, scenarioId]);
+  }, [user, instanceId, scenarioId, fetchInstance, fetchScenario, fetchMessages, initializeScenario]);
 
   return {
     messages,
