@@ -14,7 +14,7 @@ import { ScenarioData } from '@/types/scenario';
 const ScenarioCreationForm: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('basic');
+  const [activeTab, setActiveTab] = useState('settings');
   const [showAIModal, setShowAIModal] = useState(false);
   
   const {
