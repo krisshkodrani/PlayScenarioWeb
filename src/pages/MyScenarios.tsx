@@ -1,7 +1,7 @@
 
-import React, { useState, memo, useMemo } from 'react';
+import React, { useState, memo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, ArrowLeft, LayoutDashboard, Loader2 } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/navigation/PageHeader';
 import ScenarioStatsCards from '@/components/my-scenarios/ScenarioStatsCards';
@@ -17,31 +17,23 @@ import { useMyScenariosActions } from '@/components/my-scenarios/MyScenariosActi
 const ScenariosHeader = memo<{
   scenarioStats: any;
   onCreateNew: () => void;
-  onNavigateToDashboard: () => void;
-}>(({ scenarioStats, onCreateNew, onNavigateToDashboard }) => (
+}>(({ scenarioStats, onCreateNew }) => (
   <div className="sticky top-0 z-10 bg-slate-900 border-b border-slate-800">
     <div className="container mx-auto px-4 py-4">
-      {/* Single row with dashboard link, title, stats, and create button */}
       <div className="flex items-center justify-between gap-4">
-        {/* Left: Dashboard link and title */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onNavigateToDashboard}
-            className="text-slate-400 hover:text-cyan-400 hover:bg-slate-800"
-          >
-            <LayoutDashboard className="w-4 h-4 mr-2" />
-            Dashboard
-          </Button>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-white">My Scenarios</h1>
-            {scenarioStats.totalScenarios > 0 && (
-              <span className="bg-slate-700 text-cyan-400 px-2 py-1 rounded-full text-sm font-medium">
+        <div className="flex-1">
+          <PageHeader 
+            title="My Scenarios" 
+            subtitle={scenarioStats.totalScenarios === 0 
+              ? "Create your first scenario to start building interactive AI experiences"
+              : `Manage your collection of ${scenarioStats.totalScenarios} scenario${scenarioStats.totalScenarios === 1 ? '' : 's'}`
+            }
+            badge={scenarioStats.totalScenarios > 0 && (
+              <span className="bg-slate-700 text-cyan-400 px-3 py-1 rounded-full text-sm font-medium">
                 {scenarioStats.totalScenarios}
               </span>
             )}
-          </div>
+          />
         </div>
 
         {/* Center: Compact Stats (hidden on mobile) */}
@@ -98,9 +90,6 @@ const MyScenarios: React.FC = () => {
     handleView,
   } = useMyScenariosActions();
 
-  // Must be declared before any conditional returns to keep hooks order stable
-  const handleNavigateToDashboard = useMemo(() => () => navigate('/dashboard'), [navigate]);
-
   // Render loading state
   if (loading) {
     return (
@@ -153,7 +142,6 @@ const MyScenarios: React.FC = () => {
       <ScenariosHeader
         scenarioStats={scenarioStats}
         onCreateNew={handleCreateNew}
-        onNavigateToDashboard={handleNavigateToDashboard}
       />
 
       {/* Filters section - separate from header */}
