@@ -61,7 +61,7 @@ const ScenarioSidebar: React.FC<ScenarioSidebarProps> = ({
             className="w-full border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-slate-900"
           >
             <Sparkles className="w-4 h-4 mr-2" />
-            Use AI Assistant
+            AI Assistant
           </Button>
         </div>
 
