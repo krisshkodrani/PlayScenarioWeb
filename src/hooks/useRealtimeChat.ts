@@ -126,7 +126,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
         console.log('✅ useRealtimeChat: Instance and scenario data available', {
           instanceId: currentInstance.id,
           scenarioId: currentScenario.id,
-          initialScenePrompt: !!currentScenario.initial_scene_prompt
+          scenarioOpeningMessage: !!currentScenario.scenario_opening_message
         });
 
         // Step 3: Fetch existing messages first

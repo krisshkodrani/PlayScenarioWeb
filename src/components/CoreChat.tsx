@@ -393,10 +393,10 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
           </button>
           
           {/* Fallback: Show initial scene if available */}
-          {scenario?.initial_scene_prompt && (
+          {scenario?.scenario_opening_message && (
             <div className="mt-8 p-4 bg-slate-800 rounded-lg border border-gray-700">
               <h3 className="text-cyan-400 font-medium mb-2">Scenario Overview</h3>
-              <p className="text-slate-300 text-sm">{scenario.initial_scene_prompt}</p>
+              <p className="text-slate-300 text-sm">{scenario.scenario_opening_message}</p>
             </div>
           )}
         </div>

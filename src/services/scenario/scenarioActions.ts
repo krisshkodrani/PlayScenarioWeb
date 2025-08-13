@@ -17,7 +17,7 @@ export const createScenario = async (scenarioData: ScenarioData): Promise<Scenar
     win_conditions: scenarioData.win_conditions,
     lose_conditions: scenarioData.lose_conditions,
     max_turns: scenarioData.max_turns,
-    initial_scene_prompt: scenarioData.initial_scene_prompt,
+    scenario_opening_message: scenarioData.scenario_opening_message,
     is_public: scenarioData.is_public,
     creator_id: user.id,
     // Add difficulty and show_difficulty as metadata in objectives
@@ -280,7 +280,7 @@ export const duplicateScenario = async (scenarioId: string): Promise<Scenario | 
       win_conditions: original.win_conditions,
       lose_conditions: original.lose_conditions,
       max_turns: original.max_turns,
-      initial_scene_prompt: original.initial_scene_prompt,
+      scenario_opening_message: original.scenario_opening_message,
       is_public: false,
       creator_id: user.id
     })

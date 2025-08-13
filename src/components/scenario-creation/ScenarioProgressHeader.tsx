@@ -11,7 +11,7 @@ interface ScenarioProgressHeaderProps {
   scenarioData?: {
     title: string;
     description: string;
-    initial_scene_prompt: string;
+    scenario_opening_message: string;
     objectives: any[];
     characters: any[];
   };
@@ -29,7 +29,7 @@ const ScenarioProgressHeader: React.FC<ScenarioProgressHeaderProps> = ({
       completed: scenarioData ? (
         scenarioData.title.trim().length > 0 && 
         scenarioData.description.trim().length > 0 &&
-        scenarioData.initial_scene_prompt.trim().length > 0
+        scenarioData.scenario_opening_message.trim().length > 0
       ) : false
     },
     {

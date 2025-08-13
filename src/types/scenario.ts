@@ -21,7 +21,7 @@ export interface ScenarioData {
   win_conditions: string;
   lose_conditions: string;
   max_turns: number;
-  initial_scene_prompt: string;
+  scenario_opening_message: string;
   is_public: boolean;
   
   // New difficulty settings
@@ -70,7 +70,7 @@ export interface Scenario {
   is_liked?: boolean;
   is_bookmarked?: boolean;
   is_public: boolean;
-  initial_scene_prompt?: string;
+  scenario_opening_message?: string;
 }
 
 export interface ScenarioCategory {

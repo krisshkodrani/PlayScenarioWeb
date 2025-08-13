@@ -80,14 +80,14 @@ const MergedSettings: React.FC<MergedSettingsProps> = ({ data, onChange }) => {
             <Label htmlFor="initial-scene" className="text-white">Scenario Opening Message (for the Player) *</Label>
             <Textarea
               id="initial-scene"
-              value={data.initial_scene_prompt}
-              onChange={(e) => onChange({ initial_scene_prompt: e.target.value })}
+              value={data.scenario_opening_message}
+              onChange={(e) => onChange({ scenario_opening_message: e.target.value })}
               placeholder="Describe the opening scenario that will set the stage for the conversation..."
               rows={3}
               className="bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 resize-none"
               maxLength={300}
             />
-            <p className="text-xs text-slate-400">{data.initial_scene_prompt.length}/300 characters</p>
+            <p className="text-xs text-slate-400">{data.scenario_opening_message.length}/300 characters</p>
           </div>
         </CardContent>
       </Card>

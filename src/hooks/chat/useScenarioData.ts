@@ -66,7 +66,7 @@ export const useScenarioData = (instanceId: string, scenarioId: string) => {
       
       const { data: scenarioData, error: scenarioError } = await supabase
         .from('scenarios')
-        .select('id, title, description, initial_scene_prompt, objectives, max_turns')
+        .select('id, title, description, scenario_opening_message, objectives, max_turns')
         .eq('id', scenarioId)
         .maybeSingle();
 
@@ -90,7 +90,7 @@ export const useScenarioData = (instanceId: string, scenarioId: string) => {
         id: scenarioData.id,
         title: scenarioData.title,
         description: scenarioData.description,
-        initial_scene_prompt: scenarioData.initial_scene_prompt,
+        scenario_opening_message: scenarioData.scenario_opening_message,
         objectives: Array.isArray(scenarioData.objectives) ? scenarioData.objectives : [],
         max_turns: scenarioData.max_turns
       };

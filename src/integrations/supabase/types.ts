@@ -487,13 +487,13 @@ export type Database = {
           creator_id: string
           description: string
           id: string
-          initial_scene_prompt: string
           is_public: boolean
           like_count: number
           lose_conditions: string | null
           max_turns: number | null
           objectives: Json
           play_count: number
+          scenario_opening_message: string
           status: string | null
           title: string
           updated_at: string
@@ -509,13 +509,13 @@ export type Database = {
           creator_id: string
           description: string
           id?: string
-          initial_scene_prompt: string
           is_public?: boolean
           like_count?: number
           lose_conditions?: string | null
           max_turns?: number | null
           objectives?: Json
           play_count?: number
+          scenario_opening_message: string
           status?: string | null
           title: string
           updated_at?: string
@@ -531,13 +531,13 @@ export type Database = {
           creator_id?: string
           description?: string
           id?: string
-          initial_scene_prompt?: string
           is_public?: boolean
           like_count?: number
           lose_conditions?: string | null
           max_turns?: number | null
           objectives?: Json
           play_count?: number
+          scenario_opening_message?: string
           status?: string | null
           title?: string
           updated_at?: string

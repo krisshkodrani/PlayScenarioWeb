@@ -36,7 +36,7 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
       return {
         title: scenarioData.title || 'Epic Adventure Scenario',
         description: 'An exciting and engaging scenario filled with unexpected twists, humor, and interactive challenges that will keep participants on their toes!',
-        initial_scene_prompt: 'Welcome to an extraordinary adventure! You find yourself in a mysterious location where anything can happen. The air buzzes with excitement and possibility...',
+        scenario_opening_message: 'Welcome to an extraordinary adventure! You find yourself in a mysterious location where anything can happen. The air buzzes with excitement and possibility...',
         objectives: [
           { id: 1, description: 'Discover three hidden secrets that will unlock the main quest' },
           { id: 2, description: 'Form strategic alliances with at least two other participants' },
@@ -50,7 +50,7 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
       return {
         title: scenarioData.title || 'Professional Development Scenario',
         description: 'A structured professional scenario designed to enhance workplace skills, communication, and strategic thinking in a realistic business environment.',
-        initial_scene_prompt: 'You are in a professional setting where critical decisions need to be made. Your expertise and judgment will be tested as you navigate complex workplace challenges...',
+        scenario_opening_message: 'You are in a professional setting where critical decisions need to be made. Your expertise and judgment will be tested as you navigate complex workplace challenges...',
         objectives: [
           { id: 1, description: 'Demonstrate effective communication and leadership skills' },
           { id: 2, description: 'Analyze the situation and propose viable solutions' },
@@ -63,7 +63,7 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
       return {
         title: scenarioData.title || 'Creative Expression Scenario',
         description: 'An imaginative scenario that encourages creative thinking, artistic expression, and innovative problem-solving through unique challenges.',
-        initial_scene_prompt: 'Step into a world where creativity knows no bounds. Your imagination is your greatest tool as you explore, create, and transform the environment around you...',
+        scenario_opening_message: 'Step into a world where creativity knows no bounds. Your imagination is your greatest tool as you explore, create, and transform the environment around you...',
         objectives: [
           { id: 1, description: 'Create an original solution using artistic or creative methods' },
           { id: 2, description: 'Inspire others through innovative thinking and expression' },
@@ -76,7 +76,7 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
     return {
       title: scenarioData.title || 'Enhanced Interactive Scenario',
       description: (scenarioData.description || 'A comprehensive scenario') + ' Enhanced with AI to provide better engagement, clearer objectives, and more immersive storytelling.',
-      initial_scene_prompt: 'The scene is set for an engaging experience. You are about to embark on a journey that will challenge your skills and creativity...',
+      scenario_opening_message: 'The scene is set for an engaging experience. You are about to embark on a journey that will challenge your skills and creativity...',
       objectives: scenarioData.objectives.length > 0 ? scenarioData.objectives : [
         { id: 1, description: 'Complete the primary challenge with excellence' },
         { id: 2, description: 'Demonstrate key skills throughout the scenario' },

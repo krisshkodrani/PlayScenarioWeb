@@ -11,7 +11,7 @@ const defaultScenarioData: ScenarioData = {
   win_conditions: '',
   lose_conditions: '',
   max_turns: 20,
-  initial_scene_prompt: '',
+  scenario_opening_message: '',
   is_public: false,
   difficulty: 'beginner',
   show_difficulty: true,
@@ -56,7 +56,7 @@ export const useScenarioCreation = () => {
             win_conditions: '', // These aren't in the Scenario type, keeping empty
             lose_conditions: '',
             max_turns: 20, // Default value
-            initial_scene_prompt: scenario.initial_scene_prompt || '',
+            scenario_opening_message: scenario.scenario_opening_message || '',
             is_public: isDuplicateMode ? false : scenario.is_public,
             difficulty: (difficultyMeta?._difficulty || 'beginner') as 'beginner' | 'intermediate' | 'advanced' | 'expert',
             show_difficulty: difficultyMeta?._show_difficulty ?? true,
@@ -135,8 +135,8 @@ export const useScenarioCreation = () => {
         valid: scenarioData.description.trim().length >= 10
       },
       {
-        name: 'initial_scene_prompt',
-        valid: scenarioData.initial_scene_prompt.trim().length >= 10
+        name: 'scenario_opening_message',
+        valid: scenarioData.scenario_opening_message.trim().length >= 10
       },
       {
         name: 'objectives',
@@ -170,7 +170,7 @@ export const useScenarioCreation = () => {
     if (scenarioData.description.trim().length < 10) {
       errors.push('Description must be at least 10 characters');
     }
-      if (scenarioData.initial_scene_prompt.trim().length < 10) {
+      if (scenarioData.scenario_opening_message.trim().length < 10) {
         errors.push('Scenario opening message must be at least 10 characters');
       }
     if (scenarioData.objectives.length === 0) {

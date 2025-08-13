@@ -44,7 +44,7 @@ export interface Scenario {
   id: string;
   title: string;
   description: string;
-  initial_scene_prompt: string;
+  scenario_opening_message: string;
   objectives: any[];
   max_turns: number | null;
 }
