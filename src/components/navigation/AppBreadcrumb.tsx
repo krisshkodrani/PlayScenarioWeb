@@ -25,6 +25,10 @@ const BREADCRUMB_CONFIG: BreadcrumbConfig = {
     label: 'My Characters',
     parent: '/dashboard'
   },
+  '/my-games': {
+    label: 'My Games',
+    parent: '/dashboard'
+  },
   '/create-scenario': {
     label: 'Create Scenario',
     parent: '/my-scenarios'

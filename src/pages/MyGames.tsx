@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import PageHeader from '@/components/navigation/PageHeader';
+import AppBreadcrumb from '@/components/navigation/AppBreadcrumb';
 import GameFilters from '@/components/my-games/GameFilters';
 import GameInstanceCard from '@/components/my-games/GameInstanceCard';
 import EmptyGames from '@/components/my-games/EmptyGames';
@@ -182,6 +183,7 @@ const MyGames: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-900">
       <div className="container mx-auto px-4 py-8">
+        <AppBreadcrumb />
         <PageHeader
           title="My Games"
           subtitle="Manage your scenario game history"
