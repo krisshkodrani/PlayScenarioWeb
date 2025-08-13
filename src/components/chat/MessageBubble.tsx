@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { ThumbsUp, ThumbsDown, MessageCircle, Zap } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MessageCircle, Zap, Lightbulb } from 'lucide-react';
 import CharacterAvatar from './CharacterAvatar';
 import FeedbackModal from './FeedbackModal';
-import FollowUpSuggestions from './FollowUpSuggestions';
+import SuggestionsModal from './SuggestionsModal';
 import EmotionIndicator from './EmotionIndicator';
 import MetricsDisplay from './MetricsDisplay';
 import { reactionService } from '@/services/reactionService';
@@ -51,9 +51,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackType, setFeedbackType] = useState<'positive' | 'negative'>('positive');
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+  const [showSuggestionsModal, setShowSuggestionsModal] = useState(false);
   const { toast } = useToast();
   const messageType = message.message_type;
-
   // Parse JSON message for AI responses
   // Function to remove CHAT/ACTION prefix from user messages for display
   const removeMessagePrefix = (messageContent: string): string => {
@@ -235,19 +235,25 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             <button onClick={() => handleFeedback('negative')} className="bg-slate-700/80 backdrop-blur border border-slate-600 text-slate-400 hover:text-red-400 hover:border-red-400/50 p-1.5 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-red-400/20" aria-label="Negative feedback">
               <ThumbsDown className="w-3 h-3" />
             </button>
+            {onSuggestionClick && ((parsedData?.suggested_follow_ups || message.suggested_follow_ups)?.length ?? 0) > 0 && (
+              <button
+                onClick={() => setShowSuggestionsModal(true)}
+                className="bg-slate-700/80 backdrop-blur border border-slate-600 text-slate-400 hover:text-cyan-400 hover:border-cyan-400/50 p-1.5 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-cyan-400/20"
+                aria-label="Show follow-up suggestions"
+              >
+                <Lightbulb className="w-3 h-3" />
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Follow-up Suggestions */}
-      {(parsedData?.suggested_follow_ups || message.suggested_follow_ups) && onSuggestionClick && (
-        <div className="mt-4 max-w-[80%] md:max-w-[80%] sm:max-w-[90%]">
-          <FollowUpSuggestions 
-            suggestions={parsedData?.suggested_follow_ups || message.suggested_follow_ups} 
-            onSuggestionClick={onSuggestionClick} 
-          />
-        </div>
-      )}
+      <SuggestionsModal
+        isOpen={showSuggestionsModal}
+        onClose={() => setShowSuggestionsModal(false)}
+        suggestions={(parsedData?.suggested_follow_ups || message.suggested_follow_ups) ?? []}
+        onSelect={(s) => { onSuggestionClick?.(s); setShowSuggestionsModal(false); }}
+      />
 
       <FeedbackModal 
         isOpen={showFeedbackModal} 
