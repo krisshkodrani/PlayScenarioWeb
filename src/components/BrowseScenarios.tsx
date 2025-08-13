@@ -109,14 +109,7 @@ const BrowseScenarios: React.FC = () => {
             </div>
             
             {/* Dashboard Button - only show for authenticated users */}
-            {!authLoading && user && (
-              <Link to="/dashboard">
-                <Button variant="outline" className="border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-slate-900">
-                  <LayoutDashboard className="w-4 h-4 mr-2" />
-                  Dashboard
-                </Button>
-              </Link>
-            )}
+            {!authLoading && user}
           </div>
           
           {authNotice}
