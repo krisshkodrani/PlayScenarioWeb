@@ -1,10 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, Heart, Bookmark, Share, Star, Clock, Users, User, Coins } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Play, Heart, Bookmark, Share, Star, Clock, Users, User, Coins, Trash2 } from 'lucide-react';
 import { Scenario } from '@/types/scenario';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ActionSidebarProps {
   scenario: Scenario;
@@ -17,9 +19,11 @@ interface ActionSidebarProps {
   onStartPlaying: () => void;
   onBookmark: () => void;
   onLike: () => void;
+  onDelete?: () => void;
   startLoading?: boolean;
   hasEnoughCredits?: boolean;
   requiredCredits?: number;
+  isCreator?: boolean;
 }
 
 const ActionSidebar: React.FC<ActionSidebarProps> = ({
@@ -28,10 +32,13 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
   onStartPlaying,
   onBookmark,
   onLike,
+  onDelete,
   startLoading = false,
   hasEnoughCredits = true,
-  requiredCredits = 0
+  requiredCredits = 0,
+  isCreator = false
 }) => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const handleShare = async () => {
     try {
       await navigator.share({
@@ -42,6 +49,13 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
     } catch (error) {
       // Fallback to clipboard
       navigator.clipboard.writeText(window.location.href);
+    }
+  };
+
+  const handleDeleteConfirm = () => {
+    setShowDeleteDialog(false);
+    if (onDelete) {
+      onDelete();
     }
   };
 
@@ -161,9 +175,42 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
               <p className="font-medium text-white">{scenario.created_by}</p>
               <p className="text-sm text-slate-400">Scenario Creator</p>
             </div>
+            {isCreator && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDeleteDialog(true)}
+                className="ml-auto border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className="bg-slate-800 border-slate-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Delete Scenario</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-300">
+              Are you sure you want to delete "{scenario.title}"? This action cannot be undone and will permanently remove the scenario and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete Scenario
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

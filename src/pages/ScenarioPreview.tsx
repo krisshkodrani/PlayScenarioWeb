@@ -22,6 +22,8 @@ interface ScenarioPreviewData {
   userBookmarked: boolean;
   userLiked: boolean;
   userCredits: number;
+  isCreator: boolean;
+  currentUserId: string | null;
 }
 
 const ScenarioPreview: React.FC = () => {
@@ -36,7 +38,9 @@ const ScenarioPreview: React.FC = () => {
     error: null,
     userBookmarked: false,
     userLiked: false,
-    userCredits: 0
+    userCredits: 0,
+    isCreator: false,
+    currentUserId: null
   });
 
   const costCalculation = useScenarioCosts(data.scenario);
@@ -53,6 +57,23 @@ const ScenarioPreview: React.FC = () => {
       
       console.log('Fetching scenario data for ID:', scenarioId);
       
+      // Get the raw scenario data first to check creator
+      const { data: rawScenario, error: rawError } = await supabase
+        .from('scenarios')
+        .select('creator_id')
+        .eq('id', scenarioId)
+        .single();
+
+      if (rawError) {
+        console.error('Error fetching raw scenario:', rawError);
+        setData(prev => ({
+          ...prev,
+          loading: false,
+          error: 'Scenario not found'
+        }));
+        return;
+      }
+      
       const scenario = await scenarioService.getScenarioById(scenarioId);
       
       if (!scenario) {
@@ -64,9 +85,10 @@ const ScenarioPreview: React.FC = () => {
         return;
       }
 
-      // Get user's credit balance
+      // Get user's credit balance and check if user is the creator
       const { data: { user } } = await supabase.auth.getUser();
       let userCredits = 0;
+      let isCreator = false;
       
       if (user) {
         const { data: profile } = await supabase
@@ -76,6 +98,7 @@ const ScenarioPreview: React.FC = () => {
           .single();
         
         userCredits = profile?.credits || 0;
+        isCreator = rawScenario.creator_id === user.id;
       }
 
       setData({
@@ -84,7 +107,9 @@ const ScenarioPreview: React.FC = () => {
         error: null,
         userBookmarked: scenario.is_bookmarked || false,
         userLiked: scenario.is_liked || false,
-        userCredits
+        userCredits,
+        isCreator,
+        currentUserId: user?.id || null
       });
 
     } catch (error) {
@@ -185,6 +210,31 @@ const ScenarioPreview: React.FC = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (!data.scenario) return;
+    
+    try {
+      console.log('Deleting scenario:', data.scenario.id);
+      
+      await scenarioService.deleteScenario(data.scenario.id);
+      
+      toast({
+        title: "Scenario Deleted",
+        description: "The scenario has been permanently deleted.",
+      });
+      
+      // Navigate back to scenarios list
+      navigate('/my-scenarios');
+    } catch (error) {
+      console.error('Error deleting scenario:', error);
+      toast({
+        title: "Delete Failed",
+        description: "Unable to delete the scenario. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (data.loading) {
     return <ScenarioPreviewSkeleton />;
   }
@@ -239,9 +289,11 @@ const ScenarioPreview: React.FC = () => {
               onStartPlaying={handleStartPlaying}
               onBookmark={handleBookmark}
               onLike={handleLike}
+              onDelete={handleDelete}
               startLoading={startLoading}
               hasEnoughCredits={hasEnoughCredits}
               requiredCredits={costCalculation.totalCost}
+              isCreator={data.isCreator}
             />
           </div>
         </div>
