@@ -221,12 +221,7 @@ const Index: React.FC = () => {
                 </Button>
                 <p className="text-sm text-slate-400">No credit card required</p>
               </div>
-              <div className="grid grid-cols-2 gap-6 mt-10">
-                {stats.map(s => <div key={s.label} className="bg-slate-800/60 border border-gray-700 rounded-xl p-4 text-center">
-                    <p className="text-xl font-semibold">{s.value}</p>
-                    <p className="text-xs text-slate-400 mt-1">{s.label}</p>
-                  </div>)}
-              </div>
+              
             </div>
           </div>
         </section>
