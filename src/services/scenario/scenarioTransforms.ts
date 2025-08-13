@@ -41,36 +41,4 @@ export const mapDatabaseScenario = (dbScenario: any): Scenario => {
   };
 };
 
-export const enrichScenarioWithCharacters = (scenario: Scenario, characterAssignments: any[]): Scenario => {
-  const mappedCharacters: Character[] = characterAssignments.map(assignment => {
-    const char = assignment.character || assignment; // Handle both assignment objects and direct character objects
-    return {
-      id: char.id,
-      name: char.name,
-      role: char.role || 'Team Member',
-      personality: char.personality,
-      expertise_keywords: char.expertise_keywords || [],
-      avatar_color: getAvatarColor(char.name),
-      avatar_url: char.avatar_url
-    };
-  });
 
-  return {
-    ...scenario,
-    characters: mappedCharacters,
-    character_count: mappedCharacters.length
-  };
-};
-
-const getAvatarColor = (name: string): string => {
-  const colors = [
-    'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500',
-    'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'
-  ];
-  
-  const hash = name.split('').reduce((acc, char) => {
-    return char.charCodeAt(0) + ((acc << 5) - acc);
-  }, 0);
-  
-  return colors[Math.abs(hash) % colors.length];
-};

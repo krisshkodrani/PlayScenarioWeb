@@ -34,15 +34,6 @@ export interface DatabaseCharacter {
   updated_at: string;
 }
 
-// Character assignment interface for junction table
-export interface CharacterAssignment {
-  id: string;
-  scenario_id: string;
-  character_id: string;
-  is_player_character: boolean;
-  assigned_at: string;
-  assigned_by: string;
-}
 
 // Helper interface for UI context
 export interface CharacterContext {

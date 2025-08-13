@@ -5,20 +5,7 @@ import { ScenarioFilters } from './scenarioTypes';
 export const buildScenarioQuery = (isPublic?: boolean) => {
   return supabase
     .from('scenarios')
-    .select(`
-      *,
-      scenario_character_assignments(
-        *,
-        character:characters(
-          id,
-          name,
-          role,
-          personality,
-          expertise_keywords,
-          avatar_url
-        )
-      )
-    `, { count: 'exact' });
+    .select(`*`, { count: 'exact' });
 };
 
 export const applyScenarioFilters = (query: any, filters: ScenarioFilters, likedIds?: string[], bookmarkedIds?: string[]) => {
