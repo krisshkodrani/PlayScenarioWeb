@@ -83,7 +83,7 @@ const AvatarUploadSection: React.FC<AvatarUploadSectionProps> = ({
       <div className="flex items-center gap-6">
         {/* Avatar Preview */}
         <div className="relative">
-          <Avatar className="w-20 h-20">
+          <Avatar className="w-20 h-20 shrink-0">
             <AvatarImage src={avatarUrl} alt={characterName} />
             <AvatarFallback className={`${avatarColor} text-white font-semibold text-lg`}>
               {getInitials(characterName)}

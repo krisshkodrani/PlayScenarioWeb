@@ -33,7 +33,7 @@ const CharacterListItem: React.FC<CharacterListItemProps> = ({
       <div className="grid grid-cols-12 gap-4 items-center">
         {/* Character Info */}
         <div className="col-span-4 flex items-center gap-3">
-          <Avatar className="w-10 h-10">
+          <Avatar className="w-10 h-10 shrink-0">
             <AvatarImage src={character.avatar_url} alt={character.name} />
             <AvatarFallback className={`${character.avatar_color} text-white font-semibold text-sm`}>
               {getInitials(character.name)}

@@ -47,7 +47,7 @@ const SimplifiedPreview: React.FC<SimplifiedPreviewProps> = ({ characterData }) 
         {/* Character Avatar and Name */}
         <div className="text-center space-y-3">
           <div className="flex justify-center">
-            <Avatar className="w-16 h-16">
+            <Avatar className="w-16 h-16 shrink-0">
               <AvatarImage src={characterData.avatar_url} alt={characterData.name} />
               <AvatarFallback className={`${avatarColor} text-white font-semibold text-lg`}>
                 {getInitials(characterData.name || 'Unnamed Character')}

@@ -2,6 +2,7 @@
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getCharacterColor } from '../../utils/characterColors';
+import { AVATAR_SIZES, AVATAR_TEXT_SIZES, AvatarSize } from '@/utils/imageUtils';
 
 interface Character {
   id: string;
@@ -15,21 +16,10 @@ interface Character {
 interface CharacterAvatarProps {
   character?: Character;
   characterName?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: AvatarSize;
 }
 
 const CharacterAvatar: React.FC<CharacterAvatarProps> = ({ character, characterName, size = 'md' }) => {
-  const sizeClasses = {
-    sm: 'w-12 h-12',
-    md: 'w-15 h-15',
-    lg: 'w-18 h-18'
-  };
-
-  const textSizeClasses = {
-    sm: 'text-sm',
-    md: 'text-base',
-    lg: 'text-lg'
-  };
 
   // Get initials from character name
   const getInitials = (name: string) => {
@@ -47,9 +37,9 @@ const CharacterAvatar: React.FC<CharacterAvatarProps> = ({ character, characterN
   const avatarUrl = character?.avatar_url;
 
   return (
-    <Avatar className={`${sizeClasses[size]} shrink-0 shadow-lg`}>
-      <AvatarImage src={avatarUrl} alt={name} className="object-cover" />
-      <AvatarFallback className={`${avatarColor} text-white font-semibold ${textSizeClasses[size]}`}>
+    <Avatar className={`${AVATAR_SIZES[size]} shrink-0 shadow-lg`}>
+      <AvatarImage src={avatarUrl} alt={name} />
+      <AvatarFallback className={`${avatarColor} text-white font-semibold ${AVATAR_TEXT_SIZES[size]}`}>
         {getInitials(name)}
       </AvatarFallback>
     </Avatar>

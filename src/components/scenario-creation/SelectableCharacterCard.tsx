@@ -46,7 +46,7 @@ const SelectableCharacterCard: React.FC<SelectableCharacterCardProps> = ({
             className="mt-1"
           />
           <div className="flex items-start gap-3 flex-1">
-            <Avatar className="w-10 h-10">
+            <Avatar className="w-10 h-10 shrink-0">
               <AvatarImage src={character.avatar_url} alt={character.name} />
               <AvatarFallback className={`${character.avatar_color} text-white font-semibold text-sm`}>
                 {getInitials(character.name)}

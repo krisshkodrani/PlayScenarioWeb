@@ -40,7 +40,7 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
       <CardContent className="p-6 flex flex-col h-full">
         {/* Header with Avatar and Name */}
         <div className="flex items-start gap-4 mb-4">
-          <Avatar className="w-12 h-12">
+          <Avatar className="w-12 h-12 shrink-0">
             <AvatarImage src={character.avatar_url} alt={character.name} />
             <AvatarFallback className={`${character.avatar_color} text-white font-semibold`}>
               {getInitials(character.name)}
