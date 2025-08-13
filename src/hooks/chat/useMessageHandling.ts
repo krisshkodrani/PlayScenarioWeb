@@ -302,7 +302,7 @@ export const useMessageHandling = (
         }
       }
     },
-    [instance, user, instanceId, messages, toast, sortMessages]
+    [instance, user, instanceId, toast, sortMessages]
   );
 
   const addMessage = useCallback((newMessage: Message) => {

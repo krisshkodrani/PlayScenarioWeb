@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Scenario, ScenarioInstance } from '@/types/chat';
 import { useAuth } from '@/contexts/AuthContext';
@@ -50,7 +50,7 @@ export const useScenarioData = (instanceId: string, scenarioId: string) => {
       console.error('❌ fetchInstance: Error:', err);
       throw err;
     }
-  }, [user, instanceId]);
+  }, [instanceId]);
 
   // Fetch scenario data
   const fetchScenario = useCallback(async () => {

@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UseRealtimeChatProps } from '@/types/chat';
 import { useScenarioData } from '@/hooks/chat/useScenarioData';
@@ -38,6 +38,18 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
       updateInstance({ current_turn: result.current_turn });
     }
   }, [handleSendMessage, updateInstance]);
+
+  // Stable function references to prevent infinite re-renders
+  const stableFetchInstance = useRef(fetchInstance);
+  const stableFetchScenario = useRef(fetchScenario);
+  const stableFetchMessages = useRef(fetchMessages);
+  const stableInitializeScenario = useRef(initializeScenario);
+
+  // Update refs when functions change
+  stableFetchInstance.current = fetchInstance;
+  stableFetchScenario.current = fetchScenario;
+  stableFetchMessages.current = fetchMessages;
+  stableInitializeScenario.current = initializeScenario;
 
   // Single initialization effect with timeout and comprehensive error handling
   useEffect(() => {
@@ -79,11 +91,11 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
         logger.debug('Chat', 'Fetching instance and scenario data');
         
         const [fetchedInstance, fetchedScenario] = await Promise.all([
-          fetchInstance().catch(err => {
+          stableFetchInstance.current().catch(err => {
             console.error('❌ useRealtimeChat: fetchInstance failed:', err);
             throw err;
           }),
-          fetchScenario().catch(err => {
+          stableFetchScenario.current().catch(err => {
             console.error('❌ useRealtimeChat: fetchScenario failed:', err);
             throw err;
           })
@@ -119,7 +131,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
 
         // Step 3: Fetch existing messages first
         console.log('💬 useRealtimeChat: Fetching existing messages');
-        const messageCount = await fetchMessages();
+        const messageCount = await stableFetchMessages.current();
         if (isCancelled) {
           console.log('🛑 useRealtimeChat: Cancelled after fetchMessages');
           return;
@@ -151,7 +163,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
               await new Promise(resolve => setTimeout(resolve, 1000));
               
               // Re-fetch messages to get the narrator message
-              const newMessageCount = await fetchMessages();
+              const newMessageCount = await stableFetchMessages.current();
               console.log(`📨 useRealtimeChat: After initialization, found ${newMessageCount} messages`);
             } else {
               console.error('❌ useRealtimeChat: Failed to initialize instance', response.status);
@@ -161,18 +173,18 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
               });
               
               // Fallback: call initializeScenario for local setup
-              await initializeScenario();
+              await stableInitializeScenario.current();
             }
           } catch (err) {
             console.error('❌ useRealtimeChat: Error calling initialization endpoint:', err);
             logger.error('Chat', 'Error calling initialization endpoint', err, { instanceId });
             
             // Fallback: call initializeScenario for local setup
-            await initializeScenario();
+            await stableInitializeScenario.current();
           }
         } else {
           // Initialize scenario handling for existing messages
-          await initializeScenario();
+          await stableInitializeScenario.current();
         }
         
         if (isCancelled) {
@@ -212,7 +224,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
         clearTimeout(timeoutId);
       }
     };
-  }, [user, instanceId, scenarioId, fetchInstance, fetchScenario, fetchMessages, initializeScenario]);
+  }, [user, instanceId, scenarioId]);
 
   return {
     messages,
