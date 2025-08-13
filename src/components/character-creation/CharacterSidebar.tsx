@@ -31,10 +31,11 @@ const CharacterSidebar: React.FC<CharacterSidebarProps> = ({
         <CardContent className="space-y-3">
           <Button 
             onClick={onUseAI}
-            className="w-full bg-violet-500 hover:bg-violet-600 text-white"
+            variant="outline"
+            className="w-full border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-slate-900 transition-all duration-200"
           >
             <Wand2 className="w-4 h-4 mr-2" />
-            Use AI
+            AI Assistant
           </Button>
           
           <Button
