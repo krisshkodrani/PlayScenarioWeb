@@ -361,6 +361,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
           disabled
           mode={chatMode}
           onModeToggle={() => {}}
+          onModeChange={setChatMode}
         />
       </div>
     );
@@ -463,6 +464,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
         disabled={isTyping}
         mode={chatMode}
         onModeToggle={toggleMode}
+        onModeChange={setChatMode}
       />
 
       {/* Objective Drawer */}
