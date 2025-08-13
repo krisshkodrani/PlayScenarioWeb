@@ -99,14 +99,12 @@ export const useScenarioCreation = () => {
     
     const errors: string[] = [];
     
-    if (playerCharacters.length === 0) {
-      errors.push('At least one player character is required');
-    }
-    
+    // Player character validation (now optional with anonymous option)
     if (playerCharacters.length > 1) {
       errors.push('Maximum one player character is allowed');
     }
     
+    // AI character validation (required)
     if (aiCharacters.length === 0) {
       errors.push('At least one AI character is required');
     }
@@ -115,6 +113,7 @@ export const useScenarioCreation = () => {
       errors.push('Maximum 5 AI characters are allowed');
     }
     
+    // Total character validation (adjusted for optional player character)
     if (characters.length > 6) {
       errors.push('Maximum 6 characters total (1 player + 5 AI)');
     }
@@ -145,7 +144,7 @@ export const useScenarioCreation = () => {
       },
       {
         name: 'characters',
-        valid: scenarioData.characters.length > 0 && validateCharacters(scenarioData.characters).length === 0
+        valid: validateCharacters(scenarioData.characters).length === 0
       }
     ];
     
@@ -177,8 +176,10 @@ export const useScenarioCreation = () => {
     if (scenarioData.objectives.length === 0) {
       errors.push('At least one objective is required');
     }
-    if (scenarioData.characters.length === 0) {
-      errors.push('At least one character is required');
+    // Characters validation updated - we only require AI characters
+    const aiCharacters = scenarioData.characters.filter(char => !char.is_player_character);
+    if (aiCharacters.length === 0) {
+      errors.push('At least one AI character is required');
     }
     
     // Add character validation

@@ -2,10 +2,10 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScenarioData } from '@/types/scenario';
-import SimplifiedBasicInfo from './SimplifiedBasicInfo';
+import MergedSettings from './MergedSettings';
 import SimplifiedObjectives from './SimplifiedObjectives';
-import SimplifiedCharacters from './SimplifiedCharacters';
-import SimplifiedSettings from './SimplifiedSettings';
+import AICharactersTab from './AICharactersTab';
+import PlayerCharacterTab from './PlayerCharacterTab';
 
 interface ScenarioFormTabsProps {
   scenarioData: ScenarioData;
@@ -21,15 +21,15 @@ const ScenarioFormTabs: React.FC<ScenarioFormTabsProps> = ({
   onDataChange
 }) => {
   const tabs = [
-    { id: 'basic', label: 'Basic Info', component: SimplifiedBasicInfo },
+    { id: 'settings', label: 'Settings', component: MergedSettings },
     { id: 'objectives', label: 'Objectives', component: SimplifiedObjectives },
-    { id: 'characters', label: 'Characters', component: SimplifiedCharacters },
-    { id: 'settings', label: 'Settings', component: SimplifiedSettings }
+    { id: 'ai-characters', label: 'AI Characters', component: AICharactersTab },
+    { id: 'player-character', label: 'Player Character', component: PlayerCharacterTab }
   ];
 
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="space-y-6">
-      <TabsList className="grid grid-cols-2 lg:grid-cols-4 bg-slate-800 p-1">
+      <TabsList className="grid grid-cols-4 bg-slate-800 p-1">
         {tabs.map((tab) => (
           <TabsTrigger
             key={tab.id}

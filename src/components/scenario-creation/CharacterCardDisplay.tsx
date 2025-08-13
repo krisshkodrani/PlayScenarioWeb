@@ -13,13 +13,15 @@ interface CharacterCardDisplayProps {
   index: number;
   onRemove: (index: number) => void;
   onTogglePlayer: (index: number) => void;
+  hidePlayerToggle?: boolean;
 }
 
 const CharacterCardDisplay: React.FC<CharacterCardDisplayProps> = ({
   character,
   index,
   onRemove,
-  onTogglePlayer
+  onTogglePlayer,
+  hidePlayerToggle = false
 }) => {
   return (
     <Card className="bg-slate-700/30 border-slate-600">
@@ -48,16 +50,18 @@ const CharacterCardDisplay: React.FC<CharacterCardDisplayProps> = ({
               </div>
             )}
             
-            <div className="flex items-center space-x-2 pt-2">
-              <Checkbox
-                id={`player-${index}`}
-                checked={character.is_player_character}
-                onCheckedChange={() => onTogglePlayer(index)}
-              />
-              <Label htmlFor={`player-${index}`} className="text-xs text-slate-400">
-                This is a player character (controlled by user)
-              </Label>
-            </div>
+            {!hidePlayerToggle && (
+              <div className="flex items-center space-x-2 pt-2">
+                <Checkbox
+                  id={`player-${index}`}
+                  checked={character.is_player_character}
+                  onCheckedChange={() => onTogglePlayer(index)}
+                />
+                <Label htmlFor={`player-${index}`} className="text-xs text-slate-400">
+                  This is a player character (controlled by user)
+                </Label>
+              </div>
+            )}
           </div>
           <div className="flex gap-2 ml-4">
             <Button

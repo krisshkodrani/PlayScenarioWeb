@@ -16,13 +16,19 @@ interface CharacterBrowserModalProps {
   onClose: () => void;
   onSelectCharacters: (characters: CharacterData[]) => void;
   excludeCharacterIds?: string[];
+  maxSelection?: number;
+  title?: string;
+  description?: string;
 }
 
 const CharacterBrowserModal: React.FC<CharacterBrowserModalProps> = ({
   isOpen,
   onClose,
   onSelectCharacters,
-  excludeCharacterIds = []
+  excludeCharacterIds = [],
+  maxSelection,
+  title = "Browse My Characters",
+  description = "Select existing characters to add to your scenario"
 }) => {
   const [selectedCharacterIds, setSelectedCharacterIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -51,11 +57,17 @@ const CharacterBrowserModal: React.FC<CharacterBrowserModalProps> = ({
   );
 
   const handleSelectionChange = (characterId: string, selected: boolean) => {
-    setSelectedCharacterIds(prev => 
-      selected 
-        ? [...prev, characterId]
-        : prev.filter(id => id !== characterId)
-    );
+    setSelectedCharacterIds(prev => {
+      if (selected) {
+        // Check max selection limit
+        if (maxSelection && prev.length >= maxSelection) {
+          return prev;
+        }
+        return [...prev, characterId];
+      } else {
+        return prev.filter(id => id !== characterId);
+      }
+    });
   };
 
   const handleSelectAll = () => {
@@ -101,10 +113,10 @@ const CharacterBrowserModal: React.FC<CharacterBrowserModalProps> = ({
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             <Users className="w-5 h-5 text-cyan-400" />
-            Browse My Characters
+            {title}
           </DialogTitle>
           <p className="text-slate-400 text-sm">
-            Select existing characters to add to your scenario
+            {description}
           </p>
         </DialogHeader>
 
@@ -139,16 +151,16 @@ const CharacterBrowserModal: React.FC<CharacterBrowserModalProps> = ({
             <Badge variant="secondary" className="bg-cyan-500/20 text-cyan-400">
               {selectedCharacterIds.length} selected
             </Badge>
-            {availableCharacters.length > 0 && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSelectAll}
-                  className="text-cyan-400 hover:text-cyan-300"
-                >
-                  Select All
-                </Button>
+              {availableCharacters.length > 0 && !maxSelection && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSelectAll}
+                    className="text-cyan-400 hover:text-cyan-300"
+                  >
+                    Select All
+                  </Button>
                 <Button
                   variant="ghost"
                   size="sm"
