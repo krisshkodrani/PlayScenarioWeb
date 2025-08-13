@@ -62,34 +62,6 @@ const NewUserDashboard: React.FC = () => {
             </CardContent>
           </Card>
         </div>
-
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button 
-            size="lg" 
-            className="bg-cyan-400 hover:bg-cyan-300 text-slate-900 px-8 py-3 text-lg font-semibold"
-            onClick={() => navigate('/create-scenario')}
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Create Scenario
-          </Button>
-          <Button 
-            size="lg" 
-            className="bg-amber-400 hover:bg-amber-300 text-slate-900 px-8 py-3 text-lg font-semibold"
-            onClick={() => navigate('/create-character')}
-          >
-            <Users className="w-5 h-5 mr-2" />
-            Create Character
-          </Button>
-          <Button 
-            variant="outline" 
-            size="lg" 
-            className="px-8 py-3 text-lg border-slate-600 hover:border-slate-500 text-slate-300"
-            onClick={() => navigate('/browse')}
-          >
-            <BookOpen className="w-5 h-5 mr-2" />
-            Browse Library
-          </Button>
-        </div>
       </div>
     </div>
   );
