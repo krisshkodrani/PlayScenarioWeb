@@ -187,7 +187,6 @@ const MyGames: React.FC = () => {
         <PageHeader
           title="My Games"
           subtitle="Manage your scenario game history"
-          showBackButton={true}
         />
 
         <div className="mb-6">
