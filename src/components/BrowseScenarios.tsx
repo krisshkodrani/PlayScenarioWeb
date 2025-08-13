@@ -1,7 +1,7 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Gamepad2, LogIn, LayoutDashboard } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import PageHeader from '@/components/navigation/PageHeader';
@@ -16,7 +16,6 @@ type SortBy = "created_desc" | "created_asc" | "title" | "popularity" | "rating"
 
 const BrowseScenarios: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
   const {
     scenarios,
     loading,
@@ -28,13 +27,6 @@ const BrowseScenarios: React.FC = () => {
     handleLike,
     handleBookmark,
   } = useBrowseScenarios();
-
-  // Auto-redirect authenticated users to dashboard
-  useEffect(() => {
-    if (!authLoading && user) {
-      navigate('/dashboard');
-    }
-  }, [user, authLoading, navigate]);
 
   // Show auth notice for unauthenticated users
   const authNotice = !authLoading && !user && (
