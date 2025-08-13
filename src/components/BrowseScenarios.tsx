@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import PageHeader from '@/components/navigation/PageHeader';
-import AppBreadcrumb from '@/components/navigation/AppBreadcrumb';
+
 import SearchAndFilters from '@/components/browse/SearchAndFilters';
 import ScenarioGrid from '@/components/browse/ScenarioGrid';
 import { useBrowseScenarios } from '@/hooks/useBrowseScenarios';
@@ -125,7 +125,6 @@ const BrowseScenarios: React.FC = () => {
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between mb-4">
             <div className="flex-1">
-              <AppBreadcrumb />
               <PageHeader
                 title="Browse Scenarios"
                 subtitle="Discover and play interactive AI scenarios created by the community"
