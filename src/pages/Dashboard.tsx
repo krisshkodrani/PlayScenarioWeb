@@ -126,6 +126,7 @@ const Dashboard: React.FC = () => {
             />
             <QuickActions 
               onCreateScenario={() => navigate('/create-scenario')}
+              onCreateCharacter={() => navigate('/create-character')}
               onBrowseScenarios={() => navigate('/browse')}
               onViewMyCharacters={() => navigate('/my-characters')}
               onViewMyScenarios={() => navigate('/my-scenarios')}

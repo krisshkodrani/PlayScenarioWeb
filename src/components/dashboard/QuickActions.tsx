@@ -11,6 +11,7 @@ import {
 
 interface QuickActionsProps {
   onCreateScenario: () => void;
+  onCreateCharacter: () => void;
   onBrowseScenarios: () => void;
   onViewMyCharacters: () => void;
   onViewMyScenarios: () => void;
@@ -19,12 +20,20 @@ interface QuickActionsProps {
 
 const QuickActions: React.FC<QuickActionsProps> = ({
   onCreateScenario,
+  onCreateCharacter,
   onBrowseScenarios,
   onViewMyCharacters,
   onViewMyScenarios,
   onViewMyGames
 }) => {
   const actions = [
+    {
+      title: 'Create Character',
+      description: 'Design new AI characters',
+      icon: Users,
+      onClick: onCreateCharacter,
+      className: 'bg-amber-500 hover:bg-amber-600'
+    },
     {
       title: 'Browse Scenarios',
       description: 'Discover community content',
@@ -45,13 +54,6 @@ const QuickActions: React.FC<QuickActionsProps> = ({
       icon: FileText,
       onClick: onViewMyScenarios,
       className: 'bg-violet-500 hover:bg-violet-600'
-    },
-    {
-      title: 'My Characters',
-      description: 'Manage your AI characters',
-      icon: Users,
-      onClick: onViewMyCharacters,
-      className: 'bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600'
     }
   ];
 
