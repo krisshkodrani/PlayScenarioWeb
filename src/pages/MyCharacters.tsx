@@ -84,12 +84,14 @@ const MyCharacters: React.FC = () => {
         <PageHeader
           title="My Characters"
           subtitle={
-            characterStats.totalCharacters === 0 
+            characterStats && characterStats.totalCharacters === 0 
               ? "Create your first AI character to start building interactive scenarios"
-              : `Manage your collection of ${characterStats.totalCharacters} AI character${characterStats.totalCharacters === 1 ? '' : 's'}`
+              : characterStats
+              ? `Manage your collection of ${characterStats.totalCharacters} AI character${characterStats.totalCharacters === 1 ? '' : 's'}`
+              : "Loading characters..."
           }
           badge={
-            characterStats.totalCharacters > 0 && (
+            characterStats && characterStats.totalCharacters > 0 && (
               <span className="bg-slate-700 text-cyan-400 px-3 py-1 rounded-full text-sm font-medium">
                 {characterStats.totalCharacters}
               </span>
@@ -106,8 +108,8 @@ const MyCharacters: React.FC = () => {
           }
         />
 
-        {/* Character Stats Cards */}
-        <CharacterStatsCards stats={characterStats} />
+        {/* Character Stats Cards - Only render when data is available */}
+        {characterStats && <CharacterStatsCards stats={characterStats} />}
 
         {/* Filters */}
         <div className="mb-6">
