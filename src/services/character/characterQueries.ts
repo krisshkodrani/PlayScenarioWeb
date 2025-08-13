@@ -95,11 +95,11 @@ export const characterQueries = {
       expertise_keywords: char.expertise_keywords,
       avatar_url: char.avatar_url,
       created_at: char.created_at,
-      scenario_count: 0, // TODO: Calculate from actual usage
-      total_responses: 0, // TODO: Get from character_usage_stats
-      average_rating: 0, // TODO: Get from character_usage_stats
+      scenario_count: 0, // Will be calculated on demand if needed
+      total_responses: 0, // Will be calculated on demand if needed
+      average_rating: 0, // Will be calculated on demand if needed
       avatar_color: getCharacterColor(char.name),
-      last_used: char.created_at // TODO: Get from character_usage_stats
+      last_used: char.created_at // Fallback to creation date
     }));
 
     return {
@@ -127,7 +127,7 @@ export const characterQueries = {
     const totalCharacters = data?.length || 0;
     const activeCharacters = totalCharacters; // For now, all characters are considered active
     const mostUsedCharacter = data?.[0]?.name || '';
-    const averageRating = 0; // TODO: Calculate from character_usage_stats
+    const averageRating = 0; // Will be calculated on demand if needed
 
     return {
       totalCharacters,

@@ -47,53 +47,6 @@ export type Database = {
         }
         Relationships: []
       }
-      character_usage_stats: {
-        Row: {
-          average_rating: number | null
-          character_id: string
-          created_at: string
-          id: string
-          last_used: string | null
-          positive_reactions: number
-          scenario_count: number
-          total_reactions: number
-          total_responses: number
-          updated_at: string
-        }
-        Insert: {
-          average_rating?: number | null
-          character_id: string
-          created_at?: string
-          id?: string
-          last_used?: string | null
-          positive_reactions?: number
-          scenario_count?: number
-          total_reactions?: number
-          total_responses?: number
-          updated_at?: string
-        }
-        Update: {
-          average_rating?: number | null
-          character_id?: string
-          created_at?: string
-          id?: string
-          last_used?: string | null
-          positive_reactions?: number
-          scenario_count?: number
-          total_reactions?: number
-          total_responses?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "character_usage_stats_character_id_fkey"
-            columns: ["character_id"]
-            isOneToOne: true
-            referencedRelation: "characters"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       characters: {
         Row: {
           avatar_url: string | null
@@ -623,10 +576,6 @@ export type Database = {
         Args: { user_id: string; amount: number; description?: string }
         Returns: undefined
       }
-      cleanup_character_stats: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       deduct_credits: {
         Args: {
           user_id: string
@@ -648,15 +597,6 @@ export type Database = {
           row_id: string
         }
         Returns: boolean
-      }
-      update_character_stats: {
-        Args: {
-          p_character_id: string
-          p_response_count?: number
-          p_positive_reactions?: number
-          p_total_reactions?: number
-        }
-        Returns: undefined
       }
       verify_admin_access: {
         Args: Record<PropertyKey, never>

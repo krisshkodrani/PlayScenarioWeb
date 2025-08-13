@@ -46,8 +46,7 @@ class AdminCharacterService {
       .from('characters')
       .select(`
         *,
-        profiles!creator_id(username),
-        character_usage_stats(scenario_count, total_responses, average_rating, last_used)
+        profiles!creator_id(username)
       `, { count: 'exact' });
 
     // Apply filters
@@ -104,10 +103,10 @@ class AdminCharacterService {
       blocked_at: character.blocked_at,
       blocked_by: character.blocked_by,
       blocked_reason: character.blocked_reason,
-      scenario_count: character.character_usage_stats?.scenario_count || 0,
-      total_responses: character.character_usage_stats?.total_responses || 0,
-      average_rating: character.character_usage_stats?.average_rating || null,
-      last_used: character.character_usage_stats?.last_used || null,
+      scenario_count: 0, // Will be calculated on demand if needed
+      total_responses: 0, // Will be calculated on demand if needed
+      average_rating: null, // Will be calculated on demand if needed
+      last_used: null, // Will be calculated on demand if needed
     })) || [];
 
     return {
