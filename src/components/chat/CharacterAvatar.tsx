@@ -20,15 +20,15 @@ interface CharacterAvatarProps {
 
 const CharacterAvatar: React.FC<CharacterAvatarProps> = ({ character, characterName, size = 'md' }) => {
   const sizeClasses = {
-    sm: 'w-8 h-8',
-    md: 'w-10 h-10',
-    lg: 'w-12 h-12'
+    sm: 'w-12 h-12',
+    md: 'w-15 h-15',
+    lg: 'w-18 h-18'
   };
 
   const textSizeClasses = {
-    sm: 'text-xs',
-    md: 'text-sm',
-    lg: 'text-base'
+    sm: 'text-sm',
+    md: 'text-base',
+    lg: 'text-lg'
   };
 
   // Get initials from character name
@@ -48,7 +48,7 @@ const CharacterAvatar: React.FC<CharacterAvatarProps> = ({ character, characterN
 
   return (
     <Avatar className={`${sizeClasses[size]} shrink-0 shadow-lg`}>
-      <AvatarImage src={avatarUrl} alt={name} />
+      <AvatarImage src={avatarUrl} alt={name} className="object-cover" />
       <AvatarFallback className={`${avatarColor} text-white font-semibold ${textSizeClasses[size]}`}>
         {getInitials(name)}
       </AvatarFallback>
