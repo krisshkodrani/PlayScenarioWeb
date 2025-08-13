@@ -18,7 +18,7 @@ const CharacterCreationForm = () => {
     duplicateCharacterId
   } = useCharacterFormData();
 
-  const { handleSaveCharacter, saving } = useCharacterSave(isEditMode, editCharacterId);
+  const { handleSaveCharacter, handlePublish, handleMakePrivate, saving, publishing } = useCharacterSave(isEditMode, editCharacterId);
 
   if (loading) {
     return <CharacterFormLoading />;
@@ -31,7 +31,10 @@ const CharacterCreationForm = () => {
       characterContext={characterContext}
       setCharacterContext={setCharacterContext}
       onSave={() => handleSaveCharacter(characterData, characterContext)}
+      onPublish={() => handlePublish(characterData, characterContext)}
+      onMakePrivate={() => handleMakePrivate(characterData, characterContext)}
       saving={saving}
+      publishing={publishing}
       isEditMode={isEditMode}
       isDuplicateMode={isDuplicateMode}
       editCharacterId={editCharacterId}

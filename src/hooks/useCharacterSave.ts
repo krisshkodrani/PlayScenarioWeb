@@ -10,7 +10,9 @@ export const useCharacterSave = (isEditMode: boolean, editCharacterId?: string |
   const navigate = useNavigate();
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const saveOperationRef = useRef<Promise<void> | null>(null);
+  const publishOperationRef = useRef<Promise<void> | null>(null);
 
   // Check for duplicate character names (excluding current character when editing)
   const checkForDuplicateCharacter = async (name: string): Promise<boolean> => {
@@ -44,10 +46,11 @@ export const useCharacterSave = (isEditMode: boolean, editCharacterId?: string |
     }
   };
 
-  const handleSaveCharacter = useCallback(async (characterData: CharacterData, characterContext?: { role: string }) => {
+  const handleSave = useCallback(async (characterData: CharacterData, characterContext?: { role: string }, publish = false) => {
     // Prevent multiple simultaneous save operations
-    if (saveOperationRef.current) {
-      console.log('Save operation already in progress, skipping...');
+    const currentRef = publish ? publishOperationRef : saveOperationRef;
+    if (currentRef.current) {
+      console.log(`${publish ? 'Publish' : 'Save'} operation already in progress, skipping...`);
       return;
     }
 
@@ -91,28 +94,40 @@ export const useCharacterSave = (isEditMode: boolean, editCharacterId?: string |
 
     const saveOperation = async () => {
       try {
-        setSaving(true);
+        if (publish) {
+          setPublishing(true);
+        } else {
+          setSaving(true);
+        }
         
         const fullCharacterData = {
           ...characterData,
-          role: characterContext?.role || characterData.role || 'Character'
+          role: characterContext?.role || characterData.role || 'Character',
+          is_public: publish ? true : characterData.is_public
         };
 
         if (isEditMode && editCharacterId) {
           await characterService.updateCharacter(editCharacterId, fullCharacterData);
           toast({
-            title: "Character Updated",
-            description: `${characterData.name} has been successfully updated!`,
+            title: publish ? "Character Published" : "Character Updated",
+            description: publish 
+              ? `${characterData.name} is now public and can be used by other players!`
+              : `${characterData.name} has been successfully updated!`,
           });
         } else {
           await characterService.createCharacter(fullCharacterData);
           toast({
-            title: "Character Created",
-            description: `${characterData.name} has been successfully created!`,
+            title: publish ? "Character Published" : "Character Created",
+            description: publish
+              ? `${characterData.name} has been created and published!`
+              : `${characterData.name} has been successfully created!`,
           });
         }
 
-        navigate('/my-characters');
+        // For edits, stay on page; for new creations, navigate away
+        if (!isEditMode) {
+          navigate('/my-characters');
+        }
       } catch (error) {
         console.error('Error saving character:', error);
         
@@ -125,24 +140,46 @@ export const useCharacterSave = (isEditMode: boolean, editCharacterId?: string |
           });
         } else {
           toast({
-            title: "Save Failed",
-            description: `Unable to ${isEditMode ? 'update' : 'save'} the character. Please try again.`,
+            title: publish ? "Publish Failed" : "Save Failed",
+            description: `Unable to ${publish ? 'publish' : (isEditMode ? 'update' : 'save')} the character. Please try again.`,
             variant: "destructive",
           });
         }
       } finally {
-        setSaving(false);
-        saveOperationRef.current = null;
+        if (publish) {
+          setPublishing(false);
+          publishOperationRef.current = null;
+        } else {
+          setSaving(false);
+          saveOperationRef.current = null;
+        }
       }
     };
 
     // Store the promise to prevent duplicate operations
-    saveOperationRef.current = saveOperation();
-    await saveOperationRef.current;
+    const operationRef = publish ? publishOperationRef : saveOperationRef;
+    operationRef.current = saveOperation();
+    await operationRef.current;
   }, [isEditMode, editCharacterId, navigate, toast]);
+
+  const handleSaveCharacter = useCallback(async (characterData: CharacterData, characterContext?: { role: string }) => {
+    await handleSave(characterData, characterContext, false);
+  }, [handleSave]);
+
+  const handlePublish = useCallback(async (characterData: CharacterData, characterContext?: { role: string }) => {
+    await handleSave(characterData, characterContext, true);
+  }, [handleSave]);
+
+  const handleMakePrivate = useCallback(async (characterData: CharacterData, characterContext?: { role: string }) => {
+    const privateCharacterData = { ...characterData, is_public: false };
+    await handleSave(privateCharacterData, characterContext, false);
+  }, [handleSave]);
 
   return {
     handleSaveCharacter,
-    saving
+    handlePublish,
+    handleMakePrivate,
+    saving,
+    publishing
   };
 };

@@ -17,7 +17,10 @@ interface CharacterFormLayoutProps {
   characterContext: CharacterContext;
   setCharacterContext: React.Dispatch<React.SetStateAction<CharacterContext>>;
   onSave: () => void;
+  onPublish: () => void;
+  onMakePrivate: () => void;
   saving: boolean;
+  publishing: boolean;
   isEditMode: boolean;
   isDuplicateMode: boolean;
   editCharacterId?: string | null;
@@ -30,7 +33,10 @@ const CharacterFormLayout: React.FC<CharacterFormLayoutProps> = ({
   characterContext,
   setCharacterContext,
   onSave,
+  onPublish,
+  onMakePrivate,
   saving,
+  publishing,
   isEditMode,
   isDuplicateMode,
   editCharacterId,
@@ -158,7 +164,10 @@ const CharacterFormLayout: React.FC<CharacterFormLayoutProps> = ({
               characterData={characterData}
               isComplete={isComplete}
               isLoading={saving}
+              isPublishing={publishing}
               onSave={onSave}
+              onPublish={onPublish}
+              onMakePrivate={onMakePrivate}
               onUseAI={handleUseAI}
               isEditMode={isEditMode}
             />
