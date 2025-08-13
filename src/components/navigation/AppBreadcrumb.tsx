@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from '@/components/ui/breadcrumb';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 interface BreadcrumbConfig {
   [key: string]: {
     label: string;
@@ -86,6 +87,27 @@ const AppBreadcrumb: React.FC<AppBreadcrumbProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+
+  // Get authentication-aware breadcrumb configuration
+  const getBreadcrumbConfig = (): BreadcrumbConfig => {
+    const config = { ...BREADCRUMB_CONFIG };
+    
+    // For authenticated users, browse should go to dashboard
+    if (user) {
+      config['/browse'] = {
+        label: 'Browse Scenarios',
+        parent: '/dashboard'
+      };
+    } else {
+      config['/browse'] = {
+        label: 'Browse Scenarios',
+        parent: '/'
+      };
+    }
+    
+    return config;
+  };
   const buildBreadcrumbs = () => {
     if (customBreadcrumbs) {
       return customBreadcrumbs;
@@ -109,8 +131,9 @@ const AppBreadcrumb: React.FC<AppBreadcrumbProps> = ({
     }
 
     // Build breadcrumb trail
-    while (currentPath && BREADCRUMB_CONFIG[currentPath]) {
-      const config = BREADCRUMB_CONFIG[currentPath];
+    const breadcrumbConfig = getBreadcrumbConfig();
+    while (currentPath && breadcrumbConfig[currentPath]) {
+      const config = breadcrumbConfig[currentPath];
       breadcrumbs.unshift({
         label: config.label,
         href: currentPath === location.pathname ? undefined : currentPath
