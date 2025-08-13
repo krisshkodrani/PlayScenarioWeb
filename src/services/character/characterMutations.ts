@@ -28,6 +28,12 @@ export const characterMutations = {
 
     if (error) {
       console.error('Error creating character:', error);
+      // Check if it's a duplicate name error
+      if (error.code === '23505' && error.message?.includes('characters_creator_name_unique')) {
+        const duplicateError = new Error('Character name already exists. Please choose a different name.');
+        (duplicateError as any).code = '23505';
+        throw duplicateError;
+      }
       throw error;
     }
 
@@ -58,6 +64,12 @@ export const characterMutations = {
 
     if (error) {
       console.error('Error updating character:', error);
+      // Check if it's a duplicate name error
+      if (error.code === '23505' && error.message?.includes('characters_creator_name_unique')) {
+        const duplicateError = new Error('Character name already exists. Please choose a different name.');
+        (duplicateError as any).code = '23505';
+        throw duplicateError;
+      }
       throw error;
     }
 
@@ -124,6 +136,12 @@ export const characterMutations = {
 
     if (error) {
       console.error('Error duplicating character:', error);
+      // Check if it's a duplicate name error
+      if (error.code === '23505' && error.message?.includes('characters_creator_name_unique')) {
+        const duplicateError = new Error('Character name already exists. Please choose a different name.');
+        (duplicateError as any).code = '23505';
+        throw duplicateError;
+      }
       throw error;
     }
 
