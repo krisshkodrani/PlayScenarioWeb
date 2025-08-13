@@ -70,6 +70,7 @@ export interface Scenario {
   is_liked?: boolean;
   is_bookmarked?: boolean;
   is_public: boolean;
+  initial_scene_prompt?: string;
 }
 
 export interface ScenarioCategory {

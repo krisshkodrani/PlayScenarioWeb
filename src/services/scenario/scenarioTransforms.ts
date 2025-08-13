@@ -32,6 +32,7 @@ export const mapDatabaseScenario = (dbScenario: any): Scenario => {
     average_rating: dbScenario.average_score || 0,
     tags: [],
     is_public: dbScenario.is_public,
+    initial_scene_prompt: dbScenario.initial_scene_prompt,
     // Add difficulty settings as additional properties
     ...(difficultyMeta && {
       difficulty: difficultyMeta._difficulty?.charAt(0).toUpperCase() + difficultyMeta._difficulty?.slice(1),

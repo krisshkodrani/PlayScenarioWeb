@@ -56,7 +56,7 @@ export const useScenarioCreation = () => {
             win_conditions: '', // These aren't in the Scenario type, keeping empty
             lose_conditions: '',
             max_turns: 20, // Default value
-            initial_scene_prompt: '', // This isn't in the Scenario type, keeping empty
+            initial_scene_prompt: scenario.initial_scene_prompt || '',
             is_public: isDuplicateMode ? false : scenario.is_public,
             difficulty: (difficultyMeta?._difficulty || 'beginner') as 'beginner' | 'intermediate' | 'advanced' | 'expert',
             show_difficulty: difficultyMeta?._show_difficulty ?? true,
@@ -171,9 +171,9 @@ export const useScenarioCreation = () => {
     if (scenarioData.description.trim().length < 10) {
       errors.push('Description must be at least 10 characters');
     }
-    if (scenarioData.initial_scene_prompt.trim().length < 10) {
-      errors.push('Initial scene prompt must be at least 10 characters');
-    }
+      if (scenarioData.initial_scene_prompt.trim().length < 10) {
+        errors.push('Scenario opening message must be at least 10 characters');
+      }
     if (scenarioData.objectives.length === 0) {
       errors.push('At least one objective is required');
     }

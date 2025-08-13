@@ -61,12 +61,12 @@ const SimplifiedBasicInfo: React.FC<SimplifiedBasicInfoProps> = ({ data, onChang
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="initial-scene" className="text-white">Initial Scene Prompt *</Label>
+            <Label htmlFor="scenario-opening" className="text-white">Scenario Opening Message *</Label>
             <Textarea
-              id="initial-scene"
+              id="scenario-opening"
               value={data.initial_scene_prompt}
               onChange={(e) => onChange({ initial_scene_prompt: e.target.value })}
-              placeholder="Describe the opening scenario that will set the stage for the conversation..."
+              placeholder="Write the narrator's opening message when the scenario starts."
               rows={3}
               className="bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 resize-none"
               maxLength={300}
