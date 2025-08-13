@@ -184,39 +184,33 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     return () => ro.disconnect();
   }, [isUserNearBottom, scrollToBottom]);
 
-  // Fetch characters for this scenario
+  // Load characters from instance data when available
   useEffect(() => {
-    const fetchCharacters = async () => {
-      if (!scenarioId) return;
-
-      try {
-        const { data, error } = await supabase
-          .from('scenario_character_assignments')
-          .select(`
-            *,
-            character:characters(*)
-          `)
-          .eq('scenario_id', scenarioId);
-
-        if (error) throw error;
-
-        const formattedCharacters = data?.map(assignment => ({
-          id: assignment.character.id,
-          name: assignment.character.name,
-          role: assignment.character.role || 'Character',
-          avatar_color: 'bg-blue-600', // Default color, could be randomized
-          personality: assignment.character.personality,
-          avatar_url: assignment.character.avatar_url
-        })) || [];
-
-        setCharacters(formattedCharacters);
-      } catch (err) {
-        console.error('Error fetching characters:', err);
-      }
-    };
-
-    fetchCharacters();
-  }, [scenarioId]);
+    if (instance) {
+      // Characters are now embedded in the instance
+      const aiCharacters = Array.isArray(instance.ai_characters) ? instance.ai_characters : [];
+      const playerChar = instance.player_character;
+      
+      const allCharacters = [
+        ...aiCharacters.map((char: any) => ({
+          id: char.id || `ai_${Math.random()}`,
+          name: char.name,
+          role: char.role || 'Character',
+          avatar_color: char.avatar_color || 'bg-blue-600',
+          personality: char.personality
+        })),
+        ...(playerChar ? [{
+          id: playerChar.id || 'player',
+          name: playerChar.name,
+          role: 'Player',
+          avatar_color: playerChar.avatar_color || 'bg-green-600',
+          personality: playerChar.personality
+        }] : [])
+      ];
+      
+      setCharacters(allCharacters);
+    }
+  }, [instance]);
 
   // Calculate progress based on actual objective completion (not turns)
   useEffect(() => {

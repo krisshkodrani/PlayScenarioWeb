@@ -11,6 +11,7 @@ export interface CharacterData {
   personality: string;
   expertise_keywords: string[];
   is_player_character: boolean;
+  role?: string; // Add role property
 }
 
 export interface ScenarioData {
@@ -71,6 +72,9 @@ export interface Scenario {
   is_bookmarked?: boolean;
   is_public: boolean;
   scenario_opening_message?: string;
+  win_conditions?: string; // Add missing properties
+  lose_conditions?: string;
+  max_turns?: number;
 }
 
 export interface ScenarioCategory {

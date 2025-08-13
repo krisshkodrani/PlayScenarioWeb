@@ -38,6 +38,8 @@ export interface ScenarioInstance {
   started_at: string;
   max_turns: number | null;
   objectives_progress: any;
+  ai_characters?: any; // Embedded AI characters as JSON
+  player_character?: any; // Embedded player character as JSON
 }
 
 export interface Scenario {

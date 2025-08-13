@@ -1,9 +1,8 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Scenario } from '@/types/scenario';
-import { ScenarioFilters, ScenarioPaginationResult, ScenarioStats } from './scenarioTypes';
+import { ScenarioFilters, ScenarioStats, ScenarioPaginationResult } from './scenarioTypes';
 import { buildScenarioQuery, applyScenarioFilters, applySorting, applyPagination, getUserInteractionIds } from './scenarioQueries';
-import { mapDatabaseScenario, enrichScenarioWithCharacters } from './scenarioTransforms';
+import { mapDatabaseScenario } from './scenarioTransforms';
 
 export const getUserScenarios = async (
   filters: ScenarioFilters, 
@@ -30,8 +29,10 @@ export const getUserScenarios = async (
 
   const scenarios = (data || []).map(scenario => {
     const mappedScenario = mapDatabaseScenario(scenario);
-    const characters = scenario.scenario_character_assignments?.map((assignment: any) => assignment.character) || [];
-    return enrichScenarioWithCharacters(mappedScenario, characters);
+    // Characters are now embedded when instances are created
+    mappedScenario.characters = [];
+    mappedScenario.character_count = 0;
+    return mappedScenario;
   });
 
   return {
@@ -78,44 +79,38 @@ export const getPublicScenarios = async (
 };
 
 export const getScenarioById = async (scenarioId: string): Promise<Scenario | null> => {
-  const { data, error } = await supabase
-    .from('scenarios')
-    .select(`
-      *,
-      scenario_character_assignments(
+  try {
+    const { data: scenario, error } = await supabase
+      .from('scenarios')
+      .select(`
         *,
-        character:characters(*)
-      )
-    `)
-    .eq('id', scenarioId)
-    .single();
-
-  if (error) {
-    console.error('Error fetching scenario:', error);
-    return null;
-  }
-
-  // Get profile separately if needed
-  let profileData = null;
-  if (data.creator_id) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('username')
-      .eq('id', data.creator_id)
+        profiles!scenarios_creator_id_fkey(username)
+      `)
+      .eq('id', scenarioId)
       .single();
-    profileData = profile;
-  }
 
-  const scenario = mapDatabaseScenario(data);
-  const characters = data.scenario_character_assignments?.map((assignment: any) => assignment.character) || [];
-  const enrichedScenario = enrichScenarioWithCharacters(scenario, characters);
-  
-  // Add username if available
-  if (profileData) {
-    enrichedScenario.created_by = profileData.username || 'Unknown';
-  }
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null; // Scenario not found
+      }
+      console.error('Error fetching scenario:', error);
+      throw error;
+    }
+    
+    // Map the scenario (characters will be embedded when instances are created)
+    const mappedScenario = mapDatabaseScenario(scenario);
+    
+    // For now, return with empty characters array since we're transitioning
+    // Characters will be embedded when instances are created
+    mappedScenario.characters = [];
+    mappedScenario.character_count = 0;
+    
+    return mappedScenario;
 
-  return enrichedScenario;
+  } catch (error) {
+    console.error('Error in getScenarioById:', error);
+    throw error;
+  }
 };
 
 export const getScenarioStats = async (): Promise<ScenarioStats> => {
@@ -157,8 +152,10 @@ const enrichScenariosWithUserData = async (scenarios: any[]): Promise<Scenario[]
   if (!user || scenarios.length === 0) {
     return scenarios.map(s => {
       const mappedScenario = mapDatabaseScenario(s);
-      const characters = s.scenario_character_assignments?.map((assignment: any) => assignment.character) || [];
-      return enrichScenarioWithCharacters(mappedScenario, characters);
+      // Characters are now embedded when instances are created
+      mappedScenario.characters = [];
+      mappedScenario.character_count = 0;
+      return mappedScenario;
     });
   }
 
@@ -191,14 +188,15 @@ const enrichScenariosWithUserData = async (scenarios: any[]): Promise<Scenario[]
 
   return scenarios.map(scenario => {
     const mappedScenario = mapDatabaseScenario(scenario);
-    const characters = scenario.scenario_character_assignments?.map((assignment: any) => assignment.character) || [];
-    const enrichedScenario = enrichScenarioWithCharacters(mappedScenario, characters);
+    // Characters are now embedded when instances are created
+    mappedScenario.characters = [];
+    mappedScenario.character_count = 0;
     
     // Add username from profiles
-    enrichedScenario.created_by = profileMap.get(scenario.creator_id) || 'Unknown';
+    mappedScenario.created_by = profileMap.get(scenario.creator_id) || 'Unknown';
     
     return {
-      ...enrichedScenario,
+      ...mappedScenario,
       is_liked: likedIds.has(scenario.id),
       is_bookmarked: bookmarkedIds.has(scenario.id)
     };

@@ -68,7 +68,11 @@ export const useScenarioStart = (): ScenarioStartHook => {
         throw new Error('Failed to deduct credits. Please try again.');
       }
 
-      // Create scenario instance
+      // Separate AI characters and player character from scenario
+      const aiCharacters = scenario.characters?.filter(char => char.role !== 'Player') || [];
+      const playerCharacter = scenario.characters?.find(char => char.role === 'Player') || null;
+
+      // Create scenario instance with embedded characters (cast to any to work around TypeScript issues)
       const { data: instance, error: instanceError } = await supabase
         .from('scenario_instances')
         .insert({
@@ -76,8 +80,10 @@ export const useScenarioStart = (): ScenarioStartHook => {
           scenario_id: scenario.id,
           max_turns: estimatedTurns,
           objectives_progress: scenario.objectives || [],
-          status: 'playing'
-        })
+          status: 'playing',
+          ai_characters: aiCharacters as any,
+          player_character: playerCharacter as any
+        } as any)
         .select()
         .single();
 

@@ -35,8 +35,7 @@ export const getAdminScenarios = async (
     .from('scenarios')
     .select(`
       *,
-      profiles!creator_id(username),
-      scenario_character_assignments(id)
+      profiles!creator_id(username)
     `, { count: 'exact' });
 
   // Apply filters
@@ -100,7 +99,7 @@ export const getAdminScenarios = async (
     blocked_reason: scenario.blocked_reason,
     play_count: scenario.play_count || 0,
     like_count: scenario.like_count || 0,
-    character_count: scenario.scenario_character_assignments?.length || 0
+    character_count: 0 // Character count will be determined from embedded data
   }));
 
   return {

@@ -302,50 +302,9 @@ export type Database = {
           },
         ]
       }
-      scenario_character_assignments: {
-        Row: {
-          assigned_at: string
-          assigned_by: string
-          character_id: string
-          id: string
-          is_player_character: boolean
-          scenario_id: string
-        }
-        Insert: {
-          assigned_at?: string
-          assigned_by: string
-          character_id: string
-          id?: string
-          is_player_character?: boolean
-          scenario_id: string
-        }
-        Update: {
-          assigned_at?: string
-          assigned_by?: string
-          character_id?: string
-          id?: string
-          is_player_character?: boolean
-          scenario_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "scenario_character_assignments_character_id_fkey"
-            columns: ["character_id"]
-            isOneToOne: false
-            referencedRelation: "characters"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "scenario_character_assignments_scenario_id_fkey"
-            columns: ["scenario_id"]
-            isOneToOne: false
-            referencedRelation: "scenarios"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       scenario_instances: {
         Row: {
+          ai_characters: Json | null
           completion_reason: string | null
           current_turn: number
           ended_at: string | null
@@ -354,6 +313,7 @@ export type Database = {
           lose_condition_met: boolean | null
           max_turns: number | null
           objectives_progress: Json
+          player_character: Json | null
           scenario_id: string
           started_at: string
           status: string
@@ -361,6 +321,7 @@ export type Database = {
           win_condition_met: boolean | null
         }
         Insert: {
+          ai_characters?: Json | null
           completion_reason?: string | null
           current_turn?: number
           ended_at?: string | null
@@ -369,6 +330,7 @@ export type Database = {
           lose_condition_met?: boolean | null
           max_turns?: number | null
           objectives_progress?: Json
+          player_character?: Json | null
           scenario_id: string
           started_at?: string
           status?: string
@@ -376,6 +338,7 @@ export type Database = {
           win_condition_met?: boolean | null
         }
         Update: {
+          ai_characters?: Json | null
           completion_reason?: string | null
           current_turn?: number
           ended_at?: string | null
@@ -384,6 +347,7 @@ export type Database = {
           lose_condition_met?: boolean | null
           max_turns?: number | null
           objectives_progress?: Json
+          player_character?: Json | null
           scenario_id?: string
           started_at?: string
           status?: string
