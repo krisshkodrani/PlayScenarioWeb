@@ -275,13 +275,23 @@ export const useScenarioCreation = () => {
       }
       
       return false;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Save error:', error);
-      toast({
-        title: "Save Failed",
-        description: "There was an error saving your scenario. Please try again.",
-        variant: "destructive",
-      });
+      
+      // Handle specific error cases
+      if (error?.code === "23505" && error?.message?.includes("unique_scenario_title_per_creator")) {
+        toast({
+          title: "Duplicate Title",
+          description: "You already have a scenario with this title. Please choose a different title.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Save Failed",
+          description: "There was an error saving your scenario. Please try again.",
+          variant: "destructive",
+        });
+      }
       return false;
     } finally {
       setIsLoading(false);
