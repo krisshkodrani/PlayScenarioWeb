@@ -289,12 +289,21 @@ export const useScenarioCreation = () => {
       console.error('Save error:', error);
       
       // Handle specific error cases
-      if (error?.code === "23505" && error?.message?.includes("unique_scenario_title_per_creator")) {
-        toast({
-          title: "Duplicate Title",
-          description: "You already have a scenario with this title. Please choose a different title.",
-          variant: "destructive",
-        });
+      if (error?.code === "23505" && error?.message?.includes("duplicate_title")) {
+        // Check if this is a case where user should be editing instead of creating
+        if (!isEditMode) {
+          toast({
+            title: "Scenario Already Exists",
+            description: "You already have a scenario with this title. Please either: 1) Change the title to create a new scenario, or 2) Go to 'My Scenarios' and click 'Edit' on the existing scenario.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Duplicate Title",
+            description: "You already have a scenario with this title. Please choose a different title.",
+            variant: "destructive",
+          });
+        }
       } else {
         toast({
           title: "Save Failed",
