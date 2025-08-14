@@ -1,8 +1,9 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { ScenarioData } from '@/types/scenario';
 import { scenarioService } from '@/services/scenarioService';
+import { supabase } from '@/integrations/supabase/client';
 
 const defaultScenarioData: ScenarioData = {
   title: '',
@@ -206,6 +207,31 @@ export const useScenarioCreation = () => {
     return errors;
   }, [scenarioData, validateCharacters]);
 
+  // Helper function to find existing scenario with duplicate title
+  const findExistingScenario = useCallback(async (title: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data: scenarios, error } = await supabase
+        .from('scenarios')
+        .select('id, title, created_at')
+        .eq('creator_id', user.id)
+        .eq('title', title.trim())
+        .limit(1);
+
+      if (error) {
+        console.error('Error finding existing scenario:', error);
+        return null;
+      }
+
+      return scenarios && scenarios.length > 0 ? scenarios[0] : null;
+    } catch (error) {
+      console.error('Error in findExistingScenario:', error);
+      return null;
+    }
+  }, []);
+
   const handleSave = useCallback(async (publish = false) => {
     // Prevent duplicate submissions
     if (isSavingRef.current) {
@@ -289,18 +315,35 @@ export const useScenarioCreation = () => {
       console.error('Save error:', error);
       
       // Handle specific error cases
-      if (error?.code === "23505" && error?.message?.includes("duplicate_title")) {
+      if (error?.code === "23505" && (error?.message?.includes("duplicate_title") || error?.message?.includes("unique_scenario_title_per_creator"))) {
         // Check if this is a case where user should be editing instead of creating
         if (!isEditMode) {
-          toast({
-            title: "Scenario Already Exists",
-            description: "You already have a scenario with this title. Please either: 1) Change the title to create a new scenario, or 2) Go to 'My Scenarios' and click 'Edit' on the existing scenario.",
-            variant: "destructive",
-          });
+          // Find the existing scenario to provide edit link
+          const existingScenario = await findExistingScenario(scenarioData.title);
+          
+          if (existingScenario) {
+            const createdDate = new Date(existingScenario.created_at).toLocaleDateString();
+            toast({
+              title: "Scenario Already Exists",
+              description: `You already have a scenario titled "${existingScenario.title}" (created ${createdDate}). Navigating to edit mode...`,
+              variant: "destructive",
+            });
+            
+            // Auto-navigate to edit mode after a short delay
+            setTimeout(() => {
+              navigate(`/create-scenario?edit=${existingScenario.id}`);
+            }, 2000);
+          } else {
+            toast({
+              title: "Duplicate Title",
+              description: "You already have a scenario with this title. Please choose a different title to create a new scenario.",
+              variant: "destructive",
+            });
+          }
         } else {
           toast({
             title: "Duplicate Title",
-            description: "You already have a scenario with this title. Please choose a different title.",
+            description: "You already have another scenario with this title. Please choose a different title.",
             variant: "destructive",
           });
         }
@@ -316,7 +359,7 @@ export const useScenarioCreation = () => {
       setIsLoading(false);
       isSavingRef.current = false;
     }
-  }, [scenarioData, validateScenario, toast, navigate, isEditMode, editScenarioId]);
+  }, [scenarioData, validateScenario, toast, navigate, isEditMode, editScenarioId, findExistingScenario]);
 
   const handlePublish = useCallback(() => handleSave(true), [handleSave]);
 
