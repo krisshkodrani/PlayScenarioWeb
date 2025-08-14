@@ -48,9 +48,9 @@ export const useCharacterSave = (isEditMode: boolean, editCharacterId?: string |
 
   const handleSave = useCallback(async (characterData: CharacterData, characterContext?: { role: string }, publish = false) => {
     // Prevent multiple simultaneous save operations
-    const currentRef = publish ? publishOperationRef : saveOperationRef;
-    if (currentRef.current) {
-      console.log(`${publish ? 'Publish' : 'Save'} operation already in progress, skipping...`);
+    const operationRef = publish ? publishOperationRef : saveOperationRef;
+    if (operationRef.current) {
+      console.log(`${publish ? 'Publish' : 'Save'} operation already in progress, skipping duplicate request`);
       return;
     }
 
@@ -157,7 +157,6 @@ export const useCharacterSave = (isEditMode: boolean, editCharacterId?: string |
     };
 
     // Store the promise to prevent duplicate operations
-    const operationRef = publish ? publishOperationRef : saveOperationRef;
     operationRef.current = saveOperation();
     await operationRef.current;
   }, [isEditMode, editCharacterId, navigate, toast]);

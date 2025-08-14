@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { ScenarioData } from '@/types/scenario';
@@ -26,6 +26,9 @@ export const useScenarioCreation = () => {
   const [scenarioData, setScenarioData] = useState<ScenarioData>(defaultScenarioData);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingScenario, setIsLoadingScenario] = useState(false);
+  
+  // Prevent duplicate submissions
+  const isSavingRef = useRef(false);
   
   // Get mode from URL parameters
   const editScenarioId = searchParams.get('edit');
@@ -194,6 +197,13 @@ export const useScenarioCreation = () => {
   }, [scenarioData, validateCharacters]);
 
   const handleSave = useCallback(async (publish = false) => {
+    // Prevent duplicate submissions
+    if (isSavingRef.current) {
+      console.log('Save already in progress, skipping duplicate request');
+      return false;
+    }
+    
+    isSavingRef.current = true;
     setIsLoading(true);
     
     try {
@@ -275,6 +285,7 @@ export const useScenarioCreation = () => {
       return false;
     } finally {
       setIsLoading(false);
+      isSavingRef.current = false;
     }
   }, [scenarioData, validateScenario, toast, navigate, isEditMode, editScenarioId]);
 
