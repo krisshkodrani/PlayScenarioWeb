@@ -124,8 +124,8 @@ export const useCharacterSave = (isEditMode: boolean, editCharacterId?: string |
           });
         }
 
-        // For edits, stay on page; for new creations, navigate away
-        if (!isEditMode) {
+        // Only navigate away when publishing new characters
+        if (!isEditMode && publish) {
           navigate('/my-characters');
         }
       } catch (error) {
