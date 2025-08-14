@@ -23,7 +23,7 @@ const CharacterProgressHeader: React.FC<CharacterProgressHeaderProps> = ({
               {characterData.name || 'New Character'}
             </h2>
             <p className="text-slate-400">
-              {isComplete ? 'Ready to save' : 'Complete all sections to save'}
+              {isComplete ? 'Ready to publish' : 'Complete all sections to publish'}
             </p>
           </div>
           <div className="text-right">

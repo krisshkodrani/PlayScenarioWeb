@@ -64,7 +64,7 @@ const ScenarioEditForm: React.FC<ScenarioEditFormProps> = ({ scenarioId, isDupli
 
   const getPageSubtitle = () => {
     if (isDuplicate) return 'Create a copy of an existing scenario';
-    return 'Modify your existing scenario';
+    return 'Modify your interactive AI scenario';
   };
 
   const getCustomBreadcrumbs = () => {

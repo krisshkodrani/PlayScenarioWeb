@@ -51,7 +51,7 @@ const ScenarioProgressHeader: React.FC<ScenarioProgressHeaderProps> = ({
       <Card className="bg-slate-800 border-slate-700">
         <CardContent className="pt-6">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm text-slate-400">Creation Progress</span>
+            <span className="text-sm text-slate-400">Scenario Progress</span>
             <span className="text-sm text-cyan-400 font-medium">{Math.round(progress)}% Complete</span>
           </div>
           

@@ -66,7 +66,7 @@ const CharacterEditForm: React.FC<CharacterEditFormProps> = ({ characterId, isDu
 
   const getPageSubtitle = () => {
     if (isDuplicate) return 'Create a copy of an existing character';
-    return 'Modify your existing character';
+    return 'Modify your AI character design';
   };
 
   const getCustomBreadcrumbs = () => {

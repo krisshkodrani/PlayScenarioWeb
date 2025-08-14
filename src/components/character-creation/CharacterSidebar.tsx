@@ -72,17 +72,17 @@ const CharacterSidebar: React.FC<CharacterSidebarProps> = ({
               disabled={isLoading || isPublishing || !isComplete}
               className="w-full bg-gradient-to-r from-cyan-400 to-violet-500 hover:from-cyan-300 hover:to-violet-400 text-slate-900 font-semibold shadow-lg shadow-cyan-400/30"
             >
-              {characterData.is_public ? (
-                <>
-                  <Lock className="w-4 h-4 mr-2" />
-                  {isPublishing ? 'Making Private...' : 'Make Private'}
-                </>
-              ) : (
-                <>
-                  <Upload className="w-4 h-4 mr-2" />
-                  {isPublishing ? 'Publishing...' : 'Make Public'}
-                </>
-              )}
+               {characterData.is_public ? (
+                 <>
+                   <Lock className="w-4 h-4 mr-2" />
+                   {isPublishing ? 'Making Private...' : (isEditMode ? 'Update & Make Private' : 'Make Private')}
+                 </>
+               ) : (
+                 <>
+                   <Upload className="w-4 h-4 mr-2" />
+                   {isPublishing ? 'Publishing...' : (isEditMode ? 'Update & Publish' : 'Publish Character')}
+                 </>
+               )}
             </Button>
           </div>
 
@@ -99,7 +99,7 @@ const CharacterSidebar: React.FC<CharacterSidebarProps> = ({
 
           <div className="text-xs text-slate-400 space-y-1">
             <p>• Draft saves allow incomplete characters</p>
-            <p>• Public characters can be used by others</p>
+            <p>• Published characters can be used by others</p>
             {isEditMode && <p>• Changes will update the existing character</p>}
           </div>
         </CardContent>
