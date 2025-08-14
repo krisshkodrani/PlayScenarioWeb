@@ -82,10 +82,7 @@ export const getScenarioById = async (scenarioId: string): Promise<Scenario | nu
   try {
     const { data: scenario, error } = await supabase
       .from('scenarios')
-      .select(`
-        *,
-        profiles!creator_id(username)
-      `)
+      .select('*')
       .eq('id', scenarioId)
       .single();
 
@@ -97,8 +94,18 @@ export const getScenarioById = async (scenarioId: string): Promise<Scenario | nu
       throw error;
     }
     
+    // Fetch username separately
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', scenario.creator_id)
+      .single();
+    
     // Map the scenario (characters will be embedded when instances are created)
     const mappedScenario = mapDatabaseScenario(scenario);
+    
+    // Add username from separate query
+    mappedScenario.created_by = profile?.username || 'Unknown';
     
     // For now, return with empty characters array since we're transitioning
     // Characters will be embedded when instances are created
