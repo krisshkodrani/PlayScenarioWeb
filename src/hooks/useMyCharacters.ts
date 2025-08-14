@@ -21,7 +21,12 @@ interface UseMyCharactersReturn {
   handleDelete: (characterId: string) => Promise<void>;
 }
 
-export const useMyCharacters = (): UseMyCharactersReturn => {
+interface UseMyCharactersOptions {
+  preventUrlUpdates?: boolean;
+}
+
+export const useMyCharacters = (options: UseMyCharactersOptions = {}): UseMyCharactersReturn => {
+  const { preventUrlUpdates = false } = options;
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   
@@ -38,10 +43,10 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
   const isFirstLoadRef = useRef(true);
   
   const [filters, setFilters] = useState<CharacterFilters>({
-    search: searchParams.get('search') || '',
-    role: searchParams.get('role') || '',
-    expertise: searchParams.get('expertise') || '',
-    sortBy: (searchParams.get('sortBy') as CharacterFilters['sortBy']) || 'created'
+    search: preventUrlUpdates ? '' : (searchParams.get('search') || ''),
+    role: preventUrlUpdates ? '' : (searchParams.get('role') || ''),
+    expertise: preventUrlUpdates ? '' : (searchParams.get('expertise') || ''),
+    sortBy: preventUrlUpdates ? 'created' : ((searchParams.get('sortBy') as CharacterFilters['sortBy']) || 'created')
   });
   
   // Debounced search term for fetching
@@ -54,7 +59,7 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
   }, [filters.search]);
 
   const [pagination, setPagination] = useState({
-    page: parseInt(searchParams.get('page') || '1'),
+    page: preventUrlUpdates ? 1 : parseInt(searchParams.get('page') || '1'),
     limit: 12,
     total: 0
   });
@@ -131,16 +136,43 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
     }
   }, [toast, fetchCharacters, filters, pagination.page, pagination.limit]);
 
-  // Debounced URL update
+  // Debounced URL update (only when not in modal mode)
   useEffect(() => {
+    if (preventUrlUpdates) return;
+
     const timeoutId = setTimeout(() => {
-      const params = new URLSearchParams();
+      const params = new URLSearchParams(searchParams);
       
-      if (filters.search) params.set('search', filters.search);
-      if (filters.role) params.set('role', filters.role);
-      if (filters.expertise) params.set('expertise', filters.expertise);
-      if (filters.sortBy !== 'created') params.set('sortBy', filters.sortBy);
-      if (pagination.page !== 1) params.set('page', pagination.page.toString());
+      // Update character-specific parameters while preserving others
+      if (filters.search) {
+        params.set('search', filters.search);
+      } else {
+        params.delete('search');
+      }
+      
+      if (filters.role) {
+        params.set('role', filters.role);
+      } else {
+        params.delete('role');
+      }
+      
+      if (filters.expertise) {
+        params.set('expertise', filters.expertise);
+      } else {
+        params.delete('expertise');
+      }
+      
+      if (filters.sortBy !== 'created') {
+        params.set('sortBy', filters.sortBy);
+      } else {
+        params.delete('sortBy');
+      }
+      
+      if (pagination.page !== 1) {
+        params.set('page', pagination.page.toString());
+      } else {
+        params.delete('page');
+      }
       
       // Only update URL if the params actually changed
       const currentParams = searchParams.toString();
@@ -152,7 +184,7 @@ export const useMyCharacters = (): UseMyCharactersReturn => {
     }, 300); // 300ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [filters.search, filters.role, filters.expertise, filters.sortBy, pagination.page, searchParams, setSearchParams]);
+  }, [preventUrlUpdates, filters.search, filters.role, filters.expertise, filters.sortBy, pagination.page, searchParams, setSearchParams]);
 
   // Fetch characters when filters or pagination change
   useEffect(() => {

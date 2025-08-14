@@ -10,8 +10,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Wand2, Sparkles } from 'lucide-react';
+import { Wand2, Sparkles, AlertCircle } from 'lucide-react';
 import { ScenarioData } from '@/types/scenario';
+import { useScenarioHelper } from '@/hooks/useScenarioHelper';
 
 interface AIAssistanceModalProps {
   isOpen: boolean;
@@ -27,87 +28,157 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
   onApplyChanges
 }) => {
   const [prompt, setPrompt] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const { createScenario, enhanceScenario } = useScenarioHelper();
 
-  const mockAIResponse = (userPrompt: string): Partial<ScenarioData> => {
-    const lowerPrompt = userPrompt.toLowerCase();
-    
-    if (lowerPrompt.includes('more fun') || lowerPrompt.includes('funnier') || lowerPrompt.includes('entertaining')) {
-      return {
-        title: scenarioData.title || 'Epic Adventure Scenario',
-        description: 'An exciting and engaging scenario filled with unexpected twists, humor, and interactive challenges that will keep participants on their toes!',
-        scenario_opening_message: 'Welcome to an extraordinary adventure! You find yourself in a mysterious location where anything can happen. The air buzzes with excitement and possibility...',
-        objectives: [
-          { id: 1, description: 'Discover three hidden secrets that will unlock the main quest' },
-          { id: 2, description: 'Form strategic alliances with at least two other participants' },
-          { id: 3, description: 'Overcome a surprising challenge using creativity and teamwork' },
-          { id: 4, description: 'Achieve the ultimate goal while having maximum fun!' }
-        ]
-      };
-    }
-    
-    if (lowerPrompt.includes('professional') || lowerPrompt.includes('business') || lowerPrompt.includes('corporate')) {
-      return {
-        title: scenarioData.title || 'Professional Development Scenario',
-        description: 'A structured professional scenario designed to enhance workplace skills, communication, and strategic thinking in a realistic business environment.',
-        scenario_opening_message: 'You are in a professional setting where critical decisions need to be made. Your expertise and judgment will be tested as you navigate complex workplace challenges...',
-        objectives: [
-          { id: 1, description: 'Demonstrate effective communication and leadership skills' },
-          { id: 2, description: 'Analyze the situation and propose viable solutions' },
-          { id: 3, description: 'Collaborate effectively with team members to achieve goals' }
-        ]
-      };
-    }
-    
-    if (lowerPrompt.includes('creative') || lowerPrompt.includes('artistic') || lowerPrompt.includes('imaginative')) {
-      return {
-        title: scenarioData.title || 'Creative Expression Scenario',
-        description: 'An imaginative scenario that encourages creative thinking, artistic expression, and innovative problem-solving through unique challenges.',
-        scenario_opening_message: 'Step into a world where creativity knows no bounds. Your imagination is your greatest tool as you explore, create, and transform the environment around you...',
-        objectives: [
-          { id: 1, description: 'Create an original solution using artistic or creative methods' },
-          { id: 2, description: 'Inspire others through innovative thinking and expression' },
-          { id: 3, description: 'Transform ordinary situations into extraordinary experiences' }
-        ]
-      };
-    }
-    
-    // Default enhancement
-    return {
-      title: scenarioData.title || 'Enhanced Interactive Scenario',
-      description: (scenarioData.description || 'A comprehensive scenario') + ' Enhanced with AI to provide better engagement, clearer objectives, and more immersive storytelling.',
-      scenario_opening_message: 'The scene is set for an engaging experience. You are about to embark on a journey that will challenge your skills and creativity...',
-      objectives: scenarioData.objectives.length > 0 ? scenarioData.objectives : [
-        { id: 1, description: 'Complete the primary challenge with excellence' },
-        { id: 2, description: 'Demonstrate key skills throughout the scenario' },
-        { id: 3, description: 'Achieve successful collaboration and communication' }
-      ]
-    };
-  };
+  // Determine if we're creating or editing based on whether scenario has meaningful data
+  const isEditMode = scenarioData.title?.trim() || scenarioData.description?.trim() || scenarioData.objectives?.length > 0;
+  
+  // Get appropriate mutation based on mode
+  const mutation = isEditMode ? enhanceScenario : createScenario;
 
   const handleApplyAI = async () => {
     if (!prompt.trim()) return;
     
-    setIsProcessing(true);
-    
-    // Simulate AI processing delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const aiUpdates = mockAIResponse(prompt);
-    onApplyChanges(aiUpdates);
-    
-    setIsProcessing(false);
-    setPrompt('');
-    onClose();
+    try {
+      let response;
+      
+      if (isEditMode) {
+        // Enhance existing scenario
+        response = await enhanceScenario.mutateAsync({
+          userRequest: prompt,
+          currentScenarioData: {
+            title: scenarioData.title,
+            description: scenarioData.description,
+            category: scenarioData.category,
+            difficulty: scenarioData.difficulty,
+            estimated_duration: scenarioData.estimated_duration,
+            objectives: scenarioData.objectives?.map(obj => ({
+              id: obj.id,
+              description: obj.description,
+              priority: obj.priority || 'important'
+            })),
+            win_conditions: scenarioData.win_conditions,
+            lose_conditions: scenarioData.lose_conditions,
+            max_turns: scenarioData.max_turns,
+            initial_scene_prompt: scenarioData.scenario_opening_message,
+            characters: scenarioData.characters?.map(char => ({
+              name: char.name,
+              role: char.role || 'Character',
+              personality: char.personality,
+              expertise_keywords: char.expertise_keywords,
+              background: char.background,
+              appearance: char.appearance,
+              goals: char.goals,
+              fears: char.fears,
+              notable_quotes: char.notable_quotes,
+              is_player_character: char.is_player_character
+            })),
+            tags: scenarioData.tags
+          }
+        });
+      } else {
+        // Create new scenario
+        response = await createScenario.mutateAsync({
+          userRequest: prompt
+        });
+      }
+      
+      // Apply the AI response to the form
+      onApplyChanges({
+        title: response.title,
+        description: response.description,
+        category: response.category,
+        difficulty: response.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+        estimated_duration: response.estimated_duration,
+        objectives: response.objectives?.map(obj => ({
+          id: obj.id,
+          description: obj.description,
+          priority: obj.priority
+        })) || [],
+        win_conditions: response.win_conditions,
+        lose_conditions: response.lose_conditions,
+        max_turns: response.max_turns,
+        scenario_opening_message: response.initial_scene_prompt,
+        characters: response.characters?.map(char => ({
+          name: char.name,
+          role: char.role,
+          personality: char.personality,
+          expertise_keywords: char.expertise_keywords,
+          background: char.background,
+          appearance: char.appearance,
+          goals: char.goals,
+          fears: char.fears,
+          notable_quotes: char.notable_quotes,
+          is_player_character: char.is_player_character
+        })) || [],
+        tags: response.tags,
+        is_public: response.is_public
+      });
+      
+      setPrompt('');
+      onClose();
+      
+    } catch (error) {
+      console.error('AI assistance failed:', error);
+      // Error is handled by the mutation hook
+    }
   };
 
-  const suggestionPrompts = [
-    "Make this scenario more fun and engaging",
-    "Add professional business context",
-    "Enhance with creative and artistic elements",
-    "Make it more challenging and educational",
-    "Add team collaboration objectives"
-  ];
+  // Advanced context-aware suggestions based on current scenario state
+  const getContextualSuggestions = () => {
+    if (isEditMode) {
+      const suggestions = [];
+      
+      // Analyze what's missing or could be improved
+      if (!scenarioData.characters || scenarioData.characters.length === 0) {
+        suggestions.push("Add diverse characters with different perspectives");
+      } else if (scenarioData.characters.length < 3) {
+        suggestions.push("Add more characters to create richer dynamics");
+      }
+      
+      if (!scenarioData.win_conditions || scenarioData.win_conditions.length < 50) {
+        suggestions.push("Strengthen win conditions with specific criteria");
+      }
+      
+      if (!scenarioData.scenario_opening_message || scenarioData.scenario_opening_message.length < 100) {
+        suggestions.push("Create a more immersive opening scene");
+      }
+      
+      if (!scenarioData.objectives || scenarioData.objectives.length < 2) {
+        suggestions.push("Add more varied objectives with different priorities");
+      }
+      
+      if (scenarioData.max_turns && scenarioData.max_turns < 10) {
+        suggestions.push("Add more complexity with extended gameplay");
+      }
+      
+      // Default improvement suggestions if nothing specific needed
+      if (suggestions.length === 0) {
+        suggestions.push(
+          "Add more realism and industry context",
+          "Increase engagement with higher stakes",
+          "Add time pressure and urgency",
+          "Include ethical dilemmas and tough choices"
+        );
+      }
+      
+      return suggestions.slice(0, 5); // Limit to 5 suggestions
+    } else {
+      // Creation mode suggestions
+      return [
+        "Create a business crisis management scenario",
+        "Design a healthcare decision-making challenge", 
+        "Build a technical problem-solving simulation",
+        "Develop a team collaboration exercise",
+        "Make an educational training scenario"
+      ];
+    }
+  };
+  
+  const suggestionPrompts = getContextualSuggestions();
+  
+  const isProcessing = mutation.isPending;
+  const error = mutation.error;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -115,10 +186,13 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
         <DialogHeader>
           <DialogTitle className="text-cyan-400 flex items-center gap-2">
             <Wand2 className="w-5 h-5" />
-            AI Scenario Assistant
+            AI Scenario Assistant {isEditMode ? '(Enhancement Mode)' : '(Creation Mode)'}
           </DialogTitle>
           <DialogDescription className="text-slate-300">
-            Describe how you'd like to improve or modify your scenario. AI will enhance your content automatically.
+            {isEditMode 
+              ? 'Describe how you\'d like to improve or modify your scenario. AI will enhance your existing content.'
+              : 'Describe the scenario you want to create. AI will generate complete scenario details for you.'
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -137,6 +211,16 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
             />
             <p className="text-xs text-slate-400">{prompt.length}/500 characters</p>
           </div>
+
+          {error && (
+            <div className="bg-red-900/50 border border-red-600 rounded-lg p-3 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-red-200">
+                <p className="font-medium">AI assistance failed</p>
+                <p className="text-red-300">{error.message}</p>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-3">
             <Label className="text-slate-300">Quick Suggestions:</Label>
@@ -158,13 +242,17 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
           <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="w-4 h-4 text-violet-400" />
-              <span className="text-sm font-medium text-violet-400">AI Will Enhance:</span>
+              <span className="text-sm font-medium text-violet-400">
+                {isEditMode ? 'AI Will Enhance:' : 'AI Will Generate:'}
+              </span>
             </div>
             <ul className="text-sm text-slate-300 space-y-1">
               <li>• Scenario title and description</li>
-              <li>• Initial scene prompt</li>
-              <li>• Objectives and goals</li>
-              <li>• Overall engagement and clarity</li>
+              <li>• Initial scene prompt and atmosphere</li>
+              <li>• Detailed objectives with priorities</li>
+              <li>• Win/lose conditions and turn limits</li>
+              <li>• Character profiles and relationships</li>
+              <li>• Professional tags and categorization</li>
             </ul>
           </div>
 
@@ -185,12 +273,12 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
               {isProcessing ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Processing...
+                  {isEditMode ? 'Enhancing...' : 'Creating...'}
                 </>
               ) : (
                 <>
                   <Wand2 className="w-4 h-4 mr-2" />
-                  Apply AI Enhancement
+                  {isEditMode ? 'Apply AI Enhancement' : 'Create with AI'}
                 </>
               )}
             </Button>

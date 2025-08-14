@@ -40,7 +40,7 @@ const CharacterBrowserModal: React.FC<CharacterBrowserModalProps> = ({
     error,
     filters,
     handleFilterChange
-  } = useMyCharacters();
+  } = useMyCharacters({ preventUrlUpdates: true });
 
   // Update filters when search or role filter changes
   useEffect(() => {

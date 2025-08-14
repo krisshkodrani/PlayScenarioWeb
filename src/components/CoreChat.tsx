@@ -10,6 +10,9 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useRealtimeChat } from '@/hooks/useRealtimeChat';
 import { supabase } from '@/integrations/supabase/client';
 
+// Debug mode configuration
+const DEBUG_CHAT = import.meta.env.VITE_DEBUG_CHAT === '1';
+
 interface Character {
   id: string;
   name: string;
@@ -57,14 +60,132 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     sendMessage
   } = useRealtimeChat({ instanceId, scenarioId });
 
-  // Transform objectives with progress data
+  // Create synthetic opening message when scenario loads and persist until real narrator message arrives
+  const messagesWithOpening = React.useMemo(() => {
+    // If no scenario opening message, return messages as-is
+    if (!scenario?.scenario_opening_message) {
+      return messages;
+    }
+    const opening = scenario.scenario_opening_message || "";
+    
+    // Check if we already have a real opening/narrator message from backend
+    const hasRealNarratorMessage = messages.some(msg => {
+      const msgText = typeof (msg as any).message === 'string' ? (msg as any).message : (msg as any).message ? JSON.stringify((msg as any).message) : '';
+      return (
+        (msg as any).message_type === 'narration' &&
+        (msg as any).id !== 'opening-synthetic' &&
+        (
+          msgText === opening ||
+          (opening && msgText.includes(opening.substring(0, 50))) ||
+          (msg as any).turn_number === 0 ||
+          (msg as any).sender_name === 'Narrator'
+        )
+      );
+    });
+    
+    // If we have a real narrator message from backend, return messages as-is (no synthetic needed)
+    if (hasRealNarratorMessage) {
+      return messages;
+    }
+    
+    // Check if we already have a synthetic opening message in our messages
+    const hasSyntheticOpening = messages.some((msg: any) => msg.id === 'opening-synthetic');
+    
+    // Create synthetic opening message if we don't have one and no real narrator message exists
+    if (!hasSyntheticOpening) {
+      const openingMessage = {
+        id: 'opening-synthetic',
+        sender_name: 'Narrator',
+        message: opening,
+        message_type: 'narration' as const,
+        timestamp: new Date(Date.now() - 1000).toISOString(), // Slightly in the past to appear first
+        turn_number: 0,
+        sequence_number: 0
+      };
+      
+      // Add synthetic message at the beginning, followed by other messages
+      return [openingMessage as any, ...messages];
+    }
+    
+    // Synthetic opening already exists, return messages as-is
+    return messages;
+  }, [messages, scenario?.scenario_opening_message]);
+
+  // Enhanced deduplication that handles mode switches
+  const dedupedMessages = React.useMemo(() => {
+    const seen = new Set<string>();
+    const contentSeen = new Map<string, any>(); // Track by content with metadata
+    const out: any[] = [];
+    
+    for (const m of messagesWithOpening as any[]) {
+      const text = typeof m.message === 'string' ? m.message : m?.message ? JSON.stringify(m.message) : '';
+      
+      // Primary key includes ID if available
+      const fullKey = m.id || `${m.message_type}|${m.sender_name || m.character_name}|${text}|${m.turn_number ?? ''}|${m.sequence_number ?? ''}`;
+      
+      // Content key for cross-turn deduplication (especially for AI responses)
+      const contentKey = `${m.message_type}|${m.sender_name || m.character_name}|${text.substring(0, 200)}`;
+      
+      // Check for exact duplicate
+      if (seen.has(fullKey)) {
+        if (DEBUG_CHAT) console.debug('[CoreChat] Dropping exact duplicate', { id: m.id, key: fullKey });
+        continue;
+      }
+      
+      // For AI responses, check content duplication across turns
+      if (m.message_type === 'ai_response') {
+        const existing = contentSeen.get(contentKey);
+        if (existing) {
+          // If same content exists with a different turn, keep the one with higher turn
+          const existingTurn = existing.turn_number ?? 0;
+          const currentTurn = m.turn_number ?? 0;
+          
+          if (currentTurn <= existingTurn) {
+            if (DEBUG_CHAT) console.debug('[CoreChat] Dropping duplicate AI content from earlier/same turn', { 
+              current: currentTurn, 
+              existing: existingTurn,
+              character: m.character_name 
+            });
+            continue;
+          } else {
+            // Remove the older one and add the newer
+            const oldIndex = out.findIndex(msg => msg === existing);
+            if (oldIndex >= 0) {
+              out.splice(oldIndex, 1);
+              if (DEBUG_CHAT) console.debug('[CoreChat] Replacing older duplicate with newer turn', {
+                old: existingTurn,
+                new: currentTurn,
+                character: m.character_name
+              });
+            }
+          }
+        }
+        contentSeen.set(contentKey, m);
+      }
+      
+      seen.add(fullKey);
+      out.push(m);
+    }
+    
+    if (DEBUG_CHAT && messagesWithOpening.length !== out.length) {
+      console.debug('[CoreChat] Deduped messages', { 
+        before: messagesWithOpening.length, 
+        after: out.length, 
+        dropped: messagesWithOpening.length - out.length 
+      });
+    }
+    
+    return out;
+  }, [messagesWithOpening]);
+
+  // Transform objectives with progress data - optimized memoization
   const objectivesWithProgress = React.useMemo(() => {
     if (!scenario || !instance) return [];
     
     const staticObjectives = scenario.objectives || [];
     const progressData = instance.objectives_progress || {};
     
-    return staticObjectives.map((objective: any, index: number) => {
+    return staticObjectives.map((objective: Record<string, unknown>, index: number) => {
       const objectiveKey = `objective_${objective.id || index + 1}`;
       const progress = progressData[objectiveKey] || {};
       
@@ -81,7 +202,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     });
   }, [scenario, instance]);
 
-  // Detect objective progress changes and show notifications
+  // Detect objective progress changes and show notifications - fixed dependencies
   useEffect(() => {
     if (!objectivesWithProgress.length) return;
     
@@ -109,21 +230,27 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
       }
     });
     
-    // Update progress state and add notifications
-    setPreviousProgress(currentProgress);
+    // Only update if there are actual changes to prevent infinite re-renders
+    const progressChanged = Object.keys(currentProgress).some(key => 
+      currentProgress[key] !== previousProgress[key]
+    );
     
-    if (newNotifications.length > 0) {
-      setProgressNotifications(prev => [...prev, ...newNotifications]);
-      setHasObjectiveUpdates(true);
+    if (progressChanged) {
+      setPreviousProgress(currentProgress);
       
-      // Auto-clear notifications after 5 seconds
-      newNotifications.forEach(notification => {
-        setTimeout(() => {
-          setProgressNotifications(prev => prev.filter(n => n.id !== notification.id));
-        }, 5000);
-      });
-      
-      console.log('🎯 Objective progress detected:', newNotifications);
+      if (newNotifications.length > 0) {
+        setProgressNotifications(prev => [...prev, ...newNotifications]);
+        setHasObjectiveUpdates(true);
+        
+        // Auto-clear notifications after 5 seconds
+        newNotifications.forEach(notification => {
+          setTimeout(() => {
+            setProgressNotifications(prev => prev.filter(n => n.id !== notification.id));
+          }, 5000);
+        });
+        
+        console.log('🎯 Objective progress detected:', newNotifications);
+      }
     }
   }, [objectivesWithProgress, previousProgress]);
 
@@ -146,13 +273,13 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     }
   }, []);
 
-  // Smooth auto-scroll with instant first paint
+  // Smooth auto-scroll with instant first paint - updated to use messagesWithOpening
   const initialScrollDone = useRef(false);
   useLayoutEffect(() => {
     if (!messagesEndRef.current) return;
 
     // First render after load: jump to bottom without animation
-    if (!initialScrollDone.current && (messages.length > 0)) {
+    if (!initialScrollDone.current && (messagesWithOpening.length > 0)) {
       requestAnimationFrame(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
         initialScrollDone.current = true;
@@ -161,7 +288,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     }
 
     // Scroll only when a new message actually appears (avoid reacting to isTyping)
-    const last = messages[messages.length - 1];
+    const last = messagesWithOpening[messagesWithOpening.length - 1];
     if (last && lastMsgIdRef.current !== last.id) {
       lastMsgIdRef.current = last.id;
       if (isUserNearBottom) {
@@ -170,7 +297,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
         });
       }
     }
-  }, [messages, isUserNearBottom]);
+  }, [messagesWithOpening, isUserNearBottom]);
 
   // Observe container resize to keep view stuck to bottom when near bottom
   useEffect(() => {
@@ -192,7 +319,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
       const playerChar = instance.player_character;
       
       const allCharacters = [
-        ...aiCharacters.map((char: any) => ({
+        ...aiCharacters.map((char: Record<string, unknown>) => ({
           id: char.id || `ai_${Math.random()}`,
           name: char.name,
           role: char.role || 'Character',
@@ -343,15 +470,6 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
                 ? "Still loading... This may take a moment. Please be patient." 
                 : "Loading scenario and creating opening message..."}
             </div>
-            {/* Show scenario title and description if available during loading */}
-            {scenario && (
-              <div className="mt-4 p-3 bg-slate-800/50 rounded-lg border border-gray-700/50">
-                <h3 className="text-cyan-400 font-medium text-sm mb-1">{scenario.title}</h3>
-                {scenario.description && (
-                  <p className="text-slate-400 text-xs">{scenario.description}</p>
-                )}
-              </div>
-            )}
           </div>
           
           {/* Skeleton for additional messages */}
@@ -453,10 +571,10 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
         onScroll={checkScrollPosition}
       >
         <MessagesList
-          messages={messages.map(msg => ({
+          messages={messagesWithOpening.map((msg: any) => ({
             id: msg.id,
             sender_name: msg.sender_name,
-            message: msg.message,
+            message: typeof msg.message === 'object' ? JSON.stringify(msg.message) : msg.message,
             message_type: msg.message_type as 'user_message' | 'ai_response' | 'system' | 'narration',
             timestamp: new Date(msg.timestamp),
             mode: msg.mode,

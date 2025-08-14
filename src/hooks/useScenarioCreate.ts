@@ -34,9 +34,7 @@ export const useScenarioCreate = () => {
     const aiCharacters = characters.filter(c => !c.is_player_character);
     
     const errors = [];
-    if (playerCharacters.length === 0) {
-      errors.push('At least one player character is required');
-    }
+    // Anonymous players are allowed - no player character required
     if (playerCharacters.length > 1) {
       errors.push('Only one player character is allowed');
     }

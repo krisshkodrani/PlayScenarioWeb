@@ -89,13 +89,61 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
     }
   };
 
-  const suggestionPrompts = [
-    "Make this character more funny and humorous",
-    "Add professional business expertise", 
-    "Enhance with creative and artistic traits",
-    "Make them more technical and analytical",
-    "Add leadership and mentoring qualities"
-  ];
+  // Advanced context-aware suggestions based on current character state
+  const getContextualSuggestions = () => {
+    if (isEditMode) {
+      const suggestions = [];
+      
+      // Analyze what's missing or could be improved
+      if (!characterData.background || characterData.background.length < 50) {
+        suggestions.push("Add detailed professional background and experience");
+      }
+      
+      if (!characterData.personality || characterData.personality.length < 100) {
+        suggestions.push("Develop more complex personality traits and quirks");
+      }
+      
+      if (!characterData.expertise_keywords || characterData.expertise_keywords.length < 3) {
+        suggestions.push("Add specific skills and areas of expertise");
+      }
+      
+      if (!characterData.goals || characterData.goals.length < 30) {
+        suggestions.push("Clarify personal motivations and objectives");
+      }
+      
+      if (!characterData.fears || characterData.fears.length < 30) {
+        suggestions.push("Add realistic concerns and vulnerabilities");
+      }
+      
+      if (!characterData.appearance || characterData.appearance.length < 30) {
+        suggestions.push("Create distinctive physical appearance details");
+      }
+      
+      // Default improvement suggestions if nothing specific needed
+      if (suggestions.length === 0) {
+        suggestions.push(
+          "Add more depth and complexity",
+          "Increase professional authenticity",
+          "Improve communication style",
+          "Strengthen motivation and stakes",
+          "Add unique personality quirks"
+        );
+      }
+      
+      return suggestions.slice(0, 5); // Limit to 5 suggestions
+    } else {
+      // Creation mode suggestions based on common character archetypes
+      return [
+        "Create a business executive leader",
+        "Design a technical expert specialist", 
+        "Build a creative professional",
+        "Develop a healthcare worker",
+        "Make an educator or trainer"
+      ];
+    }
+  };
+  
+  const suggestionPrompts = getContextualSuggestions();
   
   const isProcessing = mutation.isPending;
   const error = mutation.error;

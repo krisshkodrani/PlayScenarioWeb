@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Message, ScenarioInstance, Scenario } from '@/types/chat';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,6 +27,8 @@ export const useMessageHandling = (
   const isInitializedRef = useRef(false);
   // Track the expected AI turn if the response content will arrive later via realtime
   const pendingTurnRef = useRef<number | null>(null);
+  // Track messages created via API response to prevent realtime duplicates
+  const apiCreatedMessageIds = useRef<Set<string>>(new Set());
 
   // Single source of truth for message ordering
   const sortMessages = useCallback((messages: Message[]): Message[] => {
@@ -212,7 +214,16 @@ export const useMessageHandling = (
 
         logger.info('Chat', 'Message sent successfully', {
           instanceId,
-          newTurn: data.turn_number || data.current_turn
+          newTurn: data.turn_number || data.current_turn,
+          characterResponseCount: data.character_responses?.length || 0
+        });
+
+        // Enhanced logging for debugging
+        console.log('📦 Full API Response:', {
+          turn_number: data.turn_number,
+          character_responses: data.character_responses?.length || 0,
+          narrator_message: !!data.narrator_message,
+          scenario_completed: data.scenario_completed
         });
 
         // Legacy: Handle narrator_message from API response (now primarily comes via real-time subscription)
@@ -249,33 +260,74 @@ export const useMessageHandling = (
         }
 
         // Determine the expected turn for the AI response
-        const expectedTurn = data.current_turn || data.turn_number || (instance?.current_turn || 0) + 1;
+        const expectedTurn = data.turn_number || (instance?.current_turn || 0) + 1;
 
-        if (data.character_name && data.content) {
-          const enhancedMessage: Message = {
-            id: `ai-${Date.now()}`,
-            sender_name: data.character_name,
-            message: data.content,
-            turn_number: expectedTurn,
-            message_type: 'ai_response',
-            timestamp: new Date().toISOString(),
-            mode,
-            character_name: data.character_name,
-            response_type: data.response_type,
-            internal_state: data.internal_state,
-            suggested_follow_ups: data.suggested_follow_ups,
-            metrics: data.metrics,
-            flags: data.flags
-          };
-
-          // Add AI message and hide typing with sequential state updates
-          setMessages(prev => {
-            if (prev.find(msg => msg.id === enhancedMessage.id)) return prev;
-            return sortMessages([...prev, enhancedMessage]);
-          });
-          setIsTyping(false);
-          typingHandledSynchronously = true;
+        // CRITICAL FIX: Handle character_responses array from EnhancedChatCompletionResponse
+        if (data.character_responses && Array.isArray(data.character_responses) && data.character_responses.length > 0) {
+          console.log(`🎭 Processing ${data.character_responses.length} character responses`);
+          
+          const characterMessages: Message[] = [];
+          
+          for (let i = 0; i < data.character_responses.length; i++) {
+            const charResponse = data.character_responses[i];
+            
+            // Log each character response for debugging
+            console.log(`🎭 Character Response ${i + 1}:`, {
+              character_name: charResponse.character_name,
+              message_length: charResponse.message?.length || 0,
+              strategy: charResponse.strategy_used
+            });
+            
+            if (charResponse.character_name && charResponse.message) {
+              const enhancedMessage: Message = {
+                id: `ai-${Date.now()}-${i}`,
+                sender_name: charResponse.character_name,
+                message: charResponse.message,
+                turn_number: expectedTurn,
+                message_type: 'ai_response',
+                timestamp: new Date(Date.now() + i * 100).toISOString(), // Slight offset for ordering
+                mode,
+                character_name: charResponse.character_name,
+                response_type: charResponse.strategy_used,
+                internal_state: charResponse.response_metadata?.internal_state,
+                suggested_follow_ups: charResponse.response_metadata?.suggested_follow_ups,
+                metrics: charResponse.response_metadata?.metrics,
+                flags: charResponse.response_metadata?.flags
+              };
+              
+              // Create content hash for duplicate prevention (character + message content + turn)
+              const contentHash = `${charResponse.character_name}:${expectedTurn}:${charResponse.message.substring(0, 100)}`;
+              apiCreatedMessageIds.current.add(contentHash);
+              console.log(`📝 Tracking API-created message hash:`, contentHash.substring(0, 50) + '...');
+              
+              characterMessages.push(enhancedMessage);
+            } else {
+              console.warn(`⚠️ Invalid character response ${i + 1}:`, charResponse);
+            }
+          }
+          
+          if (characterMessages.length > 0) {
+            // Add all character messages and hide typing
+            setMessages(prev => {
+              const newMessages = characterMessages.filter(msg => 
+                !prev.find(existing => existing.id === msg.id)
+              );
+              if (newMessages.length > 0) {
+                console.log(`✅ Added ${newMessages.length} character responses`);
+                return sortMessages([...prev, ...newMessages]);
+              }
+              return prev;
+            });
+            setIsTyping(false);
+            typingHandledSynchronously = true;
+          } else {
+            console.warn('⚠️ No valid character responses found in array');
+            // Wait for realtime messages as fallback
+            pendingTurnRef.current = expectedTurn;
+            typingHandledSynchronously = true;
+          }
         } else {
+          console.log('📡 No character_responses in API response - waiting for realtime messages');
           // No content returned; wait for realtime AI message to arrive
           pendingTurnRef.current = expectedTurn;
           typingHandledSynchronously = true; // prevent finally from hiding typing too early
@@ -305,6 +357,25 @@ export const useMessageHandling = (
     [instance, user, instanceId, toast, sortMessages]
   );
 
+  // Function to check if a realtime message is a duplicate of an API-created message
+  const isApiDuplicate = useCallback((message: Message): boolean => {
+    if (message.message_type !== 'ai_response') return false;
+    
+    // Create the same content hash we used when tracking API messages
+    const contentHash = `${message.sender_name}:${message.turn_number}:${message.message.substring(0, 100)}`;
+    const isDuplicate = apiCreatedMessageIds.current.has(contentHash);
+    
+    if (isDuplicate) {
+      console.log(`🚫 Blocking duplicate realtime message:`, {
+        hash: contentHash.substring(0, 50) + '...',
+        sender: message.sender_name,
+        turn: message.turn_number
+      });
+    }
+    
+    return isDuplicate;
+  }, []);
+
   const addMessage = useCallback((newMessage: Message) => {
     logger.debug('Chat', 'addMessage called', {
       messageId: newMessage.id,
@@ -313,6 +384,12 @@ export const useMessageHandling = (
       sequence: newMessage.sequence_number,
       currentIsTyping: isTyping
     });
+
+    // Check if this is a duplicate of an API-created message
+    if (isApiDuplicate(newMessage)) {
+      console.log('🔁 Ignoring duplicate API-created message from realtime');
+      return; // Skip processing this message
+    }
 
     // For AI/system/narration messages, immediately end typing state first
     if (newMessage.message_type !== 'user_message') {
@@ -384,7 +461,15 @@ export const useMessageHandling = (
       // Add and re-sort for perfect ordering
       return sortMessages([...prev, safeMessage]);
     });
-  }, [isTyping, sortMessages]);
+  }, [isTyping, sortMessages, isApiDuplicate]);
+
+  // Clear API message tracking when instance changes
+  useEffect(() => {
+    if (instanceId) {
+      console.log('🧹 Clearing API message tracking for new instance:', instanceId);
+      apiCreatedMessageIds.current.clear();
+    }
+  }, [instanceId]);
 
   return {
     messages,
