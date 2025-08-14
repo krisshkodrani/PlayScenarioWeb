@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -537,15 +537,15 @@ export type Database = {
     }
     Functions: {
       add_credits: {
-        Args: { user_id: string; amount: number; description?: string }
+        Args: { amount: number; description?: string; user_id: string }
         Returns: undefined
       }
       deduct_credits: {
         Args: {
-          user_id: string
           amount: number
-          reason: string
           instance_id?: string
+          reason: string
+          user_id: string
         }
         Returns: boolean
       }
@@ -555,10 +555,10 @@ export type Database = {
       }
       log_rls_violation: {
         Args: {
-          table_name: string
-          user_id: string
           operation: string
           row_id: string
+          table_name: string
+          user_id: string
         }
         Returns: boolean
       }
