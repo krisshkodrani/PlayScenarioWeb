@@ -84,7 +84,7 @@ export const getScenarioById = async (scenarioId: string): Promise<Scenario | nu
       .from('scenarios')
       .select(`
         *,
-        profiles!scenarios_creator_id_fkey(username)
+        profiles!creator_id(username)
       `)
       .eq('id', scenarioId)
       .single();
