@@ -36,6 +36,16 @@ export const useScenarioCreation = () => {
   const isEditMode = !!editScenarioId;
   const isDuplicateMode = !!duplicateScenarioId;
 
+  // Debug logging for URL parameters
+  console.log('🔍 URL Debug Info:', {
+    currentURL: window.location.href,
+    searchParams: searchParams.toString(),
+    editScenarioId,
+    duplicateScenarioId,
+    isEditMode,
+    isDuplicateMode
+  });
+
   // Load existing scenario data when editing or duplicating
   useEffect(() => {
     const loadScenarioData = async () => {
