@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, User, Users, Library } from 'lucide-react';
 import { CharacterData } from '@/types/scenario';
-import CharacterCreationForm from './CharacterCreationForm';
+import InlineCharacterForm from './InlineCharacterForm';
 
 interface CharacterCreationTabsProps {
   showForm: boolean;
@@ -64,7 +64,7 @@ const CharacterCreationTabs: React.FC<CharacterCreationTabsProps> = ({
         )}
 
         {showForm && (
-          <CharacterCreationForm
+          <InlineCharacterForm
             formData={formData}
             setFormData={setFormData}
             newKeyword={newKeyword}
