@@ -27,13 +27,7 @@ export const getUserScenarios = async (
     throw error;
   }
 
-  const scenarios = (data || []).map(scenario => {
-    const mappedScenario = mapDatabaseScenario(scenario);
-    // Characters are now embedded when instances are created
-    mappedScenario.characters = [];
-    mappedScenario.character_count = 0;
-    return mappedScenario;
-  });
+  const scenarios = (data || []).map(scenario => mapDatabaseScenario(scenario));
 
   return {
     scenarios,
@@ -101,16 +95,11 @@ export const getScenarioById = async (scenarioId: string): Promise<Scenario | nu
       .eq('id', scenario.creator_id)
       .single();
     
-    // Map the scenario (characters will be embedded when instances are created)
+    // Map the scenario with characters from database
     const mappedScenario = mapDatabaseScenario(scenario);
     
     // Add username from separate query
     mappedScenario.created_by = profile?.username || 'Unknown';
-    
-    // For now, return with empty characters array since we're transitioning
-    // Characters will be embedded when instances are created
-    mappedScenario.characters = [];
-    mappedScenario.character_count = 0;
     
     return mappedScenario;
 
@@ -157,13 +146,7 @@ const enrichScenariosWithUserData = async (scenarios: any[]): Promise<Scenario[]
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user || scenarios.length === 0) {
-    return scenarios.map(s => {
-      const mappedScenario = mapDatabaseScenario(s);
-      // Characters are now embedded when instances are created
-      mappedScenario.characters = [];
-      mappedScenario.character_count = 0;
-      return mappedScenario;
-    });
+    return scenarios.map(s => mapDatabaseScenario(s));
   }
 
   const scenarioIds = scenarios.map(s => s.id);
@@ -195,9 +178,6 @@ const enrichScenariosWithUserData = async (scenarios: any[]): Promise<Scenario[]
 
   return scenarios.map(scenario => {
     const mappedScenario = mapDatabaseScenario(scenario);
-    // Characters are now embedded when instances are created
-    mappedScenario.characters = [];
-    mappedScenario.character_count = 0;
     
     // Add username from profiles
     mappedScenario.created_by = profileMap.get(scenario.creator_id) || 'Unknown';

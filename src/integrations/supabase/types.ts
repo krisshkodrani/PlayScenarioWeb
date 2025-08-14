@@ -400,6 +400,7 @@ export type Database = {
           blocked_by: string | null
           blocked_reason: string | null
           bookmark_count: number
+          characters: Json | null
           created_at: string
           creator_id: string
           description: string
@@ -422,6 +423,7 @@ export type Database = {
           blocked_by?: string | null
           blocked_reason?: string | null
           bookmark_count?: number
+          characters?: Json | null
           created_at?: string
           creator_id: string
           description: string
@@ -444,6 +446,7 @@ export type Database = {
           blocked_by?: string | null
           blocked_reason?: string | null
           bookmark_count?: number
+          characters?: Json | null
           created_at?: string
           creator_id?: string
           description?: string

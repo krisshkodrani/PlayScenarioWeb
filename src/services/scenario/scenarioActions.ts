@@ -41,7 +41,8 @@ export const createScenario = async (scenarioData: ScenarioData): Promise<Scenar
         max_turns: scenarioData.max_turns,
         scenario_opening_message: scenarioData.scenario_opening_message,
         is_public: scenarioData.is_public,
-        creator_id: user.id
+        creator_id: user.id,
+        characters: [...aiCharacters, ...(playerCharacter ? [playerCharacter] : [])] as any
       })
       .select()
       .single();
@@ -53,8 +54,6 @@ export const createScenario = async (scenarioData: ScenarioData): Promise<Scenar
 
     // Return mapped scenario with embedded characters
     const mappedScenario = mapDatabaseScenario(scenario);
-    mappedScenario.characters = [...aiCharacters, ...(playerCharacter ? [playerCharacter] : [])];
-    mappedScenario.character_count = mappedScenario.characters.length;
     
     return mappedScenario;
 
@@ -69,30 +68,8 @@ export const updateScenario = async (scenarioId: string, updates: Partial<Scenar
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    // Update the scenario
-    const { data: scenario, error } = await supabase
-      .from('scenarios')
-      .update({
-        title: updates.title,
-        description: updates.description,
-        objectives: updates.objectives,
-        win_conditions: updates.win_conditions,
-        lose_conditions: updates.lose_conditions,
-        max_turns: updates.max_turns,
-        scenario_opening_message: updates.scenario_opening_message,
-        is_public: updates.is_public
-      })
-      .eq('id', scenarioId)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error updating scenario:', error);
-      throw error;
-    }
-
     // Process characters if provided
-    let characters = [];
+    let charactersData = [];
     if (updates.characters) {
       const aiCharacters = [];
       let playerCharacter = null;
@@ -113,15 +90,40 @@ export const updateScenario = async (scenarioId: string, updates: Partial<Scenar
         }
       }
       
-      characters = [...aiCharacters, ...(playerCharacter ? [playerCharacter] : [])];
+      charactersData = [...aiCharacters, ...(playerCharacter ? [playerCharacter] : [])];
     }
 
-    // Return mapped scenario with characters
-    const mappedScenario = mapDatabaseScenario(scenario);
+    // Update the scenario
+    const updateData: any = {
+      title: updates.title,
+      description: updates.description,
+      objectives: updates.objectives,
+      win_conditions: updates.win_conditions,
+      lose_conditions: updates.lose_conditions,
+      max_turns: updates.max_turns,
+      scenario_opening_message: updates.scenario_opening_message,
+      is_public: updates.is_public
+    };
+
+    // Only update characters if they were provided
     if (updates.characters) {
-      mappedScenario.characters = characters;
-      mappedScenario.character_count = characters.length;
+      updateData.characters = charactersData as any;
     }
+
+    const { data: scenario, error } = await supabase
+      .from('scenarios')
+      .update(updateData)
+      .eq('id', scenarioId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating scenario:', error);
+      throw error;
+    }
+
+    // Return mapped scenario with characters from database
+    const mappedScenario = mapDatabaseScenario(scenario);
     
     return mappedScenario;
 
@@ -179,9 +181,6 @@ export const duplicateScenario = async (scenarioId: string): Promise<Scenario | 
     }
 
     // Create new scenario with embedded characters
-    const aiCharacters = originalScenario.characters.filter(char => char.role !== 'Player');
-    const playerCharacter = originalScenario.characters.find(char => char.role === 'Player');
-
     const { data: newScenario, error: createError } = await supabase
       .from('scenarios')
       .insert({
@@ -193,7 +192,8 @@ export const duplicateScenario = async (scenarioId: string): Promise<Scenario | 
         max_turns: originalScenario.max_turns,
         scenario_opening_message: originalScenario.scenario_opening_message || '',
         is_public: false, // Always create copies as private
-        creator_id: user.id
+        creator_id: user.id,
+        characters: originalScenario.characters as any
       })
       .select()
       .single();
@@ -205,8 +205,6 @@ export const duplicateScenario = async (scenarioId: string): Promise<Scenario | 
 
     // Return the duplicated scenario with characters
     const mappedScenario = mapDatabaseScenario(newScenario);
-    mappedScenario.characters = originalScenario.characters;
-    mappedScenario.character_count = originalScenario.characters.length;
     
     return mappedScenario;
 

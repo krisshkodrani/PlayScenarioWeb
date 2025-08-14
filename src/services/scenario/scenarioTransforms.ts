@@ -9,6 +9,17 @@ export const mapDatabaseScenario = (dbScenario: any): Scenario => {
   // Filter out metadata objects from objectives
   const actualObjectives = objectives.filter((obj: any) => !obj._difficulty && !obj._show_difficulty);
 
+  // Parse characters from JSONB if present
+  const dbCharacters = Array.isArray(dbScenario.characters) ? dbScenario.characters : [];
+  const characters = dbCharacters.map((char: any, index: number) => ({
+    id: char.id || `char-${index}`,
+    name: char.name || '',
+    role: char.role || 'Character',
+    personality: char.personality || '',
+    expertise_keywords: char.expertise_keywords || [],
+    avatar_color: char.avatar_color || `bg-blue-500`
+  }));
+
   return {
     id: dbScenario.id,
     title: dbScenario.title,
@@ -18,8 +29,8 @@ export const mapDatabaseScenario = (dbScenario: any): Scenario => {
       (difficultyMeta._difficulty.charAt(0).toUpperCase() + difficultyMeta._difficulty.slice(1)) as 'Beginner' | 'Intermediate' | 'Advanced' :
       'Beginner',
     estimated_duration: 30, // Default duration
-    character_count: 0, // Will be set when enriched with characters
-    characters: [],
+    character_count: characters.length,
+    characters: characters,
     objectives: actualObjectives.map((obj: any, index: number) => ({
       id: obj.id?.toString() || index.toString(),
       title: obj.description || `Objective ${index + 1}`,
@@ -33,6 +44,9 @@ export const mapDatabaseScenario = (dbScenario: any): Scenario => {
     tags: [],
     is_public: dbScenario.is_public,
     scenario_opening_message: dbScenario.scenario_opening_message,
+    win_conditions: dbScenario.win_conditions,
+    lose_conditions: dbScenario.lose_conditions,
+    max_turns: dbScenario.max_turns,
     // Add difficulty settings as additional properties
     ...(difficultyMeta && {
       difficulty: difficultyMeta._difficulty?.charAt(0).toUpperCase() + difficultyMeta._difficulty?.slice(1),
