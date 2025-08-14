@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import CharacterCreateForm from './CharacterCreateForm';
 import CharacterEditForm from './CharacterEditForm';
 
-const CharacterCreationForm = () => {
+const CharacterCreationForm: React.FC = () => {
   const [searchParams] = useSearchParams();
   const editCharacterId = searchParams.get('edit');
   const duplicateCharacterId = searchParams.get('duplicate');
