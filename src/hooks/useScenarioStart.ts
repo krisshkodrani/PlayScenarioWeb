@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Scenario } from '@/types/scenario';
 import { useScenarioCosts } from './useScenarioCosts';
+import config from '@/lib/config';
 
 export interface ScenarioStartHook {
   startScenario: (scenario: Scenario) => Promise<string | null>;
@@ -96,6 +97,45 @@ export const useScenarioStart = (): ScenarioStartHook => {
         });
         
         throw new Error('Failed to create scenario instance');
+      }
+
+      console.log('Scenario instance created:', instance.id);
+
+      // Initialize scenario with proper initial messages via backend
+      try {
+        console.log('Calling scenario-start endpoint for initialization...');
+        const initResponse = await fetch(`${config.api.baseUrl}/v1/chat/scenario-start`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            scenario_instance_id: instance.id
+          })
+        });
+
+        if (!initResponse.ok) {
+          const errorText = await initResponse.text();
+          throw new Error(`Scenario initialization failed: ${errorText}`);
+        }
+
+        const initResult = await initResponse.json();
+        console.log('Scenario initialization successful:', initResult);
+
+        if (!initResult.success) {
+          throw new Error('Scenario initialization failed: ' + JSON.stringify(initResult));
+        }
+      } catch (initError) {
+        console.error('Scenario initialization failed:', initError);
+        
+        // Try to refund credits if initialization fails
+        await supabase.rpc('add_credits', {
+          user_id: user.id,
+          amount: creditsNeeded,
+          description: `Refund for failed scenario initialization: ${scenario.title}`
+        });
+        
+        throw new Error(`Failed to initialize scenario: ${initError instanceof Error ? initError.message : 'Unknown error'}`);
       }
 
       toast({

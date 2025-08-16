@@ -151,7 +151,7 @@ export const useMessageHandling = (
       const optimisticId = `user-${Date.now()}`;
 
       try {
-        // Optimistically render the user's message immediately
+        // Show user message optimistically for immediate feedback
         const optimisticUserMessage: Message = {
           id: optimisticId,
           sender_name: (user as any)?.user_metadata?.username || 'You',
@@ -163,7 +163,7 @@ export const useMessageHandling = (
         };
         setMessages(prev => [...prev, optimisticUserMessage]);
 
-        // Set typing state immediately and log that we are waiting for the realtime message
+        // Set typing state for AI responses
         setIsTyping(true);
         const expectedTurn = (instance?.current_turn || 0) + 1;
         pendingTurnRef.current = expectedTurn;
@@ -220,7 +220,7 @@ export const useMessageHandling = (
         logger.info('Chat:SendMessage', 'API request successful. Waiting for realtime message.', { instanceId, expectedTurn });
 
       } catch (err) {
-        // Remove optimistic message and hide typing on failure
+        // Remove optimistic user message and hide typing on failure
         setMessages(prev => prev.filter(m => m.id !== optimisticId));
         setIsTyping(false);
         pendingTurnRef.current = null; // Clear pending turn on error
@@ -278,34 +278,28 @@ export const useMessageHandling = (
       pendingTurnRef.current = null;
     }
 
-    // Then update messages with perfect ordering
+    // Add message with proper ordering and smart optimistic replacement
     setMessages(prev => {
-      // Replace optimistic user message with server one if applicable
+      // Replace optimistic user message with server version if applicable
       if (newMessage.message_type === 'user_message') {
-        const reverseIndex = [...prev].reverse().findIndex(m =>
+        const optimisticIndex = prev.findIndex(m =>
           m.message_type === 'user_message' &&
           typeof m.id === 'string' && m.id.startsWith('user-') &&
           m.message === newMessage.message
         );
-        if (reverseIndex !== -1) {
-          const idx = prev.length - 1 - reverseIndex;
-          const optimistic = prev[idx];
-          const next = [...prev.slice(0, idx), ...prev.slice(idx + 1)];
-          if (!next.find(msg => msg.id === newMessage.id)) {
-            // Preserve optimistic.mode or infer if server did not send it
-            const mergedUserMessage: Message = {
-              ...newMessage,
-              mode: newMessage.mode ?? optimistic.mode ?? inferModeFromContent(newMessage.message)
-            };
-            logger.debug('Chat', 'Replacing optimistic user message with server message', { 
-              optimisticReplacedIndex: idx, 
-              mode: mergedUserMessage.mode,
-              sequence: mergedUserMessage.sequence_number
-            });
-            // Re-sort after replacement to ensure perfect ordering
-            return sortMessages([...next, mergedUserMessage]);
-          }
-          return sortMessages(next);
+        if (optimisticIndex !== -1) {
+          logger.debug('Chat', 'Replacing optimistic user message with server message', { 
+            optimisticId: prev[optimisticIndex].id,
+            serverId: newMessage.id,
+            mode: prev[optimisticIndex].mode
+          });
+          // Replace optimistic with server message, preserving mode
+          const updated = [...prev];
+          updated[optimisticIndex] = { 
+            ...newMessage, 
+            mode: newMessage.mode ?? prev[optimisticIndex].mode ?? inferModeFromContent(newMessage.message) 
+          };
+          return sortMessages(updated);
         }
       }
 
@@ -332,7 +326,7 @@ export const useMessageHandling = (
         sequence: newMessage.sequence_number
       });
 
-      // For server user messages without mode, infer it to keep styling consistent
+      // For user messages without mode, infer it to keep styling consistent
       const safeMessage: Message =
         newMessage.message_type === 'user_message'
           ? { ...newMessage, mode: newMessage.mode ?? inferModeFromContent(newMessage.message) }
