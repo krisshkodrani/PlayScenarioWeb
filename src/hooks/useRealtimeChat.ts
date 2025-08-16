@@ -33,11 +33,15 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
 
   // Enhanced send message with instance update
   const sendMessage = useCallback(async (messageContent: string, mode: 'chat' | 'action' = 'chat') => {
-    const result = await handleSendMessage(messageContent, mode);
-    if (result) {
-      updateInstance({ current_turn: result.current_turn });
-    }
-  }, [handleSendMessage, updateInstance]);
+    // The handleSendMessage function will now post the message to the backend
+    // but we will no longer process the response here. The new message will
+    // arrive via the realtime subscription. The backend should only return a 
+    // success status.
+    await handleSendMessage(messageContent, mode);
+    // The result processing is removed. The `updateInstance` call is no longer
+    // needed here because the `useRealtimeSubscription` will receive the
+    // instance update from Supabase.
+  }, [handleSendMessage]);
 
   // Stable function references to prevent infinite re-renders
   const stableFetchInstance = useRef(fetchInstance);
@@ -53,8 +57,9 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
 
   // Single initialization effect with timeout and comprehensive error handling
   useEffect(() => {
+    const abortController = new AbortController();
+    const { signal } = abortController;
     let timeoutId: NodeJS.Timeout;
-    let isCancelled = false;
 
     const initializeChat = async () => {
       console.log('🔄 useRealtimeChat: Starting initialization', { 
@@ -78,7 +83,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
       try {
         // Set a timeout to prevent infinite loading
         timeoutId = setTimeout(() => {
-          if (!isCancelled) {
+          if (!signal.aborted) {
             console.log('⏰ useRealtimeChat: Initialization timed out');
             logger.error('Chat', 'Chat initialization timed out');
             setError('Chat initialization timed out. Please refresh and try again.');
@@ -101,7 +106,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
           })
         ]);
         
-        if (isCancelled) {
+        if (signal.aborted) {
           console.log('🛑 useRealtimeChat: Cancelled after fetch');
           return;
         }
@@ -113,7 +118,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
         const currentInstance = fetchedInstance ?? instance;
         const currentScenario = fetchedScenario ?? scenario;
 
-        if (isCancelled) {
+        if (signal.aborted) {
           console.log('🛑 useRealtimeChat: Cancelled during validation');
           return;
         }
@@ -132,7 +137,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
         // Step 3: Fetch existing messages first
         console.log('💬 useRealtimeChat: Fetching existing messages');
         const messageCount = await stableFetchMessages.current();
-        if (isCancelled) {
+        if (signal.aborted) {
           console.log('🛑 useRealtimeChat: Cancelled after fetchMessages');
           return;
         }
@@ -148,7 +153,8 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
             // First, call the initialization endpoint to create the narrator message
             const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/instances/${instanceId}/initialize`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' }
+              headers: { 'Content-Type': 'application/json' },
+              signal
             });
             
             if (response.ok) {
@@ -176,6 +182,10 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
               await stableInitializeScenario.current();
             }
           } catch (err) {
+            if (err.name === 'AbortError') {
+              console.log('➡️ useRealtimeChat: Initialization fetch aborted as expected.');
+              return;
+            }
             console.error('❌ useRealtimeChat: Error calling initialization endpoint:', err);
             logger.error('Chat', 'Error calling initialization endpoint', err, { instanceId });
             
@@ -187,7 +197,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
           await stableInitializeScenario.current();
         }
         
-        if (isCancelled) {
+        if (signal.aborted) {
           console.log('🛑 useRealtimeChat: Cancelled after initialization');
           return;
         }
@@ -201,7 +211,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
         setLoading(false);
         
       } catch (err) {
-        if (isCancelled) {
+        if (signal.aborted) {
           console.log('🛑 useRealtimeChat: Cancelled during error handling');
           return;
         }
@@ -219,7 +229,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
 
     return () => {
       console.log('🧹 useRealtimeChat: Cleanup');
-      isCancelled = true;
+      abortController.abort();
       if (timeoutId) {
         clearTimeout(timeoutId);
       }

@@ -142,11 +142,13 @@ export const useMessageHandling = (
 
   // Send a message
   const sendMessage = useCallback(
-    async (messageContent: string, mode: 'chat' | 'action' = 'chat') => {
-      if (!instance || !user) return;
+    async (messageContent: string, mode: 'chat' | 'action' = 'chat'): Promise<void> => {
+      if (!instance || !user) {
+        logger.warn('Chat:SendMessage', 'Send message aborted, no instance or user.', { hasInstance: !!instance, hasUser: !!user });
+        return;
+      }
 
       const optimisticId = `user-${Date.now()}`;
-      let typingHandledSynchronously = false;
 
       try {
         // Optimistically render the user's message immediately
@@ -161,13 +163,17 @@ export const useMessageHandling = (
         };
         setMessages(prev => [...prev, optimisticUserMessage]);
 
+        // Set typing state immediately and log that we are waiting for the realtime message
         setIsTyping(true);
+        const expectedTurn = (instance?.current_turn || 0) + 1;
+        pendingTurnRef.current = expectedTurn;
 
-        logger.debug('Chat', 'Sending message to backend', {
+        logger.info('Chat:SendMessage', 'Sending message to backend API.', {
           instanceId,
           messageLength: messageContent.length,
           currentTurn: instance.current_turn,
-          apiUrl: config.api.baseUrl
+          expectedTurn,
+          mode
         });
 
         // Build request payload with recent history to reduce backend DB lookups
@@ -201,7 +207,7 @@ export const useMessageHandling = (
 
         if (!res.ok) {
           const errorText = await res.text();
-          logger.error('Chat', 'API request failed', null, { 
+          logger.error('Chat:SendMessage', 'API request failed', null, { 
             status: res.status,
             statusText: res.statusText,
             errorText
@@ -209,152 +215,26 @@ export const useMessageHandling = (
           throw new Error(`API request failed: ${res.status} ${res.statusText}`);
         }
 
-        // Parse response to retrieve updated turn number and character data
-        const data = await res.json();
+        // NEW: On success, we no longer process the response body.
+        // We simply log success and wait for the realtime subscription to deliver the new messages.
+        logger.info('Chat:SendMessage', 'API request successful. Waiting for realtime message.', { instanceId, expectedTurn });
 
-        logger.info('Chat', 'Message sent successfully', {
-          instanceId,
-          newTurn: data.turn_number || data.current_turn,
-          characterResponseCount: data.character_responses?.length || 0
-        });
-
-        // Enhanced logging for debugging
-        console.log('📦 Full API Response:', {
-          turn_number: data.turn_number,
-          character_responses: data.character_responses?.length || 0,
-          narrator_message: !!data.narrator_message,
-          scenario_completed: data.scenario_completed
-        });
-
-        // Legacy: Handle narrator_message from API response (now primarily comes via real-time subscription)
-        if (data.narrator_message) {
-          console.log('📖 Backend returned narrator_message (legacy):', data.narrator_message);
-          logger.info('Chat', 'Legacy narrator message received from API', { 
-            message: data.narrator_message,
-            turn_number: instance.current_turn
-          });
-          
-          const narrationMsg: Message = {
-            id: `narration-legacy-${Date.now()}`,
-            sender_name: 'Narrator',
-            message: data.narrator_message,
-            turn_number: instance.current_turn,
-            message_type: 'narration',
-            timestamp: new Date().toISOString()
-          };
-          setMessages(prev => {
-            // Avoid duplicate narration for same turn and content
-            const exists = prev.some(m => 
-              m.message_type === 'narration' && 
-              m.message === narrationMsg.message
-            );
-            if (exists) {
-              console.log('🔁 Duplicate narration ignored (legacy)');
-              return prev;
-            }
-            console.log('✅ Added legacy narration message');
-            return [...prev, narrationMsg];
-          });
-        } else {
-          console.log('📡 No narrator_message from API - expecting via real-time subscription');
-        }
-
-        // Determine the expected turn for the AI response
-        const expectedTurn = data.turn_number || (instance?.current_turn || 0) + 1;
-
-        // CRITICAL FIX: Handle character_responses array from EnhancedChatCompletionResponse
-        if (data.character_responses && Array.isArray(data.character_responses) && data.character_responses.length > 0) {
-          console.log(`🎭 Processing ${data.character_responses.length} character responses`);
-          
-          const characterMessages: Message[] = [];
-          
-          for (let i = 0; i < data.character_responses.length; i++) {
-            const charResponse = data.character_responses[i];
-            
-            // Log each character response for debugging
-            console.log(`🎭 Character Response ${i + 1}:`, {
-              character_name: charResponse.character_name,
-              message_length: charResponse.message?.length || 0,
-              strategy: charResponse.strategy_used
-            });
-            
-            if (charResponse.character_name && charResponse.message) {
-              const enhancedMessage: Message = {
-                id: `ai-${Date.now()}-${i}`,
-                sender_name: charResponse.character_name,
-                message: charResponse.message,
-                turn_number: expectedTurn,
-                message_type: 'ai_response',
-                timestamp: new Date(Date.now() + i * 100).toISOString(), // Slight offset for ordering
-                mode,
-                character_name: charResponse.character_name,
-                response_type: charResponse.strategy_used,
-                internal_state: charResponse.response_metadata?.internal_state,
-                suggested_follow_ups: charResponse.response_metadata?.suggested_follow_ups,
-                metrics: charResponse.response_metadata?.metrics,
-                flags: charResponse.response_metadata?.flags
-              };
-              
-              // Create content hash for duplicate prevention (character + message content + turn)
-              const contentHash = `${charResponse.character_name}:${expectedTurn}:${charResponse.message.substring(0, 100)}`;
-              apiCreatedMessageIds.current.add(contentHash);
-              console.log(`📝 Tracking API-created message hash:`, contentHash.substring(0, 50) + '...');
-              
-              characterMessages.push(enhancedMessage);
-            } else {
-              console.warn(`⚠️ Invalid character response ${i + 1}:`, charResponse);
-            }
-          }
-          
-          if (characterMessages.length > 0) {
-            // Add all character messages and hide typing
-            setMessages(prev => {
-              const newMessages = characterMessages.filter(msg => 
-                !prev.find(existing => existing.id === msg.id)
-              );
-              if (newMessages.length > 0) {
-                console.log(`✅ Added ${newMessages.length} character responses`);
-                return sortMessages([...prev, ...newMessages]);
-              }
-              return prev;
-            });
-            setIsTyping(false);
-            typingHandledSynchronously = true;
-          } else {
-            console.warn('⚠️ No valid character responses found in array');
-            // Wait for realtime messages as fallback
-            pendingTurnRef.current = expectedTurn;
-            typingHandledSynchronously = true;
-          }
-        } else {
-          console.log('📡 No character_responses in API response - waiting for realtime messages');
-          // No content returned; wait for realtime AI message to arrive
-          pendingTurnRef.current = expectedTurn;
-          typingHandledSynchronously = true; // prevent finally from hiding typing too early
-        }
-
-        return { current_turn: expectedTurn };
       } catch (err) {
-        // Remove optimistic message and hide typing with sequential state updates
+        // Remove optimistic message and hide typing on failure
         setMessages(prev => prev.filter(m => m.id !== optimisticId));
         setIsTyping(false);
-        typingHandledSynchronously = true;
+        pendingTurnRef.current = null; // Clear pending turn on error
 
-        logger.error('Chat', 'Failed to send message', err, { instanceId });
+        logger.error('Chat:SendMessage', 'Failed to send message', err, { instanceId });
         toast({
           title: 'Error',
           description: 'Failed to send message. Please try again.',
           variant: 'destructive'
         });
         throw err;
-      } finally {
-        // Only hide typing here if we didn't already and we're not awaiting an external AI message
-        if (!typingHandledSynchronously && pendingTurnRef.current == null) {
-          setIsTyping(false);
-        }
       }
     },
-    [instance, user, instanceId, toast, sortMessages]
+    [instance, user, instanceId, toast, sortMessages, messages]
   );
 
   // Function to check if a realtime message is a duplicate of an API-created message
