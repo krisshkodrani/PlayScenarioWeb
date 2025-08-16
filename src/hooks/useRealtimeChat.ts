@@ -15,6 +15,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
   const {
     instance,
     scenario,
+    objectivesWithProgress,
     fetchInstance,
     fetchScenario,
     updateInstance
@@ -27,7 +28,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
     initializeScenario,
     sendMessage: handleSendMessage,
     addMessage
-  } = useMessageHandling(instanceId, instance, scenario);
+  } = useMessageHandling(instanceId, instance, scenario, fetchInstance);
 
   useRealtimeSubscription(instanceId, addMessage, updateInstance);
 
@@ -240,6 +241,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
     messages,
     instance,
     scenario,
+    objectivesWithProgress,
     loading,
     error,
     isTyping,

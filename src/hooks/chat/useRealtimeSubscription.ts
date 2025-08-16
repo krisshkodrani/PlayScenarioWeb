@@ -176,11 +176,36 @@ export const useRealtimeSubscription = (
         },
         (payload) => {
           if (onInstanceUpdate && payload.new) {
+            const updates = payload.new as Partial<ScenarioInstance>;
+            
+            // Enhanced debugging for objective progress updates
+            const hasObjectiveUpdates = updates.objectives_progress && 
+              Object.keys(updates.objectives_progress).length > 0;
+            
+            console.log('🎯 Instance update received:', {
+              instanceId,
+              hasObjectiveUpdates,
+              currentTurn: updates.current_turn,
+              objectiveKeys: hasObjectiveUpdates ? Object.keys(updates.objectives_progress!) : [],
+              updateFields: Object.keys(updates)
+            });
+            
             logger.debug('Chat', 'Instance update received', { 
               instanceId,
-              updates: payload.new 
+              updates: updates,
+              hasObjectiveUpdates,
+              objectiveProgressKeys: hasObjectiveUpdates ? Object.keys(updates.objectives_progress!) : []
             });
-            onInstanceUpdate(payload.new as Partial<ScenarioInstance>);
+            
+            // Log detailed objective progress if present
+            if (hasObjectiveUpdates) {
+              console.log('📊 Objective progress details:');
+              Object.entries(updates.objectives_progress!).forEach(([key, progress]) => {
+                console.log(`  ${key}: ${progress.completion_percentage}% (${progress.status}) - Turn ${progress.last_updated_turn}`);
+              });
+            }
+            
+            onInstanceUpdate(updates);
           }
         }
       )

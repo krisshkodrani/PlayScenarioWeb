@@ -22,6 +22,23 @@ interface ObjectiveDrawerProps {
 }
 
 const ObjectiveDrawer: React.FC<ObjectiveDrawerProps> = ({ isOpen, onClose, objectives, scenarioTitle, currentTurn }) => {
+  // Debug logging for objective updates
+  React.useEffect(() => {
+    console.log('🎯 ObjectiveDrawer: Props updated', {
+      isOpen,
+      objectivesCount: objectives.length,
+      scenarioTitle,
+      currentTurn,
+      objectives: objectives.map(obj => ({
+        id: obj.id,
+        title: obj.title,
+        completion_percentage: obj.completion_percentage,
+        status: obj.status,
+        progress_notes: obj.progress_notes?.substring(0, 50) + '...'
+      }))
+    });
+  }, [isOpen, objectives, scenarioTitle, currentTurn]);
+  
   return (
     <>
       {/* Overlay Background */}

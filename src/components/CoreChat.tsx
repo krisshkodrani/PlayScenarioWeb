@@ -54,6 +54,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     messages,
     instance,
     scenario,
+    objectivesWithProgress,
     loading,
     error,
     isTyping,
@@ -178,33 +179,50 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     return out;
   }, [messagesWithOpening]);
 
-  // Transform objectives with progress data - optimized memoization
-  const objectivesWithProgress = React.useMemo(() => {
-    if (!scenario || !instance) return [];
-    
-    const staticObjectives = scenario.objectives || [];
-    const progressData = instance.objectives_progress || {};
-    
-    return staticObjectives.map((objective: Record<string, unknown>, index: number) => {
-      const objectiveKey = `objective_${objective.id || index + 1}`;
-      const progress = progressData[objectiveKey] || {};
-      
-      return {
-        id: objective.id || `obj_${index + 1}`,
-        title: objective.description || objective.title || `Objective ${index + 1}`,
-        description: objective.description || objective.title || '',
-        completion_percentage: progress.completion_percentage || 0,
-        status: progress.status || 'active',
-        priority: objective.priority || 'normal',
-        hints: progress.hints || ['Continue engaging with the scenario to progress'],
-        progress_notes: progress.progress_notes || 'No progress yet'
-      };
-    });
-  }, [scenario, instance]);
+  // objectivesWithProgress is now provided by useRealtimeChat hook
+  // This eliminates duplicate calculations and ensures consistent data flow
 
+  // 🎯 ENHANCED: Force progress re-evaluation when AI messages arrive
+  useEffect(() => {
+    // Check for recent AI/narrator messages that might indicate turn completion
+    const recentAIMessages = messages.filter(msg => 
+      (msg.message_type === 'ai_response' || msg.message_type === 'narration') &&
+      Date.now() - new Date(msg.timestamp).getTime() < 5000 // Within last 5 seconds
+    );
+    
+    if (recentAIMessages.length > 0) {
+      console.log('🎯 CoreChat: Recent AI messages detected - forcing progress check', {
+        recentMessages: recentAIMessages.map(m => ({ 
+          type: m.message_type, 
+          sender: m.sender_name, 
+          turn: m.turn_number 
+        }))
+      });
+      
+      // Add small delay to ensure instance refresh has completed
+      setTimeout(() => {
+        console.log('🎯 CoreChat: Triggering progress re-evaluation after AI messages');
+        // Force React to re-evaluate progress by updating a dummy state
+        setHasObjectiveUpdates(prev => !prev);
+      }, 100);
+    }
+  }, [messages]); // This effect runs whenever messages change
+  
   // Detect objective progress changes and show notifications - fixed dependencies
   useEffect(() => {
-    if (!objectivesWithProgress.length) return;
+    console.log('🎯 CoreChat: objectivesWithProgress changed', {
+      length: objectivesWithProgress.length,
+      objectives: objectivesWithProgress.map(obj => ({
+        id: obj.id,
+        completion_percentage: obj.completion_percentage,
+        status: obj.status
+      }))
+    });
+    
+    if (!objectivesWithProgress.length) {
+      console.log('🎯 CoreChat: No objectives to process');
+      return;
+    }
     
     const newNotifications: typeof progressNotifications = [];
     const currentProgress: Record<string, number> = {};
@@ -216,11 +234,27 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
       
       currentProgress[objKey] = currentPercentage;
       
-      // Detect significant changes (10% or more increase)
+      // Detect ANY progress changes (not just significant ones)
       const change = currentPercentage - previousPercentage;
-      if (change >= 10) {
+      const isFirstProgress = previousPercentage === 0 && currentPercentage > 0;
+      const isSignificantChange = change >= 10;
+      const isAnyChange = change > 0;
+      
+      // Show notifications for any positive change to ensure progress is visible
+      if (isAnyChange) {
+        console.log('🔔 CoreChat: Creating notification for objective progress', {
+          objective: objective.title,
+          change,
+          currentPercentage,
+          previousPercentage,
+          isFirstProgress,
+          isSignificantChange,
+          isAnyChange,
+          objectiveStatus: objective.status
+        });
+        
         newNotifications.push({
-          id: `${objKey}-${Date.now()}`,
+          id: `${objKey}-${Date.now()}-${Math.random()}`, // Add randomness to prevent ID collisions
           objective: objective.title,
           change,
           newPercentage: currentPercentage,
@@ -236,9 +270,21 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     );
     
     if (progressChanged) {
+      console.log('🎯 CoreChat: Progress changed detected', {
+        currentProgress,
+        previousProgress,
+        changes: Object.keys(currentProgress).map(key => ({
+          key,
+          current: currentProgress[key],
+          previous: previousProgress[key],
+          change: currentProgress[key] - (previousProgress[key] || 0)
+        }))
+      });
+      
       setPreviousProgress(currentProgress);
       
       if (newNotifications.length > 0) {
+        console.log('🔔 CoreChat: Creating progress notifications', newNotifications);
         setProgressNotifications(prev => [...prev, ...newNotifications]);
         setHasObjectiveUpdates(true);
         
@@ -250,7 +296,11 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
         });
         
         console.log('🎯 Objective progress detected:', newNotifications);
+      } else {
+        console.log('🎯 CoreChat: Progress changed but no significant changes for notifications');
       }
+    } else {
+      console.log('🎯 CoreChat: No progress changes detected');
     }
   }, [objectivesWithProgress, previousProgress]);
 

@@ -17,7 +17,8 @@ const inferModeFromContent = (text?: string): 'chat' | 'action' => {
 export const useMessageHandling = (
   instanceId: string,
   instance: ScenarioInstance | null,
-  scenario: Scenario | null
+  scenario: Scenario | null,
+  refreshInstance?: () => Promise<void>
 ) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -276,6 +277,26 @@ export const useMessageHandling = (
       logger.debug('Chat', 'Ending typing for non-user message');
       setIsTyping(false);
       pendingTurnRef.current = null;
+      
+      // 🎯 TRIGGER INSTANCE REFRESH FOR OBJECTIVE PROGRESS UPDATES
+      // When we receive narrator messages (which indicate turn completion),
+      // refresh the instance to get updated objective progress
+      if (newMessage.message_type === 'narration' && refreshInstance) {
+        console.log('🎯 Narrator message received - refreshing instance for objective updates');
+        logger.info('Chat', 'Triggering instance refresh for objective progress', {
+          messageId: newMessage.id,
+          messageType: newMessage.message_type,
+          turnNumber: newMessage.turn_number
+        });
+        
+        // Refresh instance data after a brief delay to ensure backend updates are complete
+        setTimeout(() => {
+          refreshInstance().catch(err => {
+            console.error('❌ Failed to refresh instance after narrator message:', err);
+            logger.error('Chat', 'Instance refresh failed after narrator message', err);
+          });
+        }, 500); // 500ms delay to ensure backend database updates are committed
+      }
     }
 
     // Add message with proper ordering and smart optimistic replacement
@@ -335,7 +356,7 @@ export const useMessageHandling = (
       // Add and re-sort for perfect ordering
       return sortMessages([...prev, safeMessage]);
     });
-  }, [isTyping, sortMessages, isApiDuplicate]);
+  }, [isTyping, sortMessages, isApiDuplicate, refreshInstance]);
 
   // Clear API message tracking when instance changes
   useEffect(() => {

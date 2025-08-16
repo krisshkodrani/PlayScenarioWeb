@@ -105,19 +105,57 @@ export const useScenarioData = (instanceId: string, scenarioId: string) => {
   }, [scenarioId]);
 
   const updateInstance = useCallback((updates: Partial<ScenarioInstance>) => {
-    setInstance(prev => prev ? { ...prev, ...updates } : null);
+    console.log('🔄 updateInstance called:', {
+      updates,
+      hasObjectiveUpdates: !!updates.objectives_progress,
+      objectiveKeys: updates.objectives_progress ? Object.keys(updates.objectives_progress) : [],
+      currentTurn: updates.current_turn
+    });
+    
+    setInstance(prev => {
+      const newInstance = prev ? { ...prev, ...updates } : null;
+      console.log('🔄 Instance state updated:', {
+        prevObjectives: prev?.objectives_progress ? Object.keys(prev.objectives_progress) : [],
+        newObjectives: newInstance?.objectives_progress ? Object.keys(newInstance.objectives_progress) : [],
+        newCurrentTurn: newInstance?.current_turn
+      });
+      return newInstance;
+    });
   }, []);
 
   // Merge scenario objectives with instance progress
   const objectivesWithProgress = useMemo(() => {
-    if (!scenario || !instance) return [];
+    if (!scenario || !instance) {
+      console.log('🎯 objectivesWithProgress: Missing data', { 
+        hasScenario: !!scenario, 
+        hasInstance: !!instance 
+      });
+      return [];
+    }
     
     const staticObjectives = scenario.objectives || [];
     const progressData = instance.objectives_progress || {};
     
-    return staticObjectives.map((objective: any, index: number) => {
+    console.log('🎯 objectivesWithProgress: Processing data', {
+      staticObjectivesCount: staticObjectives.length,
+      progressDataKeys: Object.keys(progressData),
+      progressDataLength: Object.keys(progressData).length,
+      instanceCurrentTurn: instance.current_turn,
+      progressData: progressData
+    });
+    
+    const result = staticObjectives.map((objective: any, index: number) => {
       const objectiveKey = `objective_${objective.id || index + 1}`;
       const progress = progressData[objectiveKey] || {};
+      
+      console.log(`🎯 Processing objective ${index}:`, {
+        objectiveKey,
+        objectiveId: objective.id,
+        hasProgress: Object.keys(progress).length > 0,
+        completionPercentage: progress.completion_percentage,
+        status: progress.status,
+        lastScore: progress.last_score
+      });
       
       return {
         id: objective.id || `obj_${index + 1}`,
@@ -130,6 +168,17 @@ export const useScenarioData = (instanceId: string, scenarioId: string) => {
         progress_notes: progress.progress_notes || 'No progress yet'
       };
     });
+    
+    console.log('🎯 objectivesWithProgress: Final result', {
+      resultCount: result.length,
+      results: result.map(r => ({ 
+        id: r.id, 
+        completion_percentage: r.completion_percentage, 
+        status: r.status 
+      }))
+    });
+    
+    return result;
   }, [scenario, instance]);
 
   return {
