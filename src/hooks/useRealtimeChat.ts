@@ -28,7 +28,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
     initializeScenario,
     sendMessage: handleSendMessage,
     addMessage
-  } = useMessageHandling(instanceId, instance, scenario, fetchInstance);
+  } = useMessageHandling(instanceId, instance, scenario, async () => { await fetchInstance(); });
 
   useRealtimeSubscription(instanceId, addMessage, updateInstance);
 

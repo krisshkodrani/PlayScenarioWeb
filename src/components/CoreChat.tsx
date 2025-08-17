@@ -368,20 +368,20 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
       const aiCharacters = Array.isArray(instance.ai_characters) ? instance.ai_characters : [];
       const playerChar = instance.player_character;
       
-      const allCharacters = [
-        ...aiCharacters.map((char: Record<string, unknown>) => ({
-          id: char.id || `ai_${Math.random()}`,
-          name: char.name,
-          role: char.role || 'Character',
-          avatar_color: char.avatar_color || 'bg-blue-600',
-          personality: char.personality
+      const allCharacters: Character[] = [
+        ...aiCharacters.map((char: any) => ({
+          id: String(char.id || `ai_${Math.random()}`),
+          name: String(char.name || 'Character'),
+          role: String(char.role || 'Character'),
+          avatar_color: String(char.avatar_color || 'bg-blue-600'),
+          personality: String(char.personality || 'A mysterious character')
         })),
         ...(playerChar ? [{
-          id: playerChar.id || 'player',
-          name: playerChar.name,
+          id: String(playerChar.id || 'player'),
+          name: String(playerChar.name || 'Player'),
           role: 'Player',
-          avatar_color: playerChar.avatar_color || 'bg-green-600',
-          personality: playerChar.personality
+          avatar_color: String(playerChar.avatar_color || 'bg-green-600'),
+          personality: String(playerChar.personality || 'The player character')
         }] : [])
       ];
       
@@ -640,6 +640,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
           characters={characters}
           getCharacterById={getCharacterById}
           onSuggestionClick={handleSuggestionClick}
+          instanceId={instanceId}
         />
         <div ref={messagesEndRef} />
       </div>

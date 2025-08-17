@@ -201,7 +201,8 @@ export const useRealtimeSubscription = (
             if (hasObjectiveUpdates) {
               console.log('📊 Objective progress details:');
               Object.entries(updates.objectives_progress!).forEach(([key, progress]) => {
-                console.log(`  ${key}: ${progress.completion_percentage}% (${progress.status}) - Turn ${progress.last_updated_turn}`);
+                const progressData = progress as any;
+                console.log(`  ${key}: ${progressData.completion_percentage}% (${progressData.status}) - Turn ${progressData.last_updated_turn}`);
               });
             }
             

@@ -145,7 +145,7 @@ export const useMessageHandling = (
   const sendMessage = useCallback(
     async (messageContent: string, mode: 'chat' | 'action' = 'chat'): Promise<void> => {
       if (!instance || !user) {
-        logger.warn('Chat:SendMessage', 'Send message aborted, no instance or user.', { hasInstance: !!instance, hasUser: !!user });
+        logger.warn('Chat', 'Send message aborted, no instance or user.', { hasInstance: !!instance, hasUser: !!user });
         return;
       }
 
@@ -169,7 +169,7 @@ export const useMessageHandling = (
         const expectedTurn = (instance?.current_turn || 0) + 1;
         pendingTurnRef.current = expectedTurn;
 
-        logger.info('Chat:SendMessage', 'Sending message to backend API.', {
+        logger.info('Chat', 'Sending message to backend API.', {
           instanceId,
           messageLength: messageContent.length,
           currentTurn: instance.current_turn,
@@ -208,7 +208,7 @@ export const useMessageHandling = (
 
         if (!res.ok) {
           const errorText = await res.text();
-          logger.error('Chat:SendMessage', 'API request failed', null, { 
+          logger.error('Chat', 'API request failed', null, { 
             status: res.status,
             statusText: res.statusText,
             errorText
@@ -218,7 +218,7 @@ export const useMessageHandling = (
 
         // NEW: On success, we no longer process the response body.
         // We simply log success and wait for the realtime subscription to deliver the new messages.
-        logger.info('Chat:SendMessage', 'API request successful. Waiting for realtime message.', { instanceId, expectedTurn });
+        logger.info('Chat', 'API request successful. Waiting for realtime message.', { instanceId, expectedTurn });
 
       } catch (err) {
         // Remove optimistic user message and hide typing on failure
@@ -226,7 +226,7 @@ export const useMessageHandling = (
         setIsTyping(false);
         pendingTurnRef.current = null; // Clear pending turn on error
 
-        logger.error('Chat:SendMessage', 'Failed to send message', err, { instanceId });
+        logger.error('Chat', 'Failed to send message', err, { instanceId });
         toast({
           title: 'Error',
           description: 'Failed to send message. Please try again.',
