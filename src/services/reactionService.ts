@@ -6,6 +6,7 @@ export interface MessageReaction {
   message_id: string;
   reaction_type: 'like' | 'dislike';
   feedback_details?: string;
+  message_text?: string;
   created_at: string;
 }
 
@@ -30,6 +31,17 @@ export const reactionService = {
       throw new Error('User must be authenticated to submit reactions');
     }
 
+    // Fetch the message text to store with the reaction
+    const { data: messageData, error: messageError } = await supabase
+      .from('instance_messages')
+      .select('message')
+      .eq('id', messageId)
+      .single();
+
+    if (messageError) {
+      throw new Error(`Failed to fetch message: ${messageError.message}`);
+    }
+
     // Try to upsert the reaction (insert or update if exists)
     const { data, error } = await supabase
       .from('message_reactions')
@@ -38,7 +50,8 @@ export const reactionService = {
           user_id: user.id,
           message_id: messageId,
           reaction_type: reactionType,
-          feedback_details: feedbackDetails || null
+          feedback_details: feedbackDetails || null,
+          message_text: messageData.message
         },
         {
           onConflict: 'user_id,message_id',

@@ -135,6 +135,7 @@ export type Database = {
           message_type: string
           sender_name: string
           sequence_number: number
+          streamed: boolean
           timestamp: string
           turn_number: number
         }
@@ -147,6 +148,7 @@ export type Database = {
           message_type?: string
           sender_name: string
           sequence_number: number
+          streamed?: boolean
           timestamp?: string
           turn_number: number
         }
@@ -159,6 +161,7 @@ export type Database = {
           message_type?: string
           sender_name?: string
           sequence_number?: number
+          streamed?: boolean
           timestamp?: string
           turn_number?: number
         }
@@ -178,6 +181,7 @@ export type Database = {
           feedback_details: string | null
           id: string
           message_id: string
+          message_text: string | null
           reaction_type: string
           user_id: string
         }
@@ -186,6 +190,7 @@ export type Database = {
           feedback_details?: string | null
           id?: string
           message_id: string
+          message_text?: string | null
           reaction_type: string
           user_id: string
         }
@@ -194,6 +199,7 @@ export type Database = {
           feedback_details?: string | null
           id?: string
           message_id?: string
+          message_text?: string | null
           reaction_type?: string
           user_id?: string
         }
@@ -310,6 +316,7 @@ export type Database = {
           ended_at: string | null
           final_score: number | null
           id: string
+          is_initialized: boolean | null
           lose_condition_met: boolean | null
           max_turns: number | null
           objectives_progress: Json
@@ -327,6 +334,7 @@ export type Database = {
           ended_at?: string | null
           final_score?: number | null
           id?: string
+          is_initialized?: boolean | null
           lose_condition_met?: boolean | null
           max_turns?: number | null
           objectives_progress?: Json
@@ -344,6 +352,7 @@ export type Database = {
           ended_at?: string | null
           final_score?: number | null
           id?: string
+          is_initialized?: boolean | null
           lose_condition_met?: boolean | null
           max_turns?: number | null
           objectives_progress?: Json
@@ -564,6 +573,14 @@ export type Database = {
           user_id: string
         }
         Returns: boolean
+      }
+      mark_message_streamed: {
+        Args: { message_id: string }
+        Returns: boolean
+      }
+      mark_messages_streamed: {
+        Args: { message_ids: string[] }
+        Returns: number
       }
       verify_admin_access: {
         Args: Record<PropertyKey, never>
