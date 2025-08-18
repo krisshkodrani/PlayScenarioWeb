@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Wand2, Sparkles, AlertCircle } from 'lucide-react';
 import { ScenarioData } from '@/types/scenario';
+import { CharacterData } from '@/types/character';
 import { useScenarioHelper } from '@/hooks/useScenarioHelper';
 
 interface AIAssistanceModalProps {
@@ -49,9 +50,6 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
           currentScenarioData: {
             title: scenarioData.title,
             description: scenarioData.description,
-            category: scenarioData.category,
-            difficulty: scenarioData.difficulty,
-            estimated_duration: scenarioData.estimated_duration,
             objectives: scenarioData.objectives?.map(obj => ({
               id: obj.id,
               description: obj.description,
@@ -66,14 +64,8 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
               role: char.role || 'Character',
               personality: char.personality,
               expertise_keywords: char.expertise_keywords,
-              background: char.background,
-              appearance: char.appearance,
-              goals: char.goals,
-              fears: char.fears,
-              notable_quotes: char.notable_quotes,
               is_player_character: char.is_player_character
-            })),
-            tags: scenarioData.tags
+            }))
           }
         });
       } else {
@@ -87,9 +79,7 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
       onApplyChanges({
         title: response.title,
         description: response.description,
-        category: response.category,
         difficulty: response.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
-        estimated_duration: response.estimated_duration,
         objectives: response.objectives?.map(obj => ({
           id: obj.id,
           description: obj.description,
@@ -104,14 +94,8 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
           role: char.role,
           personality: char.personality,
           expertise_keywords: char.expertise_keywords,
-          background: char.background,
-          appearance: char.appearance,
-          goals: char.goals,
-          fears: char.fears,
-          notable_quotes: char.notable_quotes,
           is_player_character: char.is_player_character
         })) || [],
-        tags: response.tags,
         is_public: response.is_public
       });
       
