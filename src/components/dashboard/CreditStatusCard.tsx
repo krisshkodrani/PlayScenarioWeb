@@ -30,7 +30,7 @@ const CreditStatusCard: React.FC<CreditStatusCardProps> = ({
   };
 
   return (
-    <Card className="bg-slate-800 border-slate-700 h-[224px] flex flex-col">
+    <Card className="bg-slate-800 border-slate-700 h-full flex flex-col">
       <CardHeader>
         <CardTitle className="text-white flex items-center gap-2">
           <Coins className="w-5 h-5 text-amber-400" />
