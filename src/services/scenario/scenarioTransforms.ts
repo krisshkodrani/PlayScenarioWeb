@@ -28,7 +28,7 @@ export const mapDatabaseScenario = (dbScenario: any): Scenario => {
     difficulty: difficultyMeta?._difficulty ? 
       (difficultyMeta._difficulty.charAt(0).toUpperCase() + difficultyMeta._difficulty.slice(1)) as 'Beginner' | 'Intermediate' | 'Advanced' :
       'Beginner',
-    estimated_duration: 30, // Default duration
+    estimated_duration: dbScenario.max_turns || 30,
     character_count: characters.length,
     characters: characters,
     objectives: actualObjectives.map((obj: any, index: number) => ({

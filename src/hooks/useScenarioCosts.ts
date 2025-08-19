@@ -25,7 +25,7 @@ export const useScenarioCosts = (scenario: Scenario | null): ScenarioCostCalcula
     }
 
     const characterCount = scenario.characters?.length || 1;
-    const estimatedTurns = scenario.estimated_duration || 10;
+    const estimatedTurns = scenario.max_turns || 10;
     
     // Cost formula: turns × characters
     const totalCost = estimatedTurns * characterCount;
