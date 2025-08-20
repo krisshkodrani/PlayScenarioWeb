@@ -91,14 +91,20 @@ const ScenarioPreview: React.FC = () => {
       let isCreator = false;
       
       if (user) {
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('credits')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
+        
+        if (profileError) {
+          console.error('Error fetching user profile:', profileError);
+        }
         
         userCredits = profile?.credits || 0;
         isCreator = rawScenario.creator_id === user.id;
+        
+        console.log('User credits from profile:', userCredits);
       }
 
       setData({
