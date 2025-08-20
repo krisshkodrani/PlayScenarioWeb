@@ -98,6 +98,27 @@ export const getScenarioById = async (scenarioId: string): Promise<Scenario | nu
     // Map the scenario with characters from database
     const mappedScenario = mapDatabaseScenario(scenario);
     
+    // Enrich characters with avatar URLs from characters table
+    if (mappedScenario.characters && mappedScenario.characters.length > 0) {
+      const characterNames = mappedScenario.characters.map(char => char.name);
+      
+      const { data: characterDetails } = await supabase
+        .from('characters')
+        .select('name, avatar_url')
+        .in('name', characterNames);
+      
+      // Create a map of character names to avatar URLs
+      const avatarMap = new Map(
+        characterDetails?.map(char => [char.name, char.avatar_url]) || []
+      );
+      
+      // Update characters with avatar URLs
+      mappedScenario.characters = mappedScenario.characters.map(char => ({
+        ...char,
+        avatar_url: avatarMap.get(char.name) || char.avatar_url
+      }));
+    }
+    
     // Add username from separate query
     mappedScenario.created_by = profile?.username || 'Unknown';
     
