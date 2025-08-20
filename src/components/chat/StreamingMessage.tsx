@@ -1,6 +1,8 @@
-import React from 'react';
-import { Clock, SkipForward } from 'lucide-react';
+import React, { useRef, useLayoutEffect, useState } from 'react';
+import { Clock, SkipForward, Timer, Hash, Zap, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import CharacterAvatar from './CharacterAvatar';
+import EmotionIndicator from './EmotionIndicator';
 
 interface Character {
   id: string;
@@ -45,6 +47,8 @@ interface StreamingMessageProps {
   character?: Character;
   streamedContent: string;
   isStreaming: boolean;
+  isQueued?: boolean;
+  queuePosition?: number;
   onSkipStreaming: () => void;
 }
 
@@ -53,9 +57,26 @@ const StreamingMessage: React.FC<StreamingMessageProps> = ({
   character,
   streamedContent,
   isStreaming,
+  isQueued = false,
+  queuePosition = 0,
   onSkipStreaming
 }) => {
   const messageType = message.message_type;
+  
+  // Pre-sizing logic for consistent bubble dimensions
+  const ghostRef = useRef<HTMLDivElement>(null);
+  const [bubbleHeight, setBubbleHeight] = useState<number | undefined>(undefined);
+  
+  // Get the full content for measurement
+  const fullContent = message.message;
+  
+  // Measure the full content dimensions on mount and content change
+  useLayoutEffect(() => {
+    if (ghostRef.current && (isStreaming || isQueued)) {
+      const height = ghostRef.current.offsetHeight;
+      setBubbleHeight(height);
+    }
+  }, [fullContent, message.mode, character, isStreaming, isQueued]);
 
   // Parse AI message for enhanced data
   const parseAIMessage = (content: string) => {
@@ -82,7 +103,7 @@ const StreamingMessage: React.FC<StreamingMessageProps> = ({
   if (messageType === 'user_message') {
     return (
       <div className="flex justify-end">
-        <div className="bg-cyan-400 text-slate-900 rounded-2xl px-4 py-3 max-w-xs lg:max-w-md xl:max-w-lg shadow-lg shadow-cyan-400/20">
+        <div className="bg-cyan-400 text-slate-900 rounded-2xl px-4 py-3 min-w-[50%] max-w-[70%] shadow-lg shadow-cyan-400/20">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-medium opacity-80">{message.sender_name}</span>
             {message.mode === 'action' && (
@@ -113,73 +134,168 @@ const StreamingMessage: React.FC<StreamingMessageProps> = ({
     );
   }
 
-  // Narration messages
+  // Narration messages - Match MessageBubble styling exactly
   if (messageType === 'narration') {
     return (
-      <div className="flex justify-center group">
-        <div className="bg-amber-400/10 border border-amber-400/30 text-amber-300 rounded-lg px-4 py-3 text-sm italic max-w-lg text-center relative">
-          <div className="flex items-center justify-center gap-2 mb-1">
-            <span className="font-medium">Narrator</span>
+      <div className="w-full group relative">
+        {/* Ghost element for size measurement */}
+        <div 
+          ref={ghostRef}
+          className="absolute opacity-0 pointer-events-none w-full"
+          aria-hidden="true"
+        >
+          <div className="bg-gradient-to-br from-indigo-500/20 to-purple-600/20 border border-indigo-400/30 text-indigo-200 px-6 py-4 rounded-xl mx-auto shadow-lg shadow-indigo-500/10">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-semibold uppercase tracking-wide text-indigo-300">Narrator</span>
+            </div>
+            <p className="text-sm md:text-base whitespace-pre-wrap">{fullContent}</p>
+          </div>
+        </div>
+        
+        {/* Actual streaming bubble */}
+        <div 
+          className="bg-gradient-to-br from-indigo-500/20 to-purple-600/20 border border-indigo-400/30 text-indigo-200 px-6 py-4 rounded-xl mx-auto shadow-lg shadow-indigo-500/10 relative"
+          style={{ minHeight: bubbleHeight }}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-semibold uppercase tracking-wide text-indigo-300">Narrator</span>
+            {isQueued && (
+              <div className="flex items-center gap-1 text-xs text-indigo-400/70">
+                <Timer className="w-3 h-3" />
+                <span>#{queuePosition + 1}</span>
+              </div>
+            )}
             {isStreaming && (
               <>
-                <Clock className="w-3 h-3 animate-spin text-amber-400" />
+                <Clock className="w-3 h-3 animate-spin text-indigo-400" />
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={onSkipStreaming}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-xs p-1 h-auto text-amber-400 hover:text-amber-300"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-xs p-1 h-auto text-indigo-400 hover:text-indigo-300"
                 >
                   <SkipForward className="w-3 h-3" />
                 </Button>
               </>
             )}
           </div>
-          <p className="leading-relaxed">{displayContent}</p>
+          {isQueued ? (
+            <p className="text-sm md:text-base whitespace-pre-wrap text-indigo-400/60">Waiting to stream...</p>
+          ) : (
+            <p className="text-sm md:text-base whitespace-pre-wrap">{displayContent}</p>
+          )}
         </div>
       </div>
     );
   }
 
-  // AI response messages
+  // AI response messages - Match MessageBubble styling exactly
+  const isActionResponse = message.mode === 'action';
+  const parsedFullContent = messageType === 'ai_response' ? parseAIMessage(fullContent) : null;
+  
   return (
-    <div className="flex justify-start group">
-      <div className="flex gap-3 max-w-xs lg:max-w-md xl:max-w-lg">
-        {/* Character avatar */}
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0 ${character?.avatar_color || 'bg-violet-600'}`}>
-          {displayName.charAt(0).toUpperCase()}
+    <div className="w-full relative">
+      {/* Ghost element for size measurement */}
+      <div 
+        ref={ghostRef}
+        className="absolute opacity-0 pointer-events-none w-full"
+        aria-hidden="true"
+      >
+        <div className="flex items-start gap-3 w-[70%]">
+          <CharacterAvatar character={character} characterName={displayName} size="sm" />
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1 ml-1">
+              <p className="text-xs font-medium text-slate-300">{displayName}</p>
+              {message.mode && (
+                <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                  isActionResponse ? 'bg-amber-500/20 text-amber-400' : 'bg-cyan-500/20 text-cyan-400'
+                }`}>
+                  {isActionResponse ? <Zap className="w-2.5 h-2.5" /> : <MessageCircle className="w-2.5 h-2.5" />}
+                </div>
+              )}
+              {(parsedFullContent?.internal_state?.emotion || message.internal_state?.emotion) && (
+                <EmotionIndicator emotion={parsedFullContent?.internal_state?.emotion || message.internal_state?.emotion} size="sm" />
+              )}
+            </div>
+            <div className={`backdrop-blur text-white px-4 py-3 rounded-2xl rounded-bl-sm shadow-lg ${
+              isActionResponse 
+                ? 'bg-gradient-to-br from-amber-600/20 to-orange-600/20 border border-amber-500/30' 
+                : 'bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600'
+            }`}>
+              <p className="text-sm md:text-base whitespace-pre-wrap">{parsedFullContent?.content || fullContent}</p>
+            </div>
+          </div>
         </div>
+      </div>
+      
+      {/* Actual streaming bubble */}
+      <div className="flex items-start gap-3 group w-[70%]">
+        {/* Character Avatar */}
+        <CharacterAvatar character={character} characterName={displayName} size="sm" />
         
-        <div className="bg-slate-700 text-white rounded-2xl px-4 py-3 shadow-lg shadow-violet-400/10 relative">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-medium text-violet-300">{displayName}</span>
+        <div className="flex-1 relative">
+          {/* Character Name and Status Indicators */}
+          <div className="flex items-center gap-2 mb-1 ml-1">
+            <p className="text-xs font-medium text-slate-300">
+              {displayName}
+            </p>
+            {/* Mode indicator for AI responses */}
+            {message.mode && (
+              <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                isActionResponse ? 'bg-amber-500/20 text-amber-400' : 'bg-cyan-500/20 text-cyan-400'
+              }`}>
+                {isActionResponse ? (
+                  <Zap className="w-2.5 h-2.5" />
+                ) : (
+                  <MessageCircle className="w-2.5 h-2.5" />
+                )}
+              </div>
+            )}
+            {/* Streaming/Queue indicators */}
+            {isQueued && (
+              <div className="flex items-center gap-1 text-xs text-slate-400/70">
+                <Timer className="w-3 h-3" />
+                <span>#{queuePosition + 1}</span>
+              </div>
+            )}
             {isStreaming && (
               <>
-                <Clock className="w-3 h-3 animate-spin text-violet-400" />
+                <Clock className="w-3 h-3 animate-spin text-slate-400" />
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={onSkipStreaming}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-xs p-1 h-auto text-violet-400 hover:text-violet-300"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-xs p-1 h-auto text-slate-400 hover:text-slate-300"
                 >
                   <SkipForward className="w-3 h-3" />
                 </Button>
               </>
             )}
+            {(parsedData?.internal_state?.emotion || message.internal_state?.emotion) && !isQueued && (
+              <EmotionIndicator emotion={parsedData?.internal_state?.emotion || message.internal_state?.emotion} size="sm" />
+            )}
           </div>
           
-          {/* Show emotion indicator if available */}
-          {parsedData?.internal_state?.emotion && (
-            <div className="text-xs text-slate-400 mb-2 italic">
-              *{parsedData.internal_state.emotion}*
-            </div>
-          )}
-          
-          <p className="text-sm leading-relaxed">{displayContent}</p>
-          
-          {/* Show cursor while streaming */}
-          {isStreaming && (
-            <span className="inline-block w-2 h-4 bg-violet-400 ml-1 animate-pulse" />
-          )}
+          {/* Message Content */}
+          <div 
+            className={`backdrop-blur text-white px-4 py-3 rounded-2xl rounded-bl-sm shadow-lg ${
+              isActionResponse 
+                ? 'bg-gradient-to-br from-amber-600/20 to-orange-600/20 border border-amber-500/30' 
+                : 'bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600'
+            }`}
+            style={{ minHeight: bubbleHeight ? bubbleHeight - 60 : undefined }} // Subtract header height
+          >
+            {isQueued ? (
+              <p className="text-sm md:text-base whitespace-pre-wrap text-slate-400/60">Waiting to stream...</p>
+            ) : (
+              <p className="text-sm md:text-base whitespace-pre-wrap">{displayContent}</p>
+            )}
+            
+            {/* Show cursor while streaming */}
+            {isStreaming && (
+              <span className="inline-block w-2 h-4 bg-slate-400 ml-1 animate-pulse" />
+            )}
+          </div>
         </div>
       </div>
     </div>

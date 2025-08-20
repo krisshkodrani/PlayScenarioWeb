@@ -151,7 +151,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             )}
           </div>
           
-          <div className={`px-4 py-3 rounded-2xl rounded-br-sm max-w-[80%] md:max-w-[80%] sm:max-w-[90%] shadow-lg ${
+          <div className={`px-4 py-3 rounded-2xl rounded-br-sm min-w-[50%] max-w-[70%] shadow-lg ${
             isActionMessage 
               ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white' 
               : 'bg-gradient-to-br from-cyan-500 to-violet-600 text-white'
@@ -192,7 +192,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const isActionResponse = message.mode === 'action';
   return (
     <div className="w-full">
-      <div className="flex items-start gap-3 group max-w-[80%] md:max-w-[80%] sm:max-w-[90%]">
+      <div className="flex items-start gap-3 group w-[70%]">
         {/* Character Avatar */}
         <CharacterAvatar character={character} characterName={displayName} size="sm" />
         

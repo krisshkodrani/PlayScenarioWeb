@@ -5,6 +5,7 @@ import ChatInput from './chat/ChatInput';
 import MessagesSkeleton from './chat/MessagesSkeleton';
 import ObjectiveDrawer from './chat/ObjectiveDrawer';
 import CharacterDrawer from './chat/CharacterDrawer';
+import StreamingDebugInfo from './chat/StreamingDebugInfo';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useRealtimeChat } from '@/hooks/useRealtimeChat';
@@ -50,6 +51,8 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [isUserNearBottom, setIsUserNearBottom] = useState(true);
   const lastMsgIdRef = useRef<string | null>(null);
+  const [streamingQueueLength, setStreamingQueueLength] = useState(0);
+  const [isAnyStreaming, setIsAnyStreaming] = useState(false);
 
   const {
     messages,
@@ -338,17 +341,22 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
       return;
     }
 
-    // Scroll only when a new message actually appears (avoid reacting to isTyping)
+    // Scroll when new messages appear or streaming state changes
     const last = messagesWithOpening[messagesWithOpening.length - 1];
-    if (last && lastMsgIdRef.current !== last.id) {
+    const messageChanged = last && lastMsgIdRef.current !== last.id;
+    const shouldScrollForStreaming = isAnyStreaming && isUserNearBottom;
+    const shouldScrollForQueue = streamingQueueLength > 0 && isUserNearBottom;
+    
+    if (messageChanged) {
       lastMsgIdRef.current = last.id;
-      if (isUserNearBottom) {
-        requestAnimationFrame(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        });
-      }
     }
-  }, [messagesWithOpening, isUserNearBottom]);
+    
+    if ((messageChanged || shouldScrollForStreaming || shouldScrollForQueue) && isUserNearBottom) {
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      });
+    }
+  }, [messagesWithOpening, isUserNearBottom, isAnyStreaming, streamingQueueLength]);
 
   // Observe container resize to keep view stuck to bottom when near bottom
   useEffect(() => {
@@ -434,6 +442,17 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
   const handleSuggestionClick = (suggestion: string) => {
     setInputValue(suggestion);
   };
+
+  // Handle queue changes for smart scrolling
+  const handleQueueChange = useCallback((queueLength: number, streaming: boolean) => {
+    setStreamingQueueLength(queueLength);
+    setIsAnyStreaming(streaming);
+    
+    // Auto-scroll when new typing indicators appear or streaming starts
+    if (queueLength > 0 || streaming) {
+      scrollToBottom('smooth');
+    }
+  }, [scrollToBottom]);
 
   const toggleObjectiveDrawer = () => {
     setShowObjectiveDrawer(!showObjectiveDrawer);
@@ -636,13 +655,15 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
             internal_state: msg.internal_state,
             suggested_follow_ups: msg.suggested_follow_ups,
             metrics: msg.metrics,
-            flags: msg.flags
+            flags: msg.flags,
+            streamed: msg.streamed
           }))}
           isTyping={isTyping}
           typingCharacter={undefined}
           characters={characters}
           getCharacterById={getCharacterById}
           onSuggestionClick={handleSuggestionClick}
+          onQueueChange={handleQueueChange}
           instanceId={instanceId}
         />
         <div ref={messagesEndRef} />
@@ -673,6 +694,12 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
         isOpen={showCharacterDrawer}
         onClose={() => setShowCharacterDrawer(false)}
         characters={characters}
+      />
+
+      {/* Debug Info for Streaming - Only show in development */}
+      <StreamingDebugInfo 
+        messages={messagesWithOpening}
+        show={DEBUG_CHAT}
       />
     </div>
   );

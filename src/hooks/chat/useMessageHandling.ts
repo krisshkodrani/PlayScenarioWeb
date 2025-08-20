@@ -93,10 +93,25 @@ export const useMessageHandling = (
         return acc;
       }, []) || [];
 
+      // Log streamed status for AI/narrator messages
+      const streamableMessages = deduplicatedData.filter(msg => 
+        msg.message_type === 'ai_response' || msg.message_type === 'narration'
+      );
+      const streamedCount = streamableMessages.filter(msg => msg.streamed === true).length;
+      const unstreamedCount = streamableMessages.filter(msg => msg.streamed !== true).length;
+
       logger.info('Chat', 'Messages fetched successfully', { 
         instanceId, 
         messageCount: deduplicatedData.length,
-        duplicatesRemoved: (data?.length || 0) - deduplicatedData.length
+        duplicatesRemoved: (data?.length || 0) - deduplicatedData.length,
+        streamableMessages: streamableMessages.length,
+        alreadyStreamed: streamedCount,
+        needsStreaming: unstreamedCount,
+        streamedStatus: streamableMessages.map(msg => ({
+          id: msg.id.slice(-8),
+          type: msg.message_type,
+          streamed: msg.streamed
+        }))
       });
 
       // Apply sorting to ensure perfect ordering

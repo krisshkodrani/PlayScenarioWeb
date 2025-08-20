@@ -7,6 +7,7 @@ export interface Message {
   timestamp: string;
   sequence_number?: number; // New field for perfect ordering
   mode?: 'chat' | 'action'; // New field for message mode
+  streamed?: boolean; // Database field to track if message has been streamed
   // Enhanced fields for rich AI responses
   character_name?: string;
   response_type?: string;
