@@ -12,6 +12,7 @@ export interface CharacterData {
   expertise_keywords: string[];
   is_player_character: boolean;
   role?: string; // Add role property
+  avatar_url?: string; // Avatar image URL
 }
 
 export interface ScenarioData {
@@ -40,6 +41,7 @@ export interface Character {
   personality: string;
   expertise_keywords: string[];
   avatar_color: string;
+  avatar_url?: string; // Avatar image URL
 }
 
 export interface Objective {

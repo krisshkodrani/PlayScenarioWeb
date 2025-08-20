@@ -17,7 +17,8 @@ export const mapDatabaseScenario = (dbScenario: any): Scenario => {
     role: char.role || 'Character',
     personality: char.personality || '',
     expertise_keywords: char.expertise_keywords || [],
-    avatar_color: char.avatar_color || `bg-blue-500`
+    avatar_color: char.avatar_color || `bg-blue-500`,
+    avatar_url: char.avatar_url
   }));
 
   return {

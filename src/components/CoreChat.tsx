@@ -19,6 +19,7 @@ interface Character {
   role: string;
   avatar_color: string;
   personality: string;
+  avatar_url?: string; // Avatar image URL
 }
 
 interface CoreChatProps {
@@ -374,14 +375,16 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
           name: String(char.name || 'Character'),
           role: String(char.role || 'Character'),
           avatar_color: String(char.avatar_color || 'bg-blue-600'),
-          personality: String(char.personality || 'A mysterious character')
+          personality: String(char.personality || 'A mysterious character'),
+          avatar_url: char.avatar_url
         })),
         ...(playerChar ? [{
           id: String(playerChar.id || 'player'),
           name: String(playerChar.name || 'Player'),
           role: 'Player',
           avatar_color: String(playerChar.avatar_color || 'bg-green-600'),
-          personality: String(playerChar.personality || 'The player character')
+          personality: String(playerChar.personality || 'The player character'),
+          avatar_url: playerChar.avatar_url
         }] : [])
       ];
       
