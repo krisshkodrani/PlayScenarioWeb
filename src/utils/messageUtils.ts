@@ -77,7 +77,7 @@ export const shouldStreamMessage = async (message: {
   message_type: string; 
   streamed?: boolean; 
   id?: string;
-}): Promise<boolean> => {
+}, streamedCache?: Map<string, boolean>): Promise<boolean> => {
   // Only stream AI responses and narration
   if (message.message_type !== 'ai_response' && message.message_type !== 'narration') {
     return false;
@@ -92,15 +92,35 @@ export const shouldStreamMessage = async (message: {
     return false;
   }
 
+  // Check cache first if provided
+  if (message.id && streamedCache?.has(message.id)) {
+    const cachedStatus = streamedCache.get(message.id);
+    if (cachedStatus === true) {
+      logger.debug('Chat', 'Skipping already streamed message (cache)', { 
+        messageId: message.id, 
+        cached: cachedStatus 
+      });
+      return false;
+    }
+  }
+
   // Check database for streamed status if message has an ID
   if (message.id) {
     const dbStreamedStatus = await checkMessageStreamedStatus(message.id);
     if (dbStreamedStatus === true) {
+      // Cache the result
+      if (streamedCache) {
+        streamedCache.set(message.id, true);
+      }
       logger.debug('Chat', 'Skipping already streamed message (database)', { 
         messageId: message.id, 
         dbStreamed: dbStreamedStatus 
       });
       return false;
+    }
+    // Cache negative result too
+    if (streamedCache && dbStreamedStatus === false) {
+      streamedCache.set(message.id, false);
     }
   }
 
