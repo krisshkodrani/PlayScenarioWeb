@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react';
 import ChatHeader from './chat/ChatHeader';
 import MessagesList from './chat/MessagesList';
 import ChatInput from './chat/ChatInput';
@@ -27,6 +27,50 @@ interface CoreChatProps {
   instanceId: string;
   scenarioId: string;
 }
+
+const processMessages = (msgs: any[], scenario: any) => {
+  let processed = [...msgs];
+
+  if (scenario?.scenario_opening_message) {
+    const hasOpening = processed.some(
+      (m) => m.turn_number === 0 && m.message_type === 'narration'
+    );
+    if (!hasOpening) {
+      processed = [
+        {
+          id: 'opening-synthetic',
+          sender_name: 'Narrator',
+          message: scenario.scenario_opening_message,
+          message_type: 'narration',
+          timestamp: new Date(Date.now() - 1000).toISOString(),
+          turn_number: 0,
+          sequence_number: 0,
+        },
+        ...processed,
+      ];
+    }
+  }
+
+  const map = new Map<string, any>();
+  for (const m of processed) {
+    const key = m.id ?? `${m.turn_number}-${m.sequence_number}-${m.sender_name}`;
+    if (!map.has(key)) {
+      map.set(key, m);
+    }
+  }
+
+  const deduped = Array.from(map.values());
+
+  deduped.sort((a, b) => {
+    const turnDiff = (a.turn_number ?? 0) - (b.turn_number ?? 0);
+    if (turnDiff !== 0) return turnDiff;
+    const seqDiff = (a.sequence_number ?? 0) - (b.sequence_number ?? 0);
+    if (seqDiff !== 0) return seqDiff;
+    return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+  });
+
+  return deduped;
+};
 
 const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
   const { user } = useAuth();
@@ -65,123 +109,10 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     sendMessage
   } = useRealtimeChat({ instanceId, scenarioId });
 
-  // Create synthetic opening message when scenario loads and persist until real narrator message arrives
-  const messagesWithOpening = React.useMemo(() => {
-    // If no scenario opening message, return messages as-is
-    if (!scenario?.scenario_opening_message) {
-      return messages;
-    }
-    const opening = scenario.scenario_opening_message || "";
-    
-    // Check if we already have a real opening/narrator message from backend
-    const hasRealNarratorMessage = messages.some(msg => {
-      const msgText = typeof (msg as any).message === 'string' ? (msg as any).message : (msg as any).message ? JSON.stringify((msg as any).message) : '';
-      return (
-        (msg as any).message_type === 'narration' &&
-        (msg as any).id !== 'opening-synthetic' &&
-        (
-          msgText === opening ||
-          (opening && msgText.includes(opening.substring(0, 50))) ||
-          (msg as any).turn_number === 0 ||
-          (msg as any).sender_name === 'Narrator'
-        )
-      );
-    });
-    
-    // If we have a real narrator message from backend, return messages as-is (no synthetic needed)
-    if (hasRealNarratorMessage) {
-      return messages;
-    }
-    
-    // Check if we already have a synthetic opening message in our messages
-    const hasSyntheticOpening = messages.some((msg: any) => msg.id === 'opening-synthetic');
-    
-    // Create synthetic opening message if we don't have one and no real narrator message exists
-    if (!hasSyntheticOpening) {
-      const openingMessage = {
-        id: 'opening-synthetic',
-        sender_name: 'Narrator',
-        message: opening,
-        message_type: 'narration' as const,
-        timestamp: new Date(Date.now() - 1000).toISOString(), // Slightly in the past to appear first
-        turn_number: 0,
-        sequence_number: 0
-      };
-      
-      // Add synthetic message at the beginning, followed by other messages
-      return [openingMessage as any, ...messages];
-    }
-    
-    // Synthetic opening already exists, return messages as-is
-    return messages;
-  }, [messages, scenario?.scenario_opening_message]);
-
-  // Enhanced deduplication that handles mode switches
-  const dedupedMessages = React.useMemo(() => {
-    const seen = new Set<string>();
-    const contentSeen = new Map<string, any>(); // Track by content with metadata
-    const out: any[] = [];
-    
-    for (const m of messagesWithOpening as any[]) {
-      const text = typeof m.message === 'string' ? m.message : m?.message ? JSON.stringify(m.message) : '';
-      
-      // Primary key includes ID if available
-      const fullKey = m.id || `${m.message_type}|${m.sender_name || m.character_name}|${text}|${m.turn_number ?? ''}|${m.sequence_number ?? ''}`;
-      
-      // Content key for cross-turn deduplication (especially for AI responses)
-      const contentKey = `${m.message_type}|${m.sender_name || m.character_name}|${text.substring(0, 200)}`;
-      
-      // Check for exact duplicate
-      if (seen.has(fullKey)) {
-        if (DEBUG_CHAT) console.debug('[CoreChat] Dropping exact duplicate', { id: m.id, key: fullKey });
-        continue;
-      }
-      
-      // For AI responses, check content duplication across turns
-      if (m.message_type === 'ai_response') {
-        const existing = contentSeen.get(contentKey);
-        if (existing) {
-          // If same content exists with a different turn, keep the one with higher turn
-          const existingTurn = existing.turn_number ?? 0;
-          const currentTurn = m.turn_number ?? 0;
-          
-          if (currentTurn <= existingTurn) {
-            if (DEBUG_CHAT) console.debug('[CoreChat] Dropping duplicate AI content from earlier/same turn', { 
-              current: currentTurn, 
-              existing: existingTurn,
-              character: m.character_name 
-            });
-            continue;
-          } else {
-            // Remove the older one and add the newer
-            const oldIndex = out.findIndex(msg => msg === existing);
-            if (oldIndex >= 0) {
-              out.splice(oldIndex, 1);
-              if (DEBUG_CHAT) console.debug('[CoreChat] Replacing older duplicate with newer turn', {
-                old: existingTurn,
-                new: currentTurn,
-                character: m.character_name
-              });
-            }
-          }
-        }
-        contentSeen.set(contentKey, m);
-      }
-      
-      seen.add(fullKey);
-      out.push(m);
-    }
-    
-    if (DEBUG_CHAT && messagesWithOpening.length !== out.length) {
-      console.debug('[CoreChat] Deduped messages', { 
-        before: messagesWithOpening.length, 
-        after: out.length, 
-        dropped: messagesWithOpening.length - out.length 
-      });
-    }
-    
-    return out;
-  }, [messagesWithOpening]);
+  const processedMessages = useMemo(
+    () => processMessages(messages, scenario),
+    [messages, scenario?.scenario_opening_message]
+  );
 
   // objectivesWithProgress is now provided by useRealtimeChat hook
   // This eliminates duplicate calculations and ensures consistent data flow
@@ -327,13 +258,13 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     }
   }, []);
 
-  // Smooth auto-scroll with instant first paint - updated to use messagesWithOpening
+  // Smooth auto-scroll with instant first paint - updated to use processed messages
   const initialScrollDone = useRef(false);
   useLayoutEffect(() => {
     if (!messagesEndRef.current) return;
 
     // First render after load: jump to bottom without animation
-    if (!initialScrollDone.current && (messagesWithOpening.length > 0)) {
+    if (!initialScrollDone.current && (processedMessages.length > 0)) {
       requestAnimationFrame(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
         initialScrollDone.current = true;
@@ -342,7 +273,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     }
 
     // Scroll when new messages appear or streaming state changes
-    const last = messagesWithOpening[messagesWithOpening.length - 1];
+    const last = processedMessages[processedMessages.length - 1];
     const messageChanged = last && lastMsgIdRef.current !== last.id;
     const shouldScrollForStreaming = isAnyStreaming && isUserNearBottom;
     const shouldScrollForQueue = streamingQueueLength > 0 && isUserNearBottom;
@@ -356,7 +287,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       });
     }
-  }, [messagesWithOpening, isUserNearBottom, isAnyStreaming, streamingQueueLength]);
+  }, [processedMessages, isUserNearBottom, isAnyStreaming, streamingQueueLength]);
 
   // Observe container resize to keep view stuck to bottom when near bottom
   useEffect(() => {
@@ -643,7 +574,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
         onScroll={checkScrollPosition}
       >
         <MessagesList
-          messages={messagesWithOpening.map((msg: any) => ({
+          messages={processedMessages.map((msg: any) => ({
             id: msg.id,
             sender_name: msg.sender_name,
             message: typeof msg.message === 'object' ? JSON.stringify(msg.message) : msg.message,
@@ -698,7 +629,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
 
       {/* Debug Info for Streaming - Only show in development */}
       <StreamingDebugInfo 
-        messages={messagesWithOpening}
+        messages={processedMessages}
         show={DEBUG_CHAT}
       />
     </div>
