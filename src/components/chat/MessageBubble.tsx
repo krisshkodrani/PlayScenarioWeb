@@ -158,6 +158,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               <p className="text-sm md:text-base">{displayContent}</p>
             </div>
           </div>
+          <div className={`px-4 py-3 rounded-2xl rounded-br-sm min-w-[40%] max-w-[70%] border bg-slate-700 text-slate-100 border-slate-600 break-words whitespace-pre-wrap ${isOptimistic ? 'opacity-70' : ''}`}>
         </div>
       </div>
     );

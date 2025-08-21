@@ -73,23 +73,55 @@ export const checkMessageStreamedStatus = async (messageId: string): Promise<boo
 /**
  * Check if a message should be streamed based on its properties
  */
-export const shouldStreamMessage = (message: { 
+export const shouldStreamMessage = async (message: { 
   message_type: string; 
   streamed?: boolean; 
   id?: string;
-}): boolean => {
+}, streamedCache?: Map<string, boolean>): Promise<boolean> => {
   // Only stream AI responses and narration
   if (message.message_type !== 'ai_response' && message.message_type !== 'narration') {
     return false;
   }
 
-  // Don't stream if already streamed
+  // Don't stream if already streamed in memory
   if (message.streamed === true) {
-    logger.debug('Chat', 'Skipping already streamed message', { 
+    logger.debug('Chat', 'Skipping already streamed message (memory)', { 
       messageId: message.id, 
       streamed: message.streamed 
     });
     return false;
+  }
+
+  // Check cache first if provided
+  if (message.id && streamedCache?.has(message.id)) {
+    const cachedStatus = streamedCache.get(message.id);
+    if (cachedStatus === true) {
+      logger.debug('Chat', 'Skipping already streamed message (cache)', { 
+        messageId: message.id, 
+        cached: cachedStatus 
+      });
+      return false;
+    }
+  }
+
+  // Check database for streamed status if message has an ID
+  if (message.id) {
+    const dbStreamedStatus = await checkMessageStreamedStatus(message.id);
+    if (dbStreamedStatus === true) {
+      // Cache the result
+      if (streamedCache) {
+        streamedCache.set(message.id, true);
+      }
+      logger.debug('Chat', 'Skipping already streamed message (database)', { 
+        messageId: message.id, 
+        dbStreamed: dbStreamedStatus 
+      });
+      return false;
+    }
+    // Cache negative result too
+    if (streamedCache && dbStreamedStatus === false) {
+      streamedCache.set(message.id, false);
+    }
   }
 
   logger.debug('Chat', 'Message should be streamed', { 

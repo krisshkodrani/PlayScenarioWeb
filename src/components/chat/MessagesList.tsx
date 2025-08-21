@@ -112,6 +112,16 @@ const MessagesList: React.FC<MessagesListProps> = ({
     }
   }, []);
 
+  const handleStreamingComplete = useCallback((messageId: string) => {
+    // Trigger scroll to ensure full message is visible
+    setTimeout(() => {
+      const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+      if (messageElement) {
+        messageElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }, 100);
+  }, []);
+
   const { 
     streamingStates, 
     messageQueue, 
@@ -123,7 +133,8 @@ const MessagesList: React.FC<MessagesListProps> = ({
   } = useSequentialMessageStreaming({
     instanceId,
     messages: convertedMessages,
-    onStreamingUpdate: handleStreamingUpdate
+    onStreamingUpdate: handleStreamingUpdate,
+    onStreamingComplete: handleStreamingComplete
   });
 
   // Start/stop a single 50ms flush timer while any message is streaming or queued

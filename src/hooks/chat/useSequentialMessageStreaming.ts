@@ -7,6 +7,7 @@ interface UseSequentialMessageStreamingProps {
   instanceId: string;
   messages: Message[];
   onStreamingUpdate: (messageId: string, streamedContent: string, isComplete: boolean) => void;
+  onStreamingComplete?: (messageId: string) => void;
 }
 
 interface StreamingState {
@@ -28,7 +29,8 @@ interface MessageQueue {
 export const useSequentialMessageStreaming = ({ 
   instanceId, 
   messages, 
-  onStreamingUpdate 
+  onStreamingUpdate,
+  onStreamingComplete
 }: UseSequentialMessageStreamingProps) => {
   const [streamingStates, setStreamingStates] = useState<Map<string, StreamingState>>(new Map());
   const [messageQueue, setMessageQueue] = useState<MessageQueue[]>([]);
@@ -37,6 +39,7 @@ export const useSequentialMessageStreaming = ({
   const streamingTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
   const animationFrames = useRef<Map<string, number>>(new Map());
   const processedMessageIds = useRef<Set<string>>(new Set());
+  const streamedStatusCache = useRef<Map<string, boolean>>(new Map()); // Cache database results
 
   // Calculate character streaming speed for 3-4 sentences per second
   const calculateCharacterDelay = useCallback((char: string, totalChars: number): number => {
@@ -82,11 +85,18 @@ export const useSequentialMessageStreaming = ({
   }, []);
 
   // Add messages to queue in proper order
-  const addToQueue = useCallback((newMessages: Message[]) => {
-    const streamableMessages = newMessages.filter(message => 
-      shouldStreamMessage(message) &&
-      !processedMessageIds.current.has(message.id)
+  const addToQueue = useCallback(async (newMessages: Message[]) => {
+    const streamableChecks = await Promise.all(
+      newMessages.map(async message => ({
+        message,
+        shouldStream: await shouldStreamMessage(message, streamedStatusCache.current) && 
+          !processedMessageIds.current.has(message.id)
+      }))
     );
+    
+    const streamableMessages = streamableChecks
+      .filter(item => item.shouldStream)
+      .map(item => item.message);
 
     if (streamableMessages.length === 0) return;
 
@@ -163,9 +173,11 @@ export const useSequentialMessageStreaming = ({
         onStreamingUpdate(message.id, message.message, true);
         setCurrentStreamingMessageId(null);
         
-        // Mark message as streamed in database (async but don't block UI)
+        // Mark message as streamed in database and cache (async but don't block UI)
         markMessageAsStreamed(message.id).then(success => {
           if (success) {
+            // Update cache
+            streamedStatusCache.current.set(message.id, true);
             logger.info('Chat', 'Message marked as streamed in database', { messageId: message.id });
             // Verify the update worked
             setTimeout(() => {
@@ -180,6 +192,11 @@ export const useSequentialMessageStreaming = ({
             logger.warn('Chat', 'Failed to mark message as streamed in database', { messageId: message.id });
           }
         });
+        
+        // Trigger scroll completion callback if provided
+        if (onStreamingComplete) {
+          setTimeout(() => onStreamingComplete(message.id), 100);
+        }
         
         // Remove this message from queue and start next
         setMessageQueue(prev => {
@@ -267,19 +284,52 @@ export const useSequentialMessageStreaming = ({
     });
   }, [messageQueue, currentStreamingMessageId]);
 
-  // Find and queue new unstreamed messages
+  // Find and queue new unstreamed messages with better state tracking
   useEffect(() => {
-    const unstreamedMessages = messages.filter(message => 
-      shouldStreamMessage(message) &&
-      !processedMessageIds.current.has(message.id) &&
-      !messageQueue.some(q => q.message.id === message.id) &&
-      !streamingStates.has(message.id)
-    );
+    const checkAndAddMessages = async () => {
+      // Filter messages that haven't been processed yet
+      const unprocessedMessages = messages.filter(message => 
+        !processedMessageIds.current.has(message.id) &&
+        !messageQueue.some(q => q.message.id === message.id) &&
+        !streamingStates.has(message.id)
+      );
 
-    if (unstreamedMessages.length > 0) {
-      addToQueue(unstreamedMessages);
-    }
-  }, [messages, addToQueue, messageQueue, streamingStates]);
+      if (unprocessedMessages.length === 0) return;
+
+      logger.debug('Chat', 'Checking unprocessed messages for streaming', {
+        unprocessedCount: unprocessedMessages.length,
+        messageIds: unprocessedMessages.map(m => m.id)
+      });
+
+      const streamableChecks = await Promise.all(
+        unprocessedMessages.map(async message => ({
+          message,
+          shouldStream: await shouldStreamMessage(message, streamedStatusCache.current)
+        }))
+      );
+      
+      const unstreamedMessages = streamableChecks
+        .filter(item => item.shouldStream)
+        .map(item => item.message);
+
+      if (unstreamedMessages.length > 0) {
+        logger.debug('Chat', 'Found new messages to stream', {
+          count: unstreamedMessages.length,
+          messageIds: unstreamedMessages.map(m => m.id)
+        });
+        await addToQueue(unstreamedMessages);
+      } else {
+        // Mark non-streamable messages as processed to avoid re-checking
+        unprocessedMessages.forEach(message => {
+          if (message.message_type !== 'ai_response' && message.message_type !== 'narration') {
+            processedMessageIds.current.add(message.id);
+          }
+        });
+      }
+    };
+
+    checkAndAddMessages();
+  }, [messages.length]); // Only depend on messages.length to avoid constant re-evaluation
 
   // Skip streaming function for user convenience
   const skipStreaming = useCallback((messageId: string) => {
@@ -315,9 +365,10 @@ export const useSequentialMessageStreaming = ({
     onStreamingUpdate(messageId, state.fullContent, true);
     setCurrentStreamingMessageId(null);
     
-    // Mark message as streamed in database (async but don't block UI)
+    // Mark message as streamed in database and cache (async but don't block UI)
     markMessageAsStreamed(messageId).then(success => {
       if (success) {
+        streamedStatusCache.current.set(messageId, true);
         logger.info('Chat', 'Skipped message marked as streamed in database', { messageId });
       } else {
         logger.warn('Chat', 'Failed to mark skipped message as streamed in database', { messageId });
@@ -340,9 +391,10 @@ export const useSequentialMessageStreaming = ({
       const messageId = queueItem.message.id;
       processedMessageIds.current.add(messageId);
       onStreamingUpdate(messageId, queueItem.message.message, true);
-      // Mark message as streamed in database (async but don't block UI)
+      // Mark message as streamed in database and cache (async but don't block UI)
       markMessageAsStreamed(messageId).then(success => {
         if (success) {
+          streamedStatusCache.current.set(messageId, true);
           logger.info('Chat', 'Skip-all message marked as streamed in database', { messageId });
         } else {
           logger.warn('Chat', 'Failed to mark skip-all message as streamed in database', { messageId });
@@ -377,7 +429,9 @@ export const useSequentialMessageStreaming = ({
 
   // Reset everything when instance changes
   useEffect(() => {
+    logger.debug('Chat', 'Instance changed - resetting streaming system', { instanceId });
     processedMessageIds.current.clear();
+    streamedStatusCache.current.clear();
     setStreamingStates(new Map());
     setMessageQueue([]);
     setCurrentStreamingMessageId(null);
