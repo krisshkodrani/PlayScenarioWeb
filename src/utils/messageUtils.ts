@@ -73,23 +73,35 @@ export const checkMessageStreamedStatus = async (messageId: string): Promise<boo
 /**
  * Check if a message should be streamed based on its properties
  */
-export const shouldStreamMessage = (message: { 
+export const shouldStreamMessage = async (message: { 
   message_type: string; 
   streamed?: boolean; 
   id?: string;
-}): boolean => {
+}): Promise<boolean> => {
   // Only stream AI responses and narration
   if (message.message_type !== 'ai_response' && message.message_type !== 'narration') {
     return false;
   }
 
-  // Don't stream if already streamed
+  // Don't stream if already streamed in memory
   if (message.streamed === true) {
-    logger.debug('Chat', 'Skipping already streamed message', { 
+    logger.debug('Chat', 'Skipping already streamed message (memory)', { 
       messageId: message.id, 
       streamed: message.streamed 
     });
     return false;
+  }
+
+  // Check database for streamed status if message has an ID
+  if (message.id) {
+    const dbStreamedStatus = await checkMessageStreamedStatus(message.id);
+    if (dbStreamedStatus === true) {
+      logger.debug('Chat', 'Skipping already streamed message (database)', { 
+        messageId: message.id, 
+        dbStreamed: dbStreamedStatus 
+      });
+      return false;
+    }
   }
 
   logger.debug('Chat', 'Message should be streamed', { 

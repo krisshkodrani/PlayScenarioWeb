@@ -7,6 +7,7 @@ interface UseSequentialMessageStreamingProps {
   instanceId: string;
   messages: Message[];
   onStreamingUpdate: (messageId: string, streamedContent: string, isComplete: boolean) => void;
+  onStreamingComplete?: (messageId: string) => void;
 }
 
 interface StreamingState {
@@ -28,7 +29,8 @@ interface MessageQueue {
 export const useSequentialMessageStreaming = ({ 
   instanceId, 
   messages, 
-  onStreamingUpdate 
+  onStreamingUpdate,
+  onStreamingComplete
 }: UseSequentialMessageStreamingProps) => {
   const [streamingStates, setStreamingStates] = useState<Map<string, StreamingState>>(new Map());
   const [messageQueue, setMessageQueue] = useState<MessageQueue[]>([]);
@@ -82,11 +84,17 @@ export const useSequentialMessageStreaming = ({
   }, []);
 
   // Add messages to queue in proper order
-  const addToQueue = useCallback((newMessages: Message[]) => {
-    const streamableMessages = newMessages.filter(message => 
-      shouldStreamMessage(message) &&
-      !processedMessageIds.current.has(message.id)
+  const addToQueue = useCallback(async (newMessages: Message[]) => {
+    const streamableChecks = await Promise.all(
+      newMessages.map(async message => ({
+        message,
+        shouldStream: await shouldStreamMessage(message) && !processedMessageIds.current.has(message.id)
+      }))
     );
+    
+    const streamableMessages = streamableChecks
+      .filter(item => item.shouldStream)
+      .map(item => item.message);
 
     if (streamableMessages.length === 0) return;
 
@@ -181,6 +189,11 @@ export const useSequentialMessageStreaming = ({
           }
         });
         
+        // Trigger scroll completion callback if provided
+        if (onStreamingComplete) {
+          setTimeout(() => onStreamingComplete(message.id), 100);
+        }
+        
         // Remove this message from queue and start next
         setMessageQueue(prev => {
           const filtered = prev.filter(q => q.message.id !== message.id);
@@ -269,16 +282,27 @@ export const useSequentialMessageStreaming = ({
 
   // Find and queue new unstreamed messages
   useEffect(() => {
-    const unstreamedMessages = messages.filter(message => 
-      shouldStreamMessage(message) &&
-      !processedMessageIds.current.has(message.id) &&
-      !messageQueue.some(q => q.message.id === message.id) &&
-      !streamingStates.has(message.id)
-    );
+    const checkAndAddMessages = async () => {
+      const unstreamedChecks = await Promise.all(
+        messages.map(async message => ({
+          message,
+          shouldStream: await shouldStreamMessage(message) &&
+            !processedMessageIds.current.has(message.id) &&
+            !messageQueue.some(q => q.message.id === message.id) &&
+            !streamingStates.has(message.id)
+        }))
+      );
+      
+      const unstreamedMessages = unstreamedChecks
+        .filter(item => item.shouldStream)
+        .map(item => item.message);
 
-    if (unstreamedMessages.length > 0) {
-      addToQueue(unstreamedMessages);
-    }
+      if (unstreamedMessages.length > 0) {
+        await addToQueue(unstreamedMessages);
+      }
+    };
+
+    checkAndAddMessages();
   }, [messages, addToQueue, messageQueue, streamingStates]);
 
   // Skip streaming function for user convenience

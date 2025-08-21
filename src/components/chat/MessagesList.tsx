@@ -67,6 +67,16 @@ const MessagesList: React.FC<MessagesListProps> = ({
     }
   }, []);
 
+  const handleStreamingComplete = useCallback((messageId: string) => {
+    // Trigger scroll to ensure full message is visible
+    setTimeout(() => {
+      const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+      if (messageElement) {
+        messageElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }, 100);
+  }, []);
+
   const { 
     streamingStates, 
     messageQueue, 
@@ -78,7 +88,8 @@ const MessagesList: React.FC<MessagesListProps> = ({
   } = useSequentialMessageStreaming({
     instanceId,
     messages: convertedMessages,
-    onStreamingUpdate: handleStreamingUpdate
+    onStreamingUpdate: handleStreamingUpdate,
+    onStreamingComplete: handleStreamingComplete
   });
 
   // Notify parent about queue changes for smart scrolling
@@ -187,12 +198,13 @@ const MessagesList: React.FC<MessagesListProps> = ({
 
         // Show normal message bubble (for user messages or completed streaming)
         return (
-          <MessageBubble 
-            key={message.id}
-            message={message}
-            character={message.message_type === 'ai_response' ? getCharacterById?.('ai') : undefined}
-            onSuggestionClick={onSuggestionClick}
-          />
+          <div key={message.id} data-message-id={message.id}>
+            <MessageBubble 
+              message={message}
+              character={message.message_type === 'ai_response' ? getCharacterById?.('ai') : undefined}
+              onSuggestionClick={onSuggestionClick}
+            />
+          </div>
         );
       })}
     </div>
