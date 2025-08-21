@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import MessageBubble from './MessageBubble';
 import StreamingMessage from './StreamingMessage';
 import TypingIndicator from './TypingIndicator';
@@ -21,6 +21,16 @@ interface MockMessage {
   message_type: 'user_message' | 'ai_response' | 'system' | 'narration';
   timestamp: Date;
   mode?: 'chat' | 'action';
+  // Extended fields passed from CoreChat
+  turn_number?: number;
+  sequence_number?: number;
+  character_name?: string;
+  response_type?: string;
+  internal_state?: any;
+  suggested_follow_ups?: string[];
+  metrics?: any;
+  flags?: any;
+  streamed?: boolean;
 }
 
 interface MessagesListProps {
@@ -34,6 +44,25 @@ interface MessagesListProps {
   onQueueChange?: (queueLength: number, isStreaming: boolean) => void;
 }
 
+// Helper: resolve character from message
+function resolveCharacterForMessage(message: MockMessage, characters: Character[]): Character | undefined {
+  if (message.message_type !== 'ai_response') return undefined;
+  // Try JSON payload character_name
+  let characterName: string | undefined;
+  try {
+    const parsed = JSON.parse(message.message);
+    if (parsed && typeof parsed.character_name === 'string') characterName = parsed.character_name;
+  } catch {}
+  const needle = (characterName || message.sender_name || '').toLowerCase();
+  if (!needle) return characters.find(c => c.id !== 'player');
+  return (
+    characters.find(c => c.name.toLowerCase() === needle) ||
+    characters.find(c => c.id.toLowerCase() === needle) ||
+    characters.find(c => needle.includes(c.name.toLowerCase())) ||
+    characters.find(c => c.id !== 'player')
+  );
+}
+
 const MessagesList: React.FC<MessagesListProps> = ({
   messages,
   isTyping,
@@ -44,26 +73,42 @@ const MessagesList: React.FC<MessagesListProps> = ({
   instanceId,
   onQueueChange
 }) => {
+  // Throttled streamed content store
   const [streamedContent, setStreamedContent] = useState<Map<string, string>>(new Map());
   const [completedStreaming, setCompletedStreaming] = useState<Set<string>>(new Set());
+  const bufferRef = useRef<Map<string, string>>(new Map());
+  const hasPendingRef = useRef<boolean>(false);
+  const flushTimerRef = useRef<number | null>(null);
 
-  // Convert MockMessage to Message for streaming hook
-  const convertedMessages: Message[] = messages.map(m => ({
-    id: m.id,
-    sender_name: m.sender_name,
-    message: m.message,
-    turn_number: 0,
-    message_type: m.message_type,
-    timestamp: m.timestamp.toISOString(),
-    sequence_number: messages.indexOf(m),
-    mode: m.mode,
-    streamed: (m as any).streamed
-  }));
+  // Convert MockMessage to Message for streaming hook. Preserve provided sequence_number/turn_number
+  const convertedMessages: Message[] = useMemo(() => (
+    messages.map((m, index) => ({
+      id: m.id,
+      sender_name: m.sender_name,
+      message: m.message,
+      turn_number: m.turn_number ?? 0,
+      message_type: m.message_type,
+      timestamp: m.timestamp.toISOString(),
+      sequence_number: m.sequence_number ?? index,
+      mode: m.mode,
+      streamed: m.streamed
+    }))
+  ), [messages]);
 
+  // Single entry point from streaming hook: write to buffer only
   const handleStreamingUpdate = useCallback((messageId: string, content: string, isComplete: boolean) => {
-    setStreamedContent(prev => new Map(prev).set(messageId, content));
+    // Write to buffer and mark pending
+    const next = new Map(bufferRef.current);
+    next.set(messageId, content);
+    bufferRef.current = next;
+    hasPendingRef.current = true;
+
     if (isComplete) {
-      setCompletedStreaming(prev => new Set(prev).add(messageId));
+      setCompletedStreaming(prev => {
+        const n = new Set(prev);
+        n.add(messageId);
+        return n;
+      });
     }
   }, []);
 
@@ -80,6 +125,37 @@ const MessagesList: React.FC<MessagesListProps> = ({
     messages: convertedMessages,
     onStreamingUpdate: handleStreamingUpdate
   });
+
+  // Start/stop a single 50ms flush timer while any message is streaming or queued
+  useEffect(() => {
+    const shouldRun = isAnyMessageStreaming || queueLength > 0;
+
+    if (shouldRun && flushTimerRef.current == null) {
+      flushTimerRef.current = window.setInterval(() => {
+        if (!hasPendingRef.current) return;
+        // Apply buffered updates in one state set
+        setStreamedContent(new Map(bufferRef.current));
+        hasPendingRef.current = false;
+      }, 50);
+    }
+
+    if (!shouldRun && flushTimerRef.current != null) {
+      window.clearInterval(flushTimerRef.current);
+      flushTimerRef.current = null;
+      // Final flush if anything pending
+      if (hasPendingRef.current) {
+        setStreamedContent(new Map(bufferRef.current));
+        hasPendingRef.current = false;
+      }
+    }
+
+    return () => {
+      if (flushTimerRef.current != null) {
+        window.clearInterval(flushTimerRef.current);
+        flushTimerRef.current = null;
+      }
+    };
+  }, [isAnyMessageStreaming, queueLength]);
 
   // Notify parent about queue changes for smart scrolling
   useEffect(() => {
@@ -120,33 +196,14 @@ const MessagesList: React.FC<MessagesListProps> = ({
             id: message.id,
             sender_name: message.sender_name,
             message: message.message,
-            turn_number: 0,
+            turn_number: message.turn_number ?? 0,
             message_type: message.message_type,
             timestamp: message.timestamp.toISOString(),
-            sequence_number: index,
+            sequence_number: message.sequence_number ?? index,
             mode: message.mode
           };
 
-          // Find the right character for this AI message
-          let messageCharacter: Character | undefined;
-          if (message.message_type === 'ai_response') {
-            // Try to find character by name from parsed message or fallback to first AI character
-            const parsedData = (() => {
-              try {
-                const parsed = JSON.parse(message.message);
-                return parsed.character_name ? parsed : null;
-              } catch {
-                return null;
-              }
-            })();
-            
-            const characterName = parsedData?.character_name || message.sender_name;
-            messageCharacter = characters.find(char => 
-              char.name === characterName || 
-              char.id === characterName ||
-              (char.id !== 'player' && characterName?.toLowerCase().includes(char.name.toLowerCase()))
-            ) || characters.find(char => char.id !== 'player'); // Fallback to first non-player character
-          }
+          const messageCharacter = resolveCharacterForMessage(message, characters);
 
           return (
             <TypingIndicator
@@ -164,18 +221,20 @@ const MessagesList: React.FC<MessagesListProps> = ({
             id: message.id,
             sender_name: message.sender_name,
             message: message.message,
-            turn_number: 0,
+            turn_number: message.turn_number ?? 0,
             message_type: message.message_type,
             timestamp: message.timestamp.toISOString(),
-            sequence_number: index,
+            sequence_number: message.sequence_number ?? index,
             mode: message.mode
           };
+
+          const messageCharacter = resolveCharacterForMessage(message, characters);
 
           return (
             <StreamingMessage
               key={message.id}
               message={convertedMessage}
-              character={getCharacterById ? getCharacterById('ai') : undefined}
+              character={messageCharacter}
               streamedContent={streamedContent.get(message.id) || ''}
               isStreaming={streamingState?.isStreaming || false}
               isQueued={false}
@@ -185,12 +244,14 @@ const MessagesList: React.FC<MessagesListProps> = ({
           );
         }
 
+        const bubbleCharacter = resolveCharacterForMessage(message, characters);
+
         // Show normal message bubble (for user messages or completed streaming)
         return (
           <MessageBubble 
             key={message.id}
-            message={message}
-            character={message.message_type === 'ai_response' ? getCharacterById?.('ai') : undefined}
+            message={message as any}
+            character={bubbleCharacter}
             onSuggestionClick={onSuggestionClick}
           />
         );
@@ -199,4 +260,4 @@ const MessagesList: React.FC<MessagesListProps> = ({
   );
 };
 
-export default MessagesList;
+export default React.memo(MessagesList);

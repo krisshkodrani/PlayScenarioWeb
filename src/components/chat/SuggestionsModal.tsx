@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X, ArrowRightCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { createPortal } from 'react-dom';
 
 interface SuggestionsModalProps {
   isOpen: boolean;
@@ -21,8 +22,24 @@ const SuggestionsModal: React.FC<SuggestionsModalProps> = ({
     onSelect(s);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+  // Lock body scroll and add Escape to close while open
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [onClose]);
+
+  const content = (
+    <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4">
       <div className="bg-slate-800 border border-gray-700 rounded-xl p-6 w-full max-w-md shadow-lg shadow-cyan-400/20">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -68,6 +85,8 @@ const SuggestionsModal: React.FC<SuggestionsModalProps> = ({
       </div>
     </div>
   );
+
+  return createPortal(content, document.body);
 };
 
 export default SuggestionsModal;

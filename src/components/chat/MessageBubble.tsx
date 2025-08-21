@@ -135,28 +135,28 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   // User message - right aligned
   if (messageType === 'user_message') {
     const isActionMessage = message.mode === 'action';
+    const isOptimistic = typeof message.id === 'string' && message.id.startsWith('user-');
     return (
-      <div className="flex justify-end w-full">
-        <div className="relative">
-          {/* Mode indicator badge */}
-          <div className={`absolute -top-2 -left-2 z-10 w-6 h-6 rounded-full flex items-center justify-center shadow-lg ${
-            isActionMessage 
-              ? 'bg-amber-500 text-slate-900' 
-              : 'bg-cyan-500 text-slate-900'
-          }`}>
-            {isActionMessage ? (
-              <Zap className="w-3 h-3" />
-            ) : (
-              <MessageCircle className="w-3 h-3" />
-            )}
-          </div>
-          
-          <div className={`px-4 py-3 rounded-2xl rounded-br-sm min-w-[50%] max-w-[70%] shadow-lg ${
-            isActionMessage 
-              ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white' 
-              : 'bg-gradient-to-br from-cyan-500 to-violet-600 text-white'
-          }`}>
-            <p className="text-sm md:text-base">{displayContent}</p>
+      <div className="w-full">
+        {/* Match AI row widths and align to the right */}
+        <div className="flex items-start justify-end gap-4 sm:w-[90%] md:w-[80%] lg:w-[72%] xl:w-[68%] ml-auto">
+          <div className="relative max-w-full">
+            {/* Mode indicator badge */}
+            <div className={`absolute -top-2 -left-2 z-10 w-6 h-6 rounded-full flex items-center justify-center shadow-lg ${
+              isActionMessage 
+                ? 'bg-amber-500 text-slate-900' 
+                : 'bg-cyan-500 text-slate-900'
+            }`}>
+              {isActionMessage ? (
+                <Zap className="w-3 h-3" />
+              ) : (
+                <MessageCircle className="w-3 h-3" />
+              )}
+            </div>
+            
+            <div className={`px-4 py-3 rounded-2xl rounded-br-sm min-w-[40%] max-w-[70%] border bg-slate-700 text-slate-100 border-slate-600 break-words whitespace-pre-wrap ${isOptimistic ? 'opacity-70' : ''}`}>
+              <p className="text-sm md:text-base">{displayContent}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -167,7 +167,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   if (messageType === 'system') {
     return (
       <div className="w-full">
-        <div className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-200 px-6 py-4 rounded-xl mx-auto text-center shadow-lg shadow-amber-500/10">
+        <div className="bg-slate-800/50 border border-slate-700 text-slate-400 px-6 py-4 rounded-xl mx-auto text-center">
           <p className="text-sm md:text-base font-medium">{displayContent}</p>
         </div>
       </div>
@@ -178,9 +178,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   if (messageType === 'narration') {
     return (
       <div className="w-full">
-        <div className="bg-gradient-to-br from-indigo-500/20 to-purple-600/20 border border-indigo-400/30 text-indigo-200 px-6 py-4 rounded-xl mx-auto shadow-lg shadow-indigo-500/10">
+        <div className="bg-slate-800/70 border border-violet-900/30 text-slate-300 px-6 py-4 rounded-xl mx-auto">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-semibold uppercase tracking-wide text-indigo-300">Narrator</span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-violet-400">Narrator</span>
           </div>
           <p className="text-sm md:text-base whitespace-pre-wrap">{message.message}</p>
         </div>
@@ -192,11 +192,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const isActionResponse = message.mode === 'action';
   return (
     <div className="w-full">
-      <div className="flex items-start gap-3 group w-[70%]">
+      <div className="flex items-start gap-4 group sm:w-[90%] md:w-[80%] lg:w-[72%] xl:w-[68%]">
         {/* Character Avatar */}
-        <CharacterAvatar character={character} characterName={displayName} size="sm" />
+        <div className="shrink-0">
+          <CharacterAvatar character={character} characterName={displayName} size="lg" />
+        </div>
         
-        <div className="flex-1 relative">
+        <div className="flex-1 relative min-w-0">
           {/* Character Name and Status Indicators */}
           <div className="flex items-center gap-2 mb-1 ml-1">
             <p className="text-xs font-medium text-slate-300">
@@ -218,27 +220,26 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           </div>
           
           {/* Message Content */}
-          <div className={`backdrop-blur text-white px-4 py-3 rounded-2xl rounded-bl-sm shadow-lg ${
+          <div className={`backdrop-blur px-4 py-3 rounded-2xl rounded-bl-sm shadow-lg border ${
             isActionResponse 
-              ? 'bg-gradient-to-br from-amber-600/20 to-orange-600/20 border border-amber-500/30' 
-              : 'bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600'
+              ? 'bg-slate-750/40 text-slate-200 border-slate-600' 
+              : 'bg-slate-750 text-slate-200 border-slate-600'
           }`}>
-            <p className="text-sm md:text-base whitespace-pre-wrap">{displayContent}</p>
-            
+            <p className="text-sm md:text-base whitespace-pre-wrap break-words">{displayContent}</p>
           </div>
           
           {/* Feedback buttons - positioned at bottom left */}
           <div className="absolute -bottom-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <button onClick={() => handleFeedback('positive')} className="bg-slate-700/80 backdrop-blur border border-slate-600 text-slate-400 hover:text-emerald-400 hover:border-emerald-400/50 p-1.5 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-emerald-400/20" aria-label="Positive feedback">
+            <button onClick={() => handleFeedback('positive')} className="bg-slate-700/80 backdrop-blur border border-slate-600 text-slate-400 hover:text-emerald-400 hover:border-emerald-400/50 p-1.5 rounded-lg transition-all duration-200" aria-label="Positive feedback">
               <ThumbsUp className="w-3 h-3" />
             </button>
-            <button onClick={() => handleFeedback('negative')} className="bg-slate-700/80 backdrop-blur border border-slate-600 text-slate-400 hover:text-red-400 hover:border-red-400/50 p-1.5 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-red-400/20" aria-label="Negative feedback">
+            <button onClick={() => handleFeedback('negative')} className="bg-slate-700/80 backdrop-blur border border-slate-600 text-slate-400 hover:text-red-400 hover:border-red-400/50 p-1.5 rounded-lg transition-all duration-200" aria-label="Negative feedback">
               <ThumbsDown className="w-3 h-3" />
             </button>
             {onSuggestionClick && ((parsedData?.suggested_follow_ups || message.suggested_follow_ups)?.length ?? 0) > 0 && (
               <button
                 onClick={() => setShowSuggestionsModal(true)}
-                className="bg-slate-700/80 backdrop-blur border border-slate-600 text-slate-400 hover:text-cyan-400 hover:border-cyan-400/50 p-1.5 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-cyan-400/20"
+                className="bg-slate-700/80 backdrop-blur border border-slate-600 text-slate-400 hover:text-cyan-400 hover:border-cyan-400/50 p-1.5 rounded-lg transition-all duration-200"
                 aria-label="Show follow-up suggestions"
               >
                 <Lightbulb className="w-3 h-3" />

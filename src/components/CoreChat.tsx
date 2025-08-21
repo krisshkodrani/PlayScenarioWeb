@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react';
 import ChatHeader from './chat/ChatHeader';
 import MessagesList from './chat/MessagesList';
 import ChatInput from './chat/ChatInput';
@@ -9,6 +9,7 @@ import StreamingDebugInfo from './chat/StreamingDebugInfo';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useRealtimeChat } from '@/hooks/useRealtimeChat';
+import { useUnifiedScroll } from '@/hooks/useUnifiedScroll';
 import { supabase } from '@/integrations/supabase/client';
 
 // Debug mode configuration
@@ -47,10 +48,6 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     timestamp: number;
   }>>([]);
   const [previousProgress, setPreviousProgress] = useState<Record<string, number>>({});
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const [isUserNearBottom, setIsUserNearBottom] = useState(true);
-  const lastMsgIdRef = useRef<string | null>(null);
   const [streamingQueueLength, setStreamingQueueLength] = useState(0);
   const [isAnyStreaming, setIsAnyStreaming] = useState(false);
 
@@ -65,123 +62,55 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     sendMessage
   } = useRealtimeChat({ instanceId, scenarioId });
 
-  // Create synthetic opening message when scenario loads and persist until real narrator message arrives
-  const messagesWithOpening = React.useMemo(() => {
-    // If no scenario opening message, return messages as-is
-    if (!scenario?.scenario_opening_message) {
-      return messages;
-    }
-    const opening = scenario.scenario_opening_message || "";
-    
-    // Check if we already have a real opening/narrator message from backend
-    const hasRealNarratorMessage = messages.some(msg => {
-      const msgText = typeof (msg as any).message === 'string' ? (msg as any).message : (msg as any).message ? JSON.stringify((msg as any).message) : '';
-      return (
-        (msg as any).message_type === 'narration' &&
-        (msg as any).id !== 'opening-synthetic' &&
-        (
-          msgText === opening ||
-          (opening && msgText.includes(opening.substring(0, 50))) ||
-          (msg as any).turn_number === 0 ||
-          (msg as any).sender_name === 'Narrator'
-        )
-      );
-    });
-    
-    // If we have a real narrator message from backend, return messages as-is (no synthetic needed)
-    if (hasRealNarratorMessage) {
-      return messages;
-    }
-    
-    // Check if we already have a synthetic opening message in our messages
-    const hasSyntheticOpening = messages.some((msg: any) => msg.id === 'opening-synthetic');
-    
-    // Create synthetic opening message if we don't have one and no real narrator message exists
-    if (!hasSyntheticOpening) {
-      const openingMessage = {
+  // Step 1: Deterministic message pipeline
+  type Msg = any;
+  const processMessages = useCallback((raw: Msg[], scen?: any): Msg[] => {
+    const list: Msg[] = [];
+    const map = new Map<string, Msg>();
+
+    const hasTurn0Narration = raw.some((m: Msg) => m?.message_type === 'narration' && (m?.turn_number ?? -1) === 0);
+
+    if (scen?.scenario_opening_message && !hasTurn0Narration) {
+      const openingMessage: Msg = {
         id: 'opening-synthetic',
         sender_name: 'Narrator',
-        message: opening,
-        message_type: 'narration' as const,
-        timestamp: new Date(Date.now() - 1000).toISOString(), // Slightly in the past to appear first
+        message: scen.scenario_opening_message,
+        message_type: 'narration',
+        timestamp: new Date(0).toISOString(), // earliest
         turn_number: 0,
         sequence_number: 0
       };
-      
-      // Add synthetic message at the beginning, followed by other messages
-      return [openingMessage as any, ...messages];
+      const key = openingMessage.id || `${openingMessage.turn_number}-${openingMessage.sequence_number}-Narrator`;
+      map.set(key, openingMessage);
     }
-    
-    // Synthetic opening already exists, return messages as-is
-    return messages;
-  }, [messages, scenario?.scenario_opening_message]);
 
-  // Enhanced deduplication that handles mode switches
-  const dedupedMessages = React.useMemo(() => {
-    const seen = new Set<string>();
-    const contentSeen = new Map<string, any>(); // Track by content with metadata
-    const out: any[] = [];
-    
-    for (const m of messagesWithOpening as any[]) {
-      const text = typeof m.message === 'string' ? m.message : m?.message ? JSON.stringify(m.message) : '';
-      
-      // Primary key includes ID if available
-      const fullKey = m.id || `${m.message_type}|${m.sender_name || m.character_name}|${text}|${m.turn_number ?? ''}|${m.sequence_number ?? ''}`;
-      
-      // Content key for cross-turn deduplication (especially for AI responses)
-      const contentKey = `${m.message_type}|${m.sender_name || m.character_name}|${text.substring(0, 200)}`;
-      
-      // Check for exact duplicate
-      if (seen.has(fullKey)) {
-        if (DEBUG_CHAT) console.debug('[CoreChat] Dropping exact duplicate', { id: m.id, key: fullKey });
-        continue;
+    for (const m of raw) {
+      const key = m.id || `${m.turn_number ?? ''}-${m.sequence_number ?? ''}-${m.sender_name ?? ''}`;
+      if (!map.has(key)) {
+        map.set(key, m);
       }
-      
-      // For AI responses, check content duplication across turns
-      if (m.message_type === 'ai_response') {
-        const existing = contentSeen.get(contentKey);
-        if (existing) {
-          // If same content exists with a different turn, keep the one with higher turn
-          const existingTurn = existing.turn_number ?? 0;
-          const currentTurn = m.turn_number ?? 0;
-          
-          if (currentTurn <= existingTurn) {
-            if (DEBUG_CHAT) console.debug('[CoreChat] Dropping duplicate AI content from earlier/same turn', { 
-              current: currentTurn, 
-              existing: existingTurn,
-              character: m.character_name 
-            });
-            continue;
-          } else {
-            // Remove the older one and add the newer
-            const oldIndex = out.findIndex(msg => msg === existing);
-            if (oldIndex >= 0) {
-              out.splice(oldIndex, 1);
-              if (DEBUG_CHAT) console.debug('[CoreChat] Replacing older duplicate with newer turn', {
-                old: existingTurn,
-                new: currentTurn,
-                character: m.character_name
-              });
-            }
-          }
-        }
-        contentSeen.set(contentKey, m);
-      }
-      
-      seen.add(fullKey);
-      out.push(m);
     }
-    
-    if (DEBUG_CHAT && messagesWithOpening.length !== out.length) {
-      console.debug('[CoreChat] Deduped messages', { 
-        before: messagesWithOpening.length, 
-        after: out.length, 
-        dropped: messagesWithOpening.length - out.length 
-      });
-    }
-    
-    return out;
-  }, [messagesWithOpening]);
+
+    map.forEach((v) => list.push(v));
+
+    list.sort((a, b) => {
+      const tn = (a.turn_number ?? 0) - (b.turn_number ?? 0);
+      if (tn !== 0) return tn;
+      // Treat missing sequence_number as +Infinity so optimistic items render last within a turn
+      const snA = (a.sequence_number === undefined || a.sequence_number === null) ? Number.POSITIVE_INFINITY : a.sequence_number;
+      const snB = (b.sequence_number === undefined || b.sequence_number === null) ? Number.POSITIVE_INFINITY : b.sequence_number;
+      const sn = (snA as number) - (snB as number);
+      if (sn !== 0) return sn;
+      // Robust timestamp fallback: missing/invalid timestamps go last
+      const ta = isNaN(new Date(a.timestamp).getTime()) ? Number.MAX_SAFE_INTEGER : new Date(a.timestamp).getTime();
+      const tb = isNaN(new Date(b.timestamp).getTime()) ? Number.MAX_SAFE_INTEGER : new Date(b.timestamp).getTime();
+      return ta - tb;
+    });
+
+    return list;
+  }, []);
+
+  const processedMessages = useMemo(() => processMessages(messages as any[], scenario), [messages, scenario, processMessages]);
 
   // objectivesWithProgress is now provided by useRealtimeChat hook
   // This eliminates duplicate calculations and ensures consistent data flow
@@ -308,67 +237,31 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     }
   }, [objectivesWithProgress, previousProgress]);
 
-  // Enhanced scroll handling
-  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth', force: boolean = false) => {
-    if (!messagesEndRef.current) return;
-    if (!force && !isUserNearBottom) return;
-    requestAnimationFrame(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
-    });
-  }, [isUserNearBottom]);
-
-  // Check if user is near bottom of scroll
-  const checkScrollPosition = useCallback(() => {
-    if (messagesContainerRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-      const threshold = 100; // pixels from bottom
-      const nearBottom = scrollHeight - scrollTop - clientHeight < threshold;
-      setIsUserNearBottom(nearBottom);
-    }
-  }, []);
-
-  // Smooth auto-scroll with instant first paint - updated to use messagesWithOpening
+  // Unified scroll hook
+  const { containerRef, handleScroll, scrollToBottom, isAutoScrollEnabled, isNearBottom } = useUnifiedScroll(32);
+  const lastMsgIdRef = useRef<string | null>(null);
   const initialScrollDone = useRef(false);
-  useLayoutEffect(() => {
-    if (!messagesEndRef.current) return;
 
-    // First render after load: jump to bottom without animation
-    if (!initialScrollDone.current && (messagesWithOpening.length > 0)) {
-      requestAnimationFrame(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
-        initialScrollDone.current = true;
-      });
+  useLayoutEffect(() => {
+    // First paint to bottom without animation once loading completes and messages ready
+    if (!initialScrollDone.current && !loading && processedMessages.length > 0) {
+      scrollToBottom(true, 'auto' as any);
+      initialScrollDone.current = true;
       return;
     }
 
-    // Scroll when new messages appear or streaming state changes
-    const last = messagesWithOpening[messagesWithOpening.length - 1];
-    const messageChanged = last && lastMsgIdRef.current !== last.id;
-    const shouldScrollForStreaming = isAnyStreaming && isUserNearBottom;
-    const shouldScrollForQueue = streamingQueueLength > 0 && isUserNearBottom;
-    
-    if (messageChanged) {
+    const last = processedMessages[processedMessages.length - 1];
+    if (!last) return;
+    const changed = lastMsgIdRef.current !== last.id;
+    if (changed) {
       lastMsgIdRef.current = last.id;
     }
-    
-    if ((messageChanged || shouldScrollForStreaming || shouldScrollForQueue) && isUserNearBottom) {
-      requestAnimationFrame(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      });
-    }
-  }, [messagesWithOpening, isUserNearBottom, isAnyStreaming, streamingQueueLength]);
 
-  // Observe container resize to keep view stuck to bottom when near bottom
-  useEffect(() => {
-    if (!messagesContainerRef.current) return;
-    const ro = new ResizeObserver(() => {
-      if (isUserNearBottom) {
-        scrollToBottom('smooth');
-      }
-    });
-    ro.observe(messagesContainerRef.current);
-    return () => ro.disconnect();
-  }, [isUserNearBottom, scrollToBottom]);
+    // Only auto-scroll on new message if user is near bottom right now
+    if (changed && (isAutoScrollEnabled || isNearBottom())) {
+      scrollToBottom(false, 'smooth' as any);
+    }
+  }, [processedMessages, isAutoScrollEnabled, isNearBottom, loading, scrollToBottom]);
 
   // Load characters from instance data when available
   useEffect(() => {
@@ -376,7 +269,6 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
       // Characters are now embedded in the instance
       const aiCharacters = Array.isArray(instance.ai_characters) ? instance.ai_characters : [];
       const playerChar = instance.player_character;
-      
       const allCharacters: Character[] = [
         ...aiCharacters.map((char: any) => ({
           id: String(char.id || `ai_${Math.random()}`),
@@ -395,44 +287,25 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
           avatar_url: playerChar.avatar_url
         }] : [])
       ];
-      
       setCharacters(allCharacters);
     }
   }, [instance]);
-
-  // Calculate progress based on actual objective completion (not turns)
-  useEffect(() => {
-    if (objectivesWithProgress.length > 0) {
-      // Calculate average completion percentage across all objectives
-      const totalProgress = objectivesWithProgress.reduce((sum, obj) => sum + obj.completion_percentage, 0);
-      const averageProgress = Math.round(totalProgress / objectivesWithProgress.length);
-      setProgressPercentage(averageProgress);
-    } else {
-      // Fallback to 0% if no objectives are loaded yet
-      setProgressPercentage(0);
-    }
-  }, [objectivesWithProgress]);
 
   const getCharacterById = (id: string): Character | undefined => {
     return characters.find(char => char.id === id);
   };
 
   const handleSendMessage = async () => {
-    // Allow sending while AI is typing
     if (!inputValue.trim()) return;
-
     const prefix = chatMode === 'focused' ? 'CHAT ' : 'ACTION ';
     const messageContent = prefix + inputValue;
     setInputValue('');
-
-    // Jump to bottom immediately so the just-sent message is visible
-    scrollToBottom('auto', true);
-    
-    // Map focus states to message modes
+    // Only auto-scroll if the user was near the bottom at send time
+    if (isAutoScrollEnabled || isNearBottom()) {
+      scrollToBottom(true, 'auto' as any);
+    }
     const messageMode = chatMode === 'focused' ? 'chat' : 'action';
     await sendMessage(messageContent, messageMode);
-
-    // No extra scroll here; useLayoutEffect will handle after messages update
   };
 
   const toggleMode = () => {
@@ -443,36 +316,19 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     setInputValue(suggestion);
   };
 
-  // Handle queue changes for smart scrolling
   const handleQueueChange = useCallback((queueLength: number, streaming: boolean) => {
     setStreamingQueueLength(queueLength);
     setIsAnyStreaming(streaming);
-    
-    // Auto-scroll when new typing indicators appear or streaming starts
-    if (queueLength > 0 || streaming) {
-      scrollToBottom('smooth');
-    }
-  }, [scrollToBottom]);
+    // Do not force scrolling here; respect user manual scroll state
+  }, []);
 
-  const toggleObjectiveDrawer = () => {
-    setShowObjectiveDrawer(!showObjectiveDrawer);
-    if (showCharacterDrawer) {
-      setShowCharacterDrawer(false);
-    }
-    if (!showObjectiveDrawer) {
-      setHasObjectiveUpdates(false);
-    }
-  };
-
-  const toggleCharacterDrawer = () => {
-    setShowCharacterDrawer(!showCharacterDrawer);
-    if (showObjectiveDrawer) {
-      setShowObjectiveDrawer(false);
-    }
-    if (!showCharacterDrawer) {
-      setHasCharacterUpdates(false);
-    }
-  };
+  // Toggle global streaming class for motion reduction
+  useEffect(() => {
+    const active = isAnyStreaming || streamingQueueLength > 0;
+    if (active) document.body.classList.add('is-streaming');
+    else document.body.classList.remove('is-streaming');
+    return () => { document.body.classList.remove('is-streaming'); };
+  }, [isAnyStreaming, streamingQueueLength]);
 
   // Loading message with patience
   const [loadingStartTime] = useState(Date.now());
@@ -492,72 +348,18 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
   useEffect(() => {
     if (!loading) {
       requestAnimationFrame(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
+        scrollToBottom(true, 'auto' as any);
         initialScrollDone.current = true;
-        setIsUserNearBottom(true);
       });
     }
-  }, [loading]);
+  }, [loading, scrollToBottom]);
 
   if (loading) {
     return (
-      <div className="flex flex-col h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-        {/* Header with scenario title if available */}
-        <div className="sticky top-0 bg-gradient-to-r from-slate-800 to-slate-700/95 backdrop-blur-lg border-b-2 border-cyan-400/30 shadow-xl shadow-slate-900/80 p-4 z-30 min-h-[80px]">
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col">
-              {scenario?.title ? (
-                <h1 className="text-lg font-semibold text-cyan-400">{scenario.title}</h1>
-              ) : (
-                <div className="h-6 w-48 bg-slate-700/70 rounded-md animate-pulse" />
-              )}
-              <div className="text-sm text-slate-400 mt-1">Loading conversation...</div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-slate-700/70 animate-pulse" />
-              <div className="w-12 h-12 rounded-full bg-slate-700/70 animate-pulse" />
-            </div>
-          </div>
+      <div className="flex items-center justify-center h-screen bg-slate-900 text-white">
+        <div className="text-center">
+          <p className="text-slate-400 text-sm tracking-wide">connecting...</p>
         </div>
-        
-        {/* Messages with narrator preview */}
-        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4">
-          {/* Loading skeleton with better status messages */}
-          <div className="mb-6">
-            <div className="animate-pulse">
-              <div className="bg-slate-700/30 rounded-lg p-4 max-w-4xl">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500"></div>
-                  <div className="h-5 w-20 bg-slate-600/50 rounded animate-pulse"></div>
-                </div>
-                <div className="space-y-2">
-                  <div className="h-4 bg-slate-600/50 rounded w-full"></div>
-                  <div className="h-4 bg-slate-600/50 rounded w-3/4"></div>
-                  <div className="h-4 bg-slate-600/50 rounded w-5/6"></div>
-                </div>
-              </div>
-            </div>
-            <div className="text-center text-slate-400 text-sm mt-3">
-              {showPatientMessage 
-                ? "Still loading... This may take a moment. Please be patient." 
-                : "Loading scenario and creating opening message..."}
-            </div>
-          </div>
-          
-          {/* Skeleton for additional messages */}
-          <MessagesSkeleton rows={3} />
-        </div>
-        
-        {/* Input disabled during loading */}
-        <ChatInput 
-          value={inputValue}
-          onChange={setInputValue}
-          onSend={() => {}}
-          disabled
-          mode={chatMode}
-          onModeToggle={() => {}}
-          onModeChange={setChatMode}
-        />
       </div>
     );
   }
@@ -598,9 +400,8 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     );
   }
 
-
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+    <div className="flex flex-col h-screen bg-slate-900 text-white">
       {/* Header */}
       <ChatHeader
         scenarioTitle={scenario.title}
@@ -609,66 +410,65 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
         progressPercentage={progressPercentage}
         hasObjectiveUpdates={hasObjectiveUpdates}
         hasCharacterUpdates={hasCharacterUpdates}
-        onToggleObjectiveDrawer={toggleObjectiveDrawer}
-        onToggleCharacterDrawer={toggleCharacterDrawer}
+        onToggleObjectiveDrawer={() => { setShowObjectiveDrawer(v => !v); if (!showObjectiveDrawer) setHasObjectiveUpdates(false); }}
+        onToggleCharacterDrawer={() => { setShowCharacterDrawer(v => !v); if (!showCharacterDrawer) setHasCharacterUpdates(false); }}
       />
-      
+
       {/* Progress Notifications */}
       {progressNotifications.length > 0 && (
         <div className="fixed top-20 right-4 z-40 space-y-2">
           {progressNotifications.map((notification) => (
             <div
               key={notification.id}
-              className="bg-gradient-to-r from-emerald-600 to-green-500 text-white px-4 py-3 rounded-lg shadow-lg animate-in slide-in-from-right duration-300"
+              className="bg-slate-800/90 border border-slate-700 text-slate-200 px-3 py-2 rounded-md shadow-md"
             >
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                <div className="font-medium text-sm">Objective Progress!</div>
+                <span className="inline-block w-2 h-2 rounded-full bg-slate-300 animate-pulse" />
+                <div className="font-medium text-xs">Objective progress</div>
               </div>
-              <div className="text-sm opacity-90 mt-1">
+              <div className="text-xs opacity-80 mt-1">
                 {notification.objective}: +{notification.change}% ({notification.newPercentage}%)
               </div>
-              <div className="text-xs opacity-75 mt-1 capitalize">
+              <div className="text-[10px] opacity-60 mt-1 capitalize">
                 Status: {notification.status.replace(/_/g, ' ')}
               </div>
             </div>
           ))}
         </div>
       )}
-      
+
       {/* Scroll Container */}
-      <div 
-        ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto scrollbar-hide"
-        onScroll={checkScrollPosition}
-      >
-        <MessagesList
-          messages={messagesWithOpening.map((msg: any) => ({
-            id: msg.id,
-            sender_name: msg.sender_name,
-            message: typeof msg.message === 'object' ? JSON.stringify(msg.message) : msg.message,
-            message_type: msg.message_type as 'user_message' | 'ai_response' | 'system' | 'narration',
-            timestamp: new Date(msg.timestamp),
-            mode: msg.mode,
-            character_name: msg.character_name,
-            response_type: msg.response_type,
-            internal_state: msg.internal_state,
-            suggested_follow_ups: msg.suggested_follow_ups,
-            metrics: msg.metrics,
-            flags: msg.flags,
-            streamed: msg.streamed
-          }))}
-          isTyping={isTyping}
-          typingCharacter={undefined}
-          characters={characters}
-          getCharacterById={getCharacterById}
-          onSuggestionClick={handleSuggestionClick}
-          onQueueChange={handleQueueChange}
-          instanceId={instanceId}
-        />
-        <div ref={messagesEndRef} />
+      <div ref={containerRef} className="flex-1 overflow-y-auto scrollbar-smooth streaming-container" onScroll={handleScroll}>
+        <div className="mx-auto w-full max-w-5xl xl:max-w-6xl px-4 md:px-6 py-6">
+          <MessagesList
+            messages={(processedMessages as any[]).map((msg: any) => ({
+              id: msg.id,
+              sender_name: msg.sender_name,
+              message: typeof msg.message === 'object' ? JSON.stringify(msg.message) : msg.message,
+              message_type: msg.message_type as 'user_message' | 'ai_response' | 'system' | 'narration',
+              timestamp: new Date(msg.timestamp),
+              mode: msg.mode,
+              character_name: msg.character_name,
+              response_type: msg.response_type,
+              internal_state: msg.internal_state,
+              suggested_follow_ups: msg.suggested_follow_ups,
+              metrics: msg.metrics,
+              flags: msg.flags,
+              streamed: msg.streamed,
+              turn_number: msg.turn_number,
+              sequence_number: msg.sequence_number
+            }))}
+            isTyping={isTyping}
+            typingCharacter={undefined}
+            characters={characters}
+            getCharacterById={getCharacterById}
+            onSuggestionClick={handleSuggestionClick}
+            onQueueChange={handleQueueChange}
+            instanceId={instanceId}
+          />
+        </div>
       </div>
-      
+
       {/* Message Input */}
       <ChatInput 
         value={inputValue}
@@ -676,7 +476,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
         onSend={handleSendMessage}
         disabled={isTyping}
         mode={chatMode}
-        onModeToggle={toggleMode}
+        onModeToggle={() => setChatMode(prev => prev === 'focused' ? 'unfocused' : 'focused')}
         onModeChange={setChatMode}
       />
 
@@ -696,9 +496,9 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
         characters={characters}
       />
 
-      {/* Debug Info for Streaming - Only show in development */}
+      {/* Debug Info */}
       <StreamingDebugInfo 
-        messages={messagesWithOpening}
+        messages={processedMessages as any}
         show={DEBUG_CHAT}
       />
     </div>

@@ -72,11 +72,11 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
   // AI character typing indicator
   return (
     <div className="w-full">
-      <div className="flex items-start gap-3 group w-[70%]">
+      <div className="flex items-start gap-4 group sm:w-[90%] md:w-[80%] lg:w-[72%] xl:w-[68%]">
         {/* Character Avatar */}
-        <CharacterAvatar character={character} characterName={displayName} size="sm" />
+        <div className="shrink-0"><CharacterAvatar character={character} characterName={displayName} size="lg" /></div>
         
-        <div className="flex-1 relative">
+        <div className="flex-1 relative min-w-0">
           {/* Character Name and Status Indicators */}
           <div className="flex items-center gap-2 mb-1 ml-1">
             <p className="text-xs font-medium text-slate-300">
