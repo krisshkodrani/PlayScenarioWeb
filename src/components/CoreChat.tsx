@@ -257,9 +257,14 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
       lastMsgIdRef.current = last.id;
     }
 
-    // Only auto-scroll on new message if user is near bottom right now
-    if (changed && (isAutoScrollEnabled || isNearBottom())) {
-      scrollToBottom(false, 'smooth' as any);
+    // Only auto-scroll on new message if user is near bottom AND hasn't manually scrolled recently
+    if (changed && isAutoScrollEnabled && isNearBottom()) {
+      // Add delay to allow any manual scroll to complete first
+      setTimeout(() => {
+        if (isAutoScrollEnabled && isNearBottom()) {
+          scrollToBottom(false, 'smooth' as any);
+        }
+      }, 100);
     }
   }, [processedMessages, isAutoScrollEnabled, isNearBottom, loading, scrollToBottom]);
 

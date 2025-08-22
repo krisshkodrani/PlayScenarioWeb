@@ -11,6 +11,8 @@ export function useUnifiedScroll(threshold = 100) {
   const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true);
   const rafIdRef = useRef<number | null>(null);
   const prevScrollTopRef = useRef<number>(0);
+  const userScrollLockRef = useRef<number>(0); // Timestamp when user manually scrolled
+  const scrollLockTimeoutRef = useRef<number | null>(null);
 
   const isNearBottom = useCallback(() => {
     const el = containerRef.current;
@@ -24,25 +26,49 @@ export function useUnifiedScroll(threshold = 100) {
     if (!el) return;
     const prev = prevScrollTopRef.current;
     const current = el.scrollTop;
-
-    // Only check if user is manually scrolling (not programmatic)
-    if (Math.abs(current - prev) > 5) {
-      // If user scrolls upward significantly, disable auto-scroll immediately
-      if (current < prev - 10) {
-        if (isAutoScrollEnabled) setIsAutoScrollEnabled(false);
-      } else {
-        // Scrolling down: enable only when truly near bottom
-        const near = isNearBottom();
-        if (near && !isAutoScrollEnabled) setIsAutoScrollEnabled(true);
+    
+    // Detect manual scroll (significant movement)
+    const scrollDelta = Math.abs(current - prev);
+    if (scrollDelta > 3) {
+      // If user scrolls up manually, lock auto-scroll for 3 seconds
+      if (current < prev - 5) {
+        userScrollLockRef.current = Date.now();
+        setIsAutoScrollEnabled(false);
+        
+        // Clear existing timeout
+        if (scrollLockTimeoutRef.current) {
+          clearTimeout(scrollLockTimeoutRef.current);
+        }
+        
+        // Re-enable auto-scroll after 3 seconds of no manual scroll
+        scrollLockTimeoutRef.current = window.setTimeout(() => {
+          if (isNearBottom()) {
+            setIsAutoScrollEnabled(true);
+          }
+        }, 3000);
+      }
+      // If user scrolls down and is near bottom, re-enable auto-scroll
+      else if (current > prev && isNearBottom()) {
+        const timeSinceManualScroll = Date.now() - userScrollLockRef.current;
+        if (timeSinceManualScroll > 1000) { // 1 second grace period
+          setIsAutoScrollEnabled(true);
+        }
       }
     }
 
     prevScrollTopRef.current = current;
-  }, [isAutoScrollEnabled, isNearBottom]);
+  }, [isNearBottom]);
 
   const scrollToBottom = useCallback((force = false, behavior: ScrollBehavior = 'smooth') => {
     const el = containerRef.current;
     if (!el) return;
+    
+    // Check if user manually scrolled recently - if so, don't auto-scroll unless forced
+    const timeSinceManualScroll = Date.now() - userScrollLockRef.current;
+    if (!force && timeSinceManualScroll < 3000) {
+      return; // User scrolled manually within last 3 seconds, don't auto-scroll
+    }
+    
     if (!force && !isAutoScrollEnabled) return;
 
     if (rafIdRef.current) {
@@ -53,9 +79,12 @@ export function useUnifiedScroll(threshold = 100) {
     rafIdRef.current = requestAnimationFrame(() => {
       try {
         el.scrollTo({ top: el.scrollHeight, behavior });
+        // Update our tracking
+        prevScrollTopRef.current = el.scrollTop;
       } catch {
         // Fallback
         el.scrollTop = el.scrollHeight;
+        prevScrollTopRef.current = el.scrollTop;
       }
     });
   }, [isAutoScrollEnabled]);
@@ -70,11 +99,14 @@ export function useUnifiedScroll(threshold = 100) {
     }
   }, [isNearBottom]);
 
-  // Cleanup pending RAF on unmount
+  // Cleanup pending RAF and timeouts on unmount
   useEffect(() => {
     return () => {
       if (rafIdRef.current) {
         cancelAnimationFrame(rafIdRef.current);
+      }
+      if (scrollLockTimeoutRef.current) {
+        clearTimeout(scrollLockTimeoutRef.current);
       }
     };
   }, []);
