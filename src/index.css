@@ -224,11 +224,13 @@
 /* --- Chat streaming utilities and sober palette extensions --- */
 @layer utilities {
   .bg-slate-750 { background-color: rgb(40 51 66); }
-  .scrollbar-smooth { scroll-behavior: smooth; }
+  .scrollbar-smooth { 
+    scroll-behavior: auto; /* Changed from smooth to prevent interference with manual scroll */
+  }
   .streaming-container {
-    will-change: transform;
-    backface-visibility: hidden;
+    will-change: auto; /* Reduced to improve scroll performance */
     contain: layout paint;
+    overscroll-behavior: contain; /* Prevent scroll chaining */
   }
   .streaming-message {
     /* helper class for min-height guards if needed */

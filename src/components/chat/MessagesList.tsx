@@ -113,13 +113,21 @@ const MessagesList: React.FC<MessagesListProps> = ({
   }, []);
 
   const handleStreamingComplete = useCallback((messageId: string) => {
-    // Trigger scroll to ensure full message is visible
-    setTimeout(() => {
-      const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-      if (messageElement) {
-        messageElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
-    }, 100);
+    // Only auto-scroll if user hasn't manually scrolled up
+    const container = document.querySelector('.streaming-container');
+    if (!container) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = container as HTMLElement;
+    const isNearBottom = scrollHeight - (scrollTop + clientHeight) < 100;
+    
+    if (isNearBottom) {
+      setTimeout(() => {
+        const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+        if (messageElement) {
+          messageElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 100);
+    }
   }, []);
 
   const { 

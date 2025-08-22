@@ -25,13 +25,16 @@ export function useUnifiedScroll(threshold = 100) {
     const prev = prevScrollTopRef.current;
     const current = el.scrollTop;
 
-    // If user scrolls upward, disable auto-scroll immediately
-    if (current < prev) {
-      if (isAutoScrollEnabled) setIsAutoScrollEnabled(false);
-    } else {
-      // Scrolling down: enable only when truly near bottom
-      const near = isNearBottom();
-      if (near !== isAutoScrollEnabled) setIsAutoScrollEnabled(near);
+    // Only check if user is manually scrolling (not programmatic)
+    if (Math.abs(current - prev) > 5) {
+      // If user scrolls upward significantly, disable auto-scroll immediately
+      if (current < prev - 10) {
+        if (isAutoScrollEnabled) setIsAutoScrollEnabled(false);
+      } else {
+        // Scrolling down: enable only when truly near bottom
+        const near = isNearBottom();
+        if (near && !isAutoScrollEnabled) setIsAutoScrollEnabled(true);
+      }
     }
 
     prevScrollTopRef.current = current;
