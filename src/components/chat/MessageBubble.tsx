@@ -136,11 +136,20 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   if (messageType === 'user_message') {
     const isActionMessage = message.mode === 'action';
     const isOptimistic = typeof message.id === 'string' && message.id.startsWith('user-');
+    
+    // Calculate dynamic width based on content length
+    const contentLength = displayContent.length;
+    const getMessageWidth = () => {
+      if (contentLength <= 20) return 'w-fit max-w-[40%]'; // Short messages
+      if (contentLength <= 50) return 'w-fit max-w-[55%]'; // Medium messages  
+      return 'w-fit max-w-[70%]'; // Long messages
+    };
+    
     return (
       <div className="w-full">
         {/* Match AI row widths and align to the right */}
         <div className="flex items-start justify-end gap-4 sm:w-[90%] md:w-[80%] lg:w-[72%] xl:w-[68%] ml-auto">
-          <div className="relative max-w-full">
+          <div className="relative">
             {/* Mode indicator badge */}
             <div className={`absolute -top-2 -left-2 z-10 w-6 h-6 rounded-full flex items-center justify-center shadow-lg ${
               isActionMessage 
@@ -154,7 +163,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               )}
             </div>
             
-            <div className={`px-4 py-3 rounded-2xl rounded-br-sm min-w-[40%] max-w-[70%] border bg-slate-700 text-slate-100 border-slate-600 break-words whitespace-pre-wrap ${isOptimistic ? 'opacity-70' : ''}`}>
+            <div className={`${getMessageWidth()} px-4 py-3 rounded-2xl rounded-br-sm border bg-slate-700 text-slate-100 border-slate-600 break-words whitespace-pre-wrap ${isOptimistic ? 'opacity-70' : ''}`}>
               <p className="text-sm md:text-base">{displayContent}</p>
             </div>
           </div>
