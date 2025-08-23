@@ -237,6 +237,22 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     }
   }, [objectivesWithProgress, previousProgress]);
 
+  // Update header progress ring based on objectives progress
+  useEffect(() => {
+    const count = objectivesWithProgress?.length ?? 0;
+    if (!count) {
+      setProgressPercentage(0);
+      return;
+    }
+    const avg = objectivesWithProgress.reduce((sum: number, obj: any) => {
+      const pct = typeof obj?.completion_percentage === 'number'
+        ? obj.completion_percentage
+        : (typeof obj?.progress_percentage === 'number' ? obj.progress_percentage : 0);
+      return sum + pct;
+    }, 0) / count;
+    setProgressPercentage(Math.round(avg));
+  }, [objectivesWithProgress]);
+
   // Unified scroll hook
   const { containerRef, handleScroll, scrollToBottom, isAutoScrollEnabled, isNearBottom } = useUnifiedScroll(32);
   const lastMsgIdRef = useRef<string | null>(null);
