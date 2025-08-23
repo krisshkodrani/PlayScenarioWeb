@@ -119,7 +119,7 @@ const StreamingMessage: React.FC<StreamingMessageProps> = ({
   // User messages (shouldn't be streamed, but just in case)
   if (messageType === 'user_message') {
     return (
-      <div className="flex justify-end">
+      <div className="flex justify-end" data-message-id={message.id}>
         <div className="bg-slate-700 text-slate-100 border border-slate-600 rounded-2xl px-4 py-3 min-w-[50%] sm:max-w-[90%] md:max-w-[80%] lg:max-w-[72%] xl:max-w-[68%] shadow-lg break-words whitespace-pre-wrap">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-medium opacity-80">{message.sender_name}</span>
@@ -138,7 +138,7 @@ const StreamingMessage: React.FC<StreamingMessageProps> = ({
   // System messages
   if (messageType === 'system') {
     return (
-      <div className="flex justify-center">
+      <div className="flex justify-center" data-message-id={message.id}>
         <div className="bg-slate-800/50 border border-slate-700 text-slate-400 rounded-lg px-4 py-2 text-sm italic max-w-md text-center">
           {shownContent}
           {isStreaming && (
@@ -154,7 +154,7 @@ const StreamingMessage: React.FC<StreamingMessageProps> = ({
   // Narration messages - dynamic growth (no pre-sized ghost, no reserved height)
   if (messageType === 'narration') {
     return (
-      <div className="w-full group relative">
+      <div className="w-full group relative" data-message-id={message.id}>
         <div className="bg-slate-800/70 border border-violet-900/30 text-slate-300 px-6 py-4 rounded-xl mx-auto shadow-lg">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-semibold uppercase tracking-wide text-violet-400">Narrator</span>
@@ -188,7 +188,7 @@ const StreamingMessage: React.FC<StreamingMessageProps> = ({
   const isActionResponse = message.mode === 'action';
   
   return (
-    <div className="w-full relative">
+    <div className="w-full relative" data-message-id={message.id}>
       <div className="flex items-start gap-4 group sm:w-[90%] md:w-[80%] lg:w-[72%] xl:w-[68%]">
         <div className="shrink-0"><CharacterAvatar character={character} characterName={displayName} size="lg" /></div>
         

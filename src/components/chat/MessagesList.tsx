@@ -95,6 +95,13 @@ const MessagesList: React.FC<MessagesListProps> = ({
     }))
   ), [messages]);
 
+  // Helper to get the scroll container and check if user is near bottom
+  const getScrollContainer = () => document.querySelector('.streaming-container') as HTMLElement | null;
+  const isNearBottom = (el: HTMLElement, threshold = 200) => {
+    const remaining = el.scrollHeight - (el.scrollTop + el.clientHeight);
+    return remaining < threshold;
+  };
+
   // Single entry point from streaming hook: write to buffer only
   const handleStreamingUpdate = useCallback((messageId: string, content: string, isComplete: boolean) => {
     // Write to buffer and mark pending
@@ -113,13 +120,13 @@ const MessagesList: React.FC<MessagesListProps> = ({
   }, []);
 
   const handleStreamingComplete = useCallback((messageId: string) => {
-    // Trigger scroll to ensure full message is visible
+    // When streaming completes, if user was near bottom, keep them at bottom
     setTimeout(() => {
-      const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-      if (messageElement) {
-        messageElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      const container = getScrollContainer();
+      if (container && isNearBottom(container)) {
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
       }
-    }, 100);
+    }, 80);
   }, []);
 
   const { 
@@ -144,9 +151,19 @@ const MessagesList: React.FC<MessagesListProps> = ({
     if (shouldRun && flushTimerRef.current == null) {
       flushTimerRef.current = window.setInterval(() => {
         if (!hasPendingRef.current) return;
+
+        const container = getScrollContainer();
+        const shouldStick = container ? isNearBottom(container) : false;
+
         // Apply buffered updates in one state set
         setStreamedContent(new Map(bufferRef.current));
         hasPendingRef.current = false;
+
+        // If user was near bottom, keep the scroll pinned to bottom so content doesn't go under input
+        if (shouldStick && container) {
+          // Use auto to avoid continuous smooth scroll jitter during streaming
+          container.scrollTo({ top: container.scrollHeight, behavior: 'auto' });
+        }
       }, 50);
     }
 
@@ -155,8 +172,13 @@ const MessagesList: React.FC<MessagesListProps> = ({
       flushTimerRef.current = null;
       // Final flush if anything pending
       if (hasPendingRef.current) {
+        const container = getScrollContainer();
+        const shouldStick = container ? isNearBottom(container) : false;
         setStreamedContent(new Map(bufferRef.current));
         hasPendingRef.current = false;
+        if (shouldStick && container) {
+          container.scrollTo({ top: container.scrollHeight, behavior: 'auto' });
+        }
       }
     }
 
@@ -200,6 +222,38 @@ const MessagesList: React.FC<MessagesListProps> = ({
         const isCurrentlyStreaming = message.id === currentStreamingMessageId;
         const isInQueue = messageQueue.some(m => m.id === message.id) && !isCurrentlyStreaming;
         const shouldStream = isStreamable && streamingState && !completedStreaming.has(message.id) && isCurrentlyStreaming;
+        const hasStreamingState = !!streamingState;
+        const isCompleted = completedStreaming.has(message.id) || message.streamed === true;
+
+        // FIX: Hide unprocessed streamable messages to prevent full-content flash
+        const isUnprocessedStreamable = isStreamable && !isCompleted && !hasStreamingState && !isCurrentlyStreaming && !isInQueue;
+        if (isUnprocessedStreamable) {
+          return null;
+        }
+
+        // NEW: Pending streamable (has state but not queued/streaming yet) -> show typing indicator placeholder
+        const isPendingStreamable = isStreamable && !isCompleted && hasStreamingState && !isCurrentlyStreaming && !isInQueue;
+        if (isPendingStreamable) {
+          const convertedMessage: Message = {
+            id: message.id,
+            sender_name: message.sender_name,
+            message: message.message,
+            turn_number: message.turn_number ?? 0,
+            message_type: message.message_type,
+            timestamp: message.timestamp.toISOString(),
+            sequence_number: message.sequence_number ?? index,
+            mode: message.mode
+          };
+          const messageCharacter = resolveCharacterForMessage(message, characters);
+          return (
+            <TypingIndicator
+              key={`typing-pending-${message.id}`}
+              message={convertedMessage}
+              character={messageCharacter}
+              queuePosition={streamingState?.position || 0}
+            />
+          );
+        }
         
         // Show typing indicator for queued messages
         if (isInQueue) {
@@ -267,6 +321,9 @@ const MessagesList: React.FC<MessagesListProps> = ({
           />
         );
       })}
+
+      {/* Bottom spacer removed: we now rely on scroll container padding to avoid overlap */}
+      {/* <div aria-hidden className="h-24 sm:h-28" /> */}
     </div>
   );
 };

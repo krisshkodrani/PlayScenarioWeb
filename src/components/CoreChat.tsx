@@ -258,10 +258,38 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
   const lastMsgIdRef = useRef<string | null>(null);
   const initialScrollDone = useRef(false);
 
+  // Dynamically pad scroll container to the height of the sticky input
+  const inputHeightRef = useRef<number>(96); // fallback
+  useEffect(() => {
+    const measure = () => {
+      const el = document.querySelector('.chat-input-container') as HTMLElement | null;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      inputHeightRef.current = rect.height;
+      const container = containerRef.current;
+      if (container) {
+        container.style.paddingBottom = `${Math.ceil(rect.height + 16)}px`; // a little extra gap
+      }
+    };
+    measure();
+    const ro = new ResizeObserver(() => measure());
+    const el = document.querySelector('.chat-input-container') as HTMLElement | null;
+    if (el) ro.observe(el);
+    return () => ro.disconnect();
+  }, [containerRef]);
+
+  // Helper to scroll to bottom safely (keeping content above the input)
+  const safeScrollToBottom = useCallback((instant = false) => {
+    const container = containerRef.current;
+    if (!container) return;
+    const behavior = instant ? 'auto' : 'smooth';
+    container.scrollTo({ top: container.scrollHeight, behavior: behavior as ScrollBehavior });
+  }, [containerRef]);
+
   useLayoutEffect(() => {
     // First paint to bottom without animation once loading completes and messages ready
     if (!initialScrollDone.current && !loading && processedMessages.length > 0) {
-      scrollToBottom(true, 'auto' as any);
+      safeScrollToBottom(true);
       initialScrollDone.current = true;
       return;
     }
@@ -275,9 +303,19 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
 
     // Only auto-scroll on new message if user is near bottom right now
     if (changed && (isAutoScrollEnabled || isNearBottom())) {
-      scrollToBottom(false, 'smooth' as any);
+      safeScrollToBottom(false);
     }
-  }, [processedMessages, isAutoScrollEnabled, isNearBottom, loading, scrollToBottom]);
+  }, [processedMessages, isAutoScrollEnabled, isNearBottom, loading, safeScrollToBottom]);
+
+  // After loading finishes, jump to bottom once without animation to resume like a normal chat
+  useEffect(() => {
+    if (!loading) {
+      requestAnimationFrame(() => {
+        safeScrollToBottom(true);
+        initialScrollDone.current = true;
+      });
+    }
+  }, [loading, safeScrollToBottom]);
 
   // Load characters from instance data when available
   useEffect(() => {
@@ -379,16 +417,6 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
       return () => clearTimeout(timer);
     }
   }, [loading]);
-
-  // After loading finishes, jump to bottom once without animation to resume like a normal chat
-  useEffect(() => {
-    if (!loading) {
-      requestAnimationFrame(() => {
-        scrollToBottom(true, 'auto' as any);
-        initialScrollDone.current = true;
-      });
-    }
-  }, [loading, scrollToBottom]);
 
   if (loading) {
     return (

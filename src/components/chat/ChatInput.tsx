@@ -1,4 +1,3 @@
-
 import React, { KeyboardEvent } from 'react';
 import { Send, MessageCircle, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import { 
@@ -41,7 +40,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <div className="sticky bottom-0 bg-gradient-to-r from-slate-800/95 to-slate-700/80 backdrop-blur-lg border-t border-slate-600 shadow-lg shadow-slate-900/50 p-4 z-10">
+    <div className="sticky bottom-0 bg-gradient-to-r from-slate-800/95 to-slate-700/80 backdrop-blur-lg border-t border-slate-600 shadow-lg shadow-slate-900/50 p-4 z-10 chat-input-container">
       <div className="flex gap-3 items-end">
         {/* Mode Switcher - moved to the left */}
         <div

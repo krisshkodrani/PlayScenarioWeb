@@ -43,18 +43,10 @@ export const useSequentialMessageStreaming = ({
 
   // Calculate character streaming speed for 3-4 sentences per second
   const calculateCharacterDelay = useCallback((char: string, totalChars: number): number => {
-    // Target: 3-4 sentences per second
-    // Average sentence length ~50-100 characters
-    // So target: 150-400 characters per second
-    // Character delay: 1000ms / 300 chars = ~3.3ms per character
-    
     const baseDelay = 3; // 3ms per character for ~333 chars/second (fast but readable)
-    
-    // Slight pauses for natural reading flow
     if (char === '.' || char === '!' || char === '?') return baseDelay + 150; // Brief pause after sentences
     if (char === ',' || char === ';') return baseDelay + 50; // Tiny pause for commas
     if (char === ' ') return baseDelay + 1; // Slightly longer for spaces
-    
     return baseDelay;
   }, []);
 
@@ -127,7 +119,7 @@ export const useSequentialMessageStreaming = ({
     });
   }, [getMessagePriority]);
 
-  // Stream a single message character by character at 3-4 sentences per second
+  // Stream a single message
   const streamMessage = useCallback(async (message: Message, queuePosition: number) => {
     if (processedMessageIds.current.has(message.id)) {
       return;
@@ -284,7 +276,7 @@ export const useSequentialMessageStreaming = ({
     });
   }, [messageQueue, currentStreamingMessageId]);
 
-  // Find and queue new unstreamed messages with better state tracking
+  // Find and queue new unstreamed messages with immediate pending states
   useEffect(() => {
     const checkAndAddMessages = async () => {
       // Filter messages that haven't been processed yet
@@ -300,6 +292,28 @@ export const useSequentialMessageStreaming = ({
         unprocessedCount: unprocessedMessages.length,
         messageIds: unprocessedMessages.map(m => m.id)
       });
+
+      // Immediately create pending streaming states for streamable types to prevent flash
+      const immediateStreamables = unprocessedMessages.filter(m => m.message_type === 'ai_response' || m.message_type === 'narration');
+      if (immediateStreamables.length > 0) {
+        setStreamingStates(prev => {
+          const next = new Map(prev);
+          immediateStreamables.forEach(m => {
+            if (!next.has(m.id)) {
+              next.set(m.id, {
+                messageId: m.id,
+                fullContent: m.message,
+                currentContent: '',
+                characters: [],
+                currentCharIndex: 0,
+                isStreaming: false,
+                position: 999
+              });
+            }
+          });
+          return next;
+        });
+      }
 
       const streamableChecks = await Promise.all(
         unprocessedMessages.map(async message => ({
