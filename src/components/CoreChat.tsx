@@ -322,13 +322,33 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     // Do not force scrolling here; respect user manual scroll state
   }, []);
 
-  // Toggle global streaming class for motion reduction
+  // Toggle global streaming class for motion reduction (delay to allow indicator fade-out)
   useEffect(() => {
-    const active = isAnyStreaming || streamingQueueLength > 0;
-    if (active) document.body.classList.add('is-streaming');
-    else document.body.classList.remove('is-streaming');
-    return () => { document.body.classList.remove('is-streaming'); };
-  }, [isAnyStreaming, streamingQueueLength]);
+    let timer: number | undefined;
+    if (isAnyStreaming) {
+      timer = window.setTimeout(() => {
+        document.body.classList.add('is-streaming');
+      }, 300); // allow waiting pill to fade out smoothly
+    } else {
+      document.body.classList.remove('is-streaming');
+    }
+    return () => {
+      if (timer) window.clearTimeout(timer);
+      document.body.classList.remove('is-streaming');
+    };
+  }, [isAnyStreaming]);
+
+  // Derived awaiting state: locked input but no streaming yet
+  const isAwaitingResponse = isTyping && !isAnyStreaming;
+  const [showWaitingIndicator, setShowWaitingIndicator] = useState(false);
+  useEffect(() => {
+    if (isAwaitingResponse) {
+      setShowWaitingIndicator(true);
+      return;
+    }
+    const t = setTimeout(() => setShowWaitingIndicator(false), 250); // allow fade-out
+    return () => clearTimeout(t);
+  }, [isAwaitingResponse]);
 
   // Loading message with patience
   const [loadingStartTime] = useState(Date.now());
@@ -468,6 +488,28 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
           />
         </div>
       </div>
+
+      {/* Awaiting response indicator (centered; smooth fade/slide) */}
+      {showWaitingIndicator && (
+        <div
+          className={`fixed left-1/2 -translate-x-1/2 bottom-24 z-40 pointer-events-none transition-all duration-200 allow-animations ${
+            isAwaitingResponse ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1'
+          }`}
+          role="status"
+          aria-live="polite"
+        >
+          <div className="backdrop-blur bg-slate-800/70 border border-slate-700/60 text-slate-300 px-3 py-1.5 rounded-full shadow-md">
+            <div className="flex items-center gap-2">
+              <span className="text-xs">Waiting for response</span>
+              <span className="flex items-center gap-1" aria-hidden="true">
+                <span className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce"></span>
+                <span className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></span>
+                <span className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></span>
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Message Input */}
       <ChatInput 
