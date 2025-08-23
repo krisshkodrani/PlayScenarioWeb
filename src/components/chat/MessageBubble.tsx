@@ -55,13 +55,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const { toast } = useToast();
   const messageType = message.message_type;
   // Parse JSON message for AI responses
-  // Function to remove CHAT/ACTION prefix from user messages for display
+  // Function to remove CHAT/ACTION or SAY/DO prefix from user messages for display
   const removeMessagePrefix = (messageContent: string): string => {
-    if (messageContent.startsWith('CHAT ')) {
-      return messageContent.substring(5);
-    }
-    if (messageContent.startsWith('ACTION ')) {
-      return messageContent.substring(7);
+    const prefixes = ['SAY ', 'DO ', 'CHAT ', 'ACTION '];
+    for (const p of prefixes) {
+      if (messageContent.startsWith(p)) {
+        return messageContent.substring(p.length);
+      }
     }
     return messageContent;
   };
@@ -213,17 +213,16 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             </p>
             {/* Mode indicator for AI responses */}
             {message.mode && (
-              <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                isActionResponse ? 'bg-amber-500/20 text-amber-400' : 'bg-cyan-500/20 text-cyan-400'
+              <div className={`w-auto h-5 px-2 rounded-full flex items-center justify-center border text-[10px] tracking-wide uppercase ${
+                isActionResponse ? 'border-amber-500/40 text-amber-400' : 'border-cyan-500/40 text-cyan-400'
               }`}>
-                {isActionResponse ? (
-                  <Zap className="w-2.5 h-2.5" />
-                ) : (
-                  <MessageCircle className="w-2.5 h-2.5" />
-                )}
+                {isActionResponse ? 'DO' : 'SAY'}
               </div>
             )}
-            {(parsedData?.internal_state?.emotion || message.internal_state?.emotion) && <EmotionIndicator emotion={parsedData?.internal_state?.emotion || message.internal_state?.emotion} size="sm" />}
+            {/* Emotion indicator */}
+            {(parsedData?.internal_state?.emotion || message.internal_state?.emotion) && (
+              <EmotionIndicator emotion={parsedData?.internal_state?.emotion || message.internal_state?.emotion} size="sm" />
+            )}
           </div>
           
           {/* Message Content */}

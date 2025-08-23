@@ -11,6 +11,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useRealtimeChat } from '@/hooks/useRealtimeChat';
 import { useUnifiedScroll } from '@/hooks/useUnifiedScroll';
 import { supabase } from '@/integrations/supabase/client';
+import { CHAT_MODES, MODE_PREFIXES } from '@/constants/chatCommands';
 
 // Debug mode configuration
 const DEBUG_CHAT = import.meta.env.VITE_DEBUG_CHAT === '1';
@@ -351,14 +352,15 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
-    const prefix = chatMode === 'focused' ? 'CHAT ' : 'ACTION ';
+    const asMode = CHAT_MODES[chatMode];
+    const prefix = MODE_PREFIXES[asMode];
     const messageContent = prefix + inputValue;
     setInputValue('');
     // Only auto-scroll if the user was near the bottom at send time
     if (isAutoScrollEnabled || isNearBottom()) {
       scrollToBottom(true, 'auto' as any);
     }
-    const messageMode = chatMode === 'focused' ? 'chat' : 'action';
+    const messageMode = asMode;
     await sendMessage(messageContent, messageMode);
   };
 

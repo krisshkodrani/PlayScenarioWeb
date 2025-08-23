@@ -84,14 +84,10 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
             </p>
             {/* Mode indicator for AI responses */}
             {message.mode && (
-              <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                isActionResponse ? 'bg-amber-500/20 text-amber-400' : 'bg-cyan-500/20 text-cyan-400'
+              <div className={`w-auto h-5 px-2 rounded-full flex items-center justify-center border text-[10px] tracking-wide uppercase ${
+                isActionResponse ? 'border-amber-500/40 text-amber-400' : 'border-cyan-500/40 text-cyan-400'
               }`}>
-                {isActionResponse ? (
-                  <Zap className="w-2.5 h-2.5" />
-                ) : (
-                  <MessageCircle className="w-2.5 h-2.5" />
-                )}
+                {isActionResponse ? 'DO' : 'SAY'}
               </div>
             )}
             {/* Queue position indicator */}

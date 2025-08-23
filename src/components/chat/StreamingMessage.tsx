@@ -123,9 +123,11 @@ const StreamingMessage: React.FC<StreamingMessageProps> = ({
         <div className="bg-slate-700 text-slate-100 border border-slate-600 rounded-2xl px-4 py-3 min-w-[50%] sm:max-w-[90%] md:max-w-[80%] lg:max-w-[72%] xl:max-w-[68%] shadow-lg break-words whitespace-pre-wrap">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-medium opacity-80">{message.sender_name}</span>
-            {message.mode === 'action' && (
-              <span className="text-xs bg-slate-900 text-cyan-400 px-2 py-0.5 rounded-full">
-                Action
+            {message.mode && (
+              <span className={`text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full border ${
+                message.mode === 'action' ? 'border-amber-500/40 text-amber-400' : 'border-cyan-500/40 text-cyan-400'
+              }`}>
+                {message.mode === 'action' ? 'DO' : 'SAY'}
               </span>
             )}
           </div>

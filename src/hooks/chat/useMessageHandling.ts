@@ -5,14 +5,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import { config } from '@/lib/config';
+import { inferModeFromText } from '@/constants/chatCommands';
 
 // Helper to infer mode based on message content prefix when backend omits mode
-const inferModeFromContent = (text?: string): 'chat' | 'action' => {
-  const t = (text || '').trim().toUpperCase();
-  if (t.startsWith('ACTION ')) return 'action';
-  if (t.startsWith('CHAT ')) return 'chat';
-  return 'chat';
-};
+const inferModeFromContent = (text?: string): 'chat' | 'action' => inferModeFromText(text);
 
 export const useMessageHandling = (
   instanceId: string,
