@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/navigation/PageHeader';
@@ -32,7 +31,7 @@ const CreditsPurchase: React.FC = () => {
   const customBreadcrumbs = [
     { label: 'Dashboard', href: '/dashboard' },
     { label: 'Credits', href: undefined },
-    { label: 'Purchase', href: undefined }
+    { label: 'Subscribe', href: undefined }
   ];
 
   const headerBadge = (
@@ -43,8 +42,8 @@ const CreditsPurchase: React.FC = () => {
   );
 
   const subtitle = currentBalance < 5 
-    ? "⚠️ Low balance - Purchase credits to continue creating scenarios"
-    : "Choose a package to continue creating scenarios";
+    ? "⚠️ Low balance - Subscribe to get 5,000 credits monthly"
+    : "Subscribe to Pro: $4.99/month • 5,000 credits recharged every month";
 
   if (purchaseComplete && purchaseDetails) {
     return (
@@ -64,7 +63,7 @@ const CreditsPurchase: React.FC = () => {
     <div className="min-h-screen bg-slate-900">
       <div className="container mx-auto px-4 py-8">
         <PageHeader
-          title="Purchase Credits"
+          title="Pro Subscription"
           subtitle={subtitle}
           badge={headerBadge}
           customBreadcrumbs={customBreadcrumbs}

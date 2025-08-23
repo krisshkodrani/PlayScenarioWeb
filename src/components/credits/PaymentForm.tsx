@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -138,22 +137,22 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         <CardHeader className="pb-4">
           <CardTitle className="text-white flex items-center gap-2">
             <CreditCard className="w-5 h-5 text-cyan-400" />
-            Order Summary
+            Subscription Summary
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-slate-300">Package:</span>
-              <span className="text-white font-medium capitalize">{selectedPackage.id}</span>
+              <span className="text-slate-300">Plan:</span>
+              <span className="text-white font-medium capitalize">Pro</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-300">Credits:</span>
+              <span className="text-slate-300">Monthly Credits:</span>
               <span className="text-cyan-400 font-bold">{selectedPackage.credits.toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-300">Total:</span>
-              <span className="text-white text-xl font-bold">${selectedPackage.price}</span>
+              <span className="text-slate-300">Price:</span>
+              <span className="text-white text-xl font-bold">${selectedPackage.price}/month</span>
             </div>
             {selectedPackage.originalPrice && (
               <div className="flex justify-between items-center text-sm">
@@ -185,7 +184,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         <CardHeader className="pb-4">
           <CardTitle className="text-white flex items-center gap-2">
             <Shield className="w-5 h-5 text-cyan-400" />
-            Complete Purchase
+            Complete Subscription
           </CardTitle>
           <div className="flex items-center gap-2 text-sm text-slate-400">
             <Lock className="w-4 h-4" />
@@ -219,13 +218,13 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             ) : (
               <div className="flex items-center gap-2">
                 <ExternalLink className="w-5 h-5" />
-                Pay ${selectedPackage.price} with Stripe
+                Subscribe for ${selectedPackage.price}/month
               </div>
             )}
           </Button>
 
           <div className="text-center text-xs text-slate-400 mt-4">
-            By completing this purchase, you agree to our Terms of Service and Privacy Policy
+            Credits are recharged every month. You can cancel anytime.
           </div>
         </CardContent>
       </Card>

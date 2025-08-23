@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStripePayment } from './useStripePayment';
@@ -42,66 +41,19 @@ export interface Transaction {
   createdAt: string;
 }
 
+// Simplified to a single monthly subscription offering
 const CREDIT_PACKAGES: CreditPackage[] = [
   {
-    id: 'starter',
-    credits: 25,
+    id: 'pro',
+    credits: 5000,
     price: 4.99,
-    description: 'Perfect for trying a few scenarios',
+    description: '5,000 credits recharged every month',
     features: [
-      '~5-8 scenario conversations',
-      'All scenario types',
-      'Character interactions',
-      'Progress tracking'
-    ]
-  },
-  {
-    id: 'popular',
-    credits: 100,
-    price: 14.99,
-    originalPrice: 19.99,
-    popular: true,
-    savings: 'Save 25%',
-    description: 'Great for regular use',
-    features: [
-      '~20-25 scenario conversations',
+      'Monthly credit recharge',
       'All scenario types',
       'Character interactions',
       'Progress tracking',
       'Priority support'
-    ]
-  },
-  {
-    id: 'pro',
-    credits: 300,
-    price: 39.99,
-    originalPrice: 59.99,
-    savings: 'Save 33%',
-    description: 'Best value for power users',
-    features: [
-      '~60-75 scenario conversations',
-      'All scenario types',
-      'Character interactions',
-      'Progress tracking',
-      'Priority support',
-      'Early access to features'
-    ]
-  },
-  {
-    id: 'enterprise',
-    credits: 1000,
-    price: 99.99,
-    originalPrice: 199.99,
-    savings: 'Save 50%',
-    description: 'For teams and heavy users',
-    features: [
-      '~200+ scenario conversations',
-      'All scenario types',
-      'Character interactions',
-      'Progress tracking',
-      'Priority support',
-      'Early access to features',
-      'Bulk discount pricing'
     ]
   }
 ];

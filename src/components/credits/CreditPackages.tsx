@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,8 +19,8 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-white mb-2">Choose Your Credit Package</h2>
-        <p className="text-slate-400">Select the package that best fits your needs</p>
+        <h2 className="text-2xl font-bold text-white mb-2">Choose Your Plan</h2>
+        <p className="text-slate-400">Pro: $4.99/month • 5,000 credits recharged every month</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
@@ -43,7 +42,7 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                   <Badge className="bg-gradient-to-r from-cyan-500 to-violet-500 text-white px-3 py-1">
                     <Star className="w-3 h-3 mr-1" />
-                    Most Popular
+                    Best Value
                   </Badge>
                 </div>
               )}
@@ -52,7 +51,7 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({
                 <div className="flex items-center justify-center mb-2">
                   <Zap className="w-6 h-6 text-cyan-400 mr-2" />
                   <CardTitle className="text-lg text-white capitalize">
-                    {pkg.id}
+                    Pro Subscription
                   </CardTitle>
                 </div>
                 
@@ -60,7 +59,7 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({
                   <div className="text-3xl font-bold text-cyan-400">
                     {pkg.credits.toLocaleString()}
                   </div>
-                  <div className="text-sm text-slate-400">credits</div>
+                  <div className="text-sm text-slate-400">credits per month</div>
                 </div>
 
                 <div className="space-y-1">
@@ -107,7 +106,7 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({
                     onSelectPackage(pkg.id);
                   }}
                 >
-                  {isSelected ? 'Selected' : 'Select Package'}
+                  {isSelected ? 'Selected' : 'Subscribe for $4.99/month'}
                 </Button>
               </CardContent>
             </Card>

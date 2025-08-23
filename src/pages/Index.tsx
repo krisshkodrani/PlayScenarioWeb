@@ -10,7 +10,7 @@ const Index: React.FC = () => {
   // Basic SEO for the landing page
   useEffect(() => {
     const title = 'Learn, Play, and Master Real Skills with AI | PlayScenarioAI';
-    const description = 'AI scenarios that challenge your mind. Practice real skills or explore for fun with 200 free credits monthly. No credit card required.';
+    const description = 'AI scenarios that challenge your mind. Free account includes a one-time 500 credits. Upgrade to Pro for $4.99/month with 5,000 credits recharged monthly.';
     document.title = title;
     const setMeta = (name: string, content: string) => {
       let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
@@ -146,38 +146,23 @@ const Index: React.FC = () => {
     iconBg: 'bg-violet-400/20',
     emoji: '🎭'
   }];
+  // Single plan definition for UI
   const plans = [{
-    name: 'Free Forever',
-    price: '200 Credits Monthly',
-    badge: 'Most Accessible',
-    highlights: ['Access all scenario types', 'Basic progress tracking', 'Community scenarios', 'Perfect for casual players'],
+    name: 'Free',
+    price: 'One-time 500 credits',
+    badge: 'Start Here',
+    highlights: ['Access all scenario types', 'Basic progress tracking', 'Community scenarios'],
     cta: 'Sign Up Free',
     onClick: () => navigate('/register'),
     popular: false
   }, {
-    name: 'Enthusiast',
-    price: '5,000 Credits • $4.99/mo',
-    badge: 'Most Popular',
-    highlights: ['Much more play time', 'Create custom scenarios', 'Advanced analytics', 'Priority AI response', 'Early access to features'],
-    cta: 'Upgrade',
+    name: 'Pro',
+    price: '5,000 credits • $4.99/month',
+    badge: 'Best Value',
+    highlights: ['Monthly credit recharge', 'Create custom scenarios', 'Advanced analytics', 'Priority AI response', 'Early access to features'],
+    cta: 'Subscribe',
     onClick: () => navigate('/credits'),
     popular: true
-  }, {
-    name: 'Professional',
-    price: '20,000 Credits • $14.99/mo',
-    badge: 'For Power Users',
-    highlights: ['Maximum flexibility', 'Unlimited scenario creation', 'Team sharing features', 'API access', 'Download conversation logs', 'Priority support'],
-    cta: 'Choose Professional',
-    onClick: () => navigate('/credits'),
-    popular: false
-  }, {
-    name: 'Organization',
-    price: 'Unlimited Credits • Custom',
-    badge: 'For Teams',
-    highlights: ['Bulk user management', 'Custom AI training', 'Private scenario library', 'Usage analytics', 'Dedicated support'],
-    cta: 'Contact Sales',
-    onClick: () => navigate('/profile'),
-    popular: false
   }];
   return <div className="min-h-screen bg-slate-900 text-white">
       {/* Header */}
@@ -215,8 +200,8 @@ const Index: React.FC = () => {
                 Engage with intelligent AI characters in scenarios ranging from boardroom negotiations to space station emergencies. Practice real skills or just explore for fun.
               </p>
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 max-w-xl">
-                <Button size="lg" aria-label="Sign up free and get monthly credits" className="bg-cyan-400 text-slate-900 px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:bg-cyan-300 hover:scale-105 shadow-lg shadow-cyan-400/30" onClick={() => navigate('/register')}>
-                  Sign Up Free - Get 200 Credits Monthly
+                <Button size="lg" aria-label="Sign up free and get starter credits" className="bg-cyan-400 text-slate-900 px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:bg-cyan-300 hover:scale-105 shadow-lg shadow-cyan-400/30" onClick={() => navigate('/register')}>
+                  Sign Up Free - Get 500 Credits (one-time)
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
                 <p className="text-sm text-slate-400">No credit card required</p>
@@ -245,8 +230,8 @@ const Index: React.FC = () => {
               desc: 'Serious skill‑building on Monday, casual mystery‑solving on Friday'
             }, {
               icon: Coins,
-              title: 'Always Free to Play',
-              desc: '200 credits every month - enjoy multiple scenarios without paying a cent'
+              title: 'Simple Credits',
+              desc: 'Free: one-time 500 credits. Pro: 5,000 credits recharged monthly for $4.99.'
             }].map(({
               icon: Icon,
               title,
@@ -375,7 +360,7 @@ const Index: React.FC = () => {
               {[{
               step: '1',
               title: 'Sign Up in Seconds',
-              desc: 'Create your free account. Get 200 credits immediately. Credits refresh every month.'
+              desc: 'Create your free account and get a one-time 500 credits.'
             }, {
               step: '2',
               title: 'Choose Your Adventure',
@@ -407,7 +392,7 @@ const Index: React.FC = () => {
             <h2 id="showcase-title" className="text-2xl md:text-3xl font-semibold mb-8">Featured Scenarios This Week</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {featured.map(s => <div key={s.title} className="bg-slate-800 border border-gray-700 rounded-xl p-5">
-                  <div className={`w-10 h-10 ${s.iconBg} rounded-lg flex items-center justify-center mb-3`}>
+                  <div className={`${s.iconBg} w-10 h-10 rounded-lg flex items-center justify-center mb-3`}>
                     <span className="text-lg" aria-hidden>{s.emoji}</span>
                   </div>
                   <p className="text-xs text-slate-400 mb-1">{s.subtitle}</p>
@@ -429,7 +414,7 @@ const Index: React.FC = () => {
             <h2 id="why-title" className="text-2xl md:text-3xl font-semibold mb-8">Why PlayScenarioAI?</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <ul className="space-y-3">
-                {['Not just chat—real scenarios with multiple characters, objectives, and outcomes', 'Professional‑grade training scenarios for real skill development', 'Engaging stories and adventures that rival interactive fiction games', 'Advanced AI that maintains character consistency in long conversations', 'Generous free tier — 200 credits monthly means you can always play'].map(text => <li key={text} className="flex items-start gap-3">
+                {['Not just chat—real scenarios with multiple characters, objectives, and outcomes', 'Professional‑grade training scenarios for real skill development', 'Engaging stories and adventures that rival interactive fiction games', 'Advanced AI that maintains character consistency in long conversations', 'Simple pricing — Free one-time 500 credits, or Pro with 5,000 credits monthly'].map(text => <li key={text} className="flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 text-cyan-400 mt-0.5" />
                     <span className="text-slate-300">{text}</span>
                   </li>)}
@@ -448,11 +433,11 @@ const Index: React.FC = () => {
         <section aria-labelledby="pricing-title" className="py-16 md:py-20 border-t border-gray-700/60">
           <div className="max-w-7xl mx-auto px-4 md:px-6">
             <h2 id="pricing-title" className="text-2xl md:text-3xl font-semibold mb-8">Simple, Credit‑Based Pricing</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
               {plans.map(p => <div key={p.name} className={`rounded-xl border ${p.popular ? 'border-cyan-400 shadow-lg shadow-cyan-400/20' : 'border-gray-700'} bg-slate-800 p-6`}>
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-lg font-semibold text-white">{p.name}</h3>
-                    {p.popular && <span className="text-xs px-2 py-1 rounded bg-cyan-400 text-slate-900 font-medium">Most Popular</span>}
+                    {p.popular && <span className="text-xs px-2 py-1 rounded bg-cyan-400 text-slate-900 font-medium">Best Value</span>}
                   </div>
                   <p className="text-slate-300 mb-4">{p.price}</p>
                   <ul className="space-y-2 text-sm text-slate-300">
@@ -470,16 +455,19 @@ const Index: React.FC = () => {
         <section aria-labelledby="bottom-cta-title" className="py-20 border-t border-gray-700/60">
           <div className="max-w-7xl mx-auto px-4 md:px-6 text-center">
             <h2 id="bottom-cta-title" className="text-3xl md:text-4xl font-bold">Join thousands exploring AI‑powered scenarios</h2>
-            <p className="text-slate-300 mt-3">200 free credits every month. No credit card required.</p>
-            <div className="mt-6">
+            <p className="text-slate-300 mt-3">Free account includes a one-time 500 credits. Upgrade to Pro anytime.</p>
+            <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
               <Button size="lg" className="bg-cyan-400 text-slate-900 px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:bg-cyan-300 hover:scale-105 shadow-lg shadow-cyan-400/30" onClick={() => navigate('/register')}>
                 Sign Up and Start Playing
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
+              <Button size="lg" variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-800" onClick={() => navigate('/credits')}>
+                Subscribe to Pro — $4.99/month
+              </Button>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6 text-sm text-slate-400">
               <div>✓ Free forever option</div>
-              <div>✓ No credit card needed</div>
+              <div>✓ Transparent pricing</div>
               <div>✓ Cancel anytime</div>
             </div>
           </div>
