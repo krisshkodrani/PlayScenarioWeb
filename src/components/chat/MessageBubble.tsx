@@ -89,10 +89,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       };
     }
   };
+
+  // Remove a trailing streaming cursor (on its own line) from AI content just in case
+  const stripStreamingCursor = (text: string) => text.replace(/(?:\r?\n|^)[▍▋▌█⎸|]\s*$/u, '');
   const parsedData = messageType === 'ai_response' ? parseAIMessage(message.message) : null;
-  const displayContent = messageType === 'user_message' 
-    ? removeMessagePrefix(message.message) 
-    : parsedData?.content || message.message;
+  const rawContent = messageType === 'user_message' ? removeMessagePrefix(message.message) : parsedData?.content || message.message;
+  const displayContent = messageType === 'ai_response' ? stripStreamingCursor(rawContent) : rawContent;
   const displayName = parsedData?.character_name || message.character_name || character?.name || (messageType === 'narration' ? 'Narrator' : 'AI');
   const handleFeedback = (type: 'positive' | 'negative') => {
     setFeedbackType(type);
@@ -139,10 +141,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     return (
       <div className="w-full">
         {/* Match AI row widths and align to the right */}
-        <div className="flex items-start justify-end gap-4 sm:w-[90%] md:w-[80%] lg:w-[72%] xl:w-[68%] ml-auto">
-          <div className="relative max-w-full">
-            {/* Mode indicator badge */}
-            <div className={`absolute -top-2 -left-2 z-10 w-6 h-6 rounded-full flex items-center justify-center shadow-lg ${
+        <div className="flex items-start justify-end sm:w-[90%] md:w-[80%] lg:w-[72%] xl:w-[68%] ml-auto">
+          <div className="relative min-w-0">
+            {/* Mode indicator badge (top-right for right-aligned bubble) */}
+            <div className={`absolute -top-2 -right-2 z-10 w-6 h-6 rounded-full flex items-center justify-center shadow-lg ${
               isActionMessage 
                 ? 'bg-amber-500 text-slate-900' 
                 : 'bg-cyan-500 text-slate-900'
@@ -154,11 +156,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               )}
             </div>
             
-            <div className={`px-4 py-3 rounded-2xl rounded-br-sm min-w-[40%] max-w-[70%] border bg-slate-700 text-slate-100 border-slate-600 break-words whitespace-pre-wrap ${isOptimistic ? 'opacity-70' : ''}`}>
+            {/* Bubble */}
+            <div className={`backdrop-blur px-4 py-3 rounded-2xl rounded-br-sm shadow-lg border break-words whitespace-pre-wrap text-slate-200 border-slate-600 ${
+              isActionMessage 
+                ? 'bg-slate-750/40' 
+                : 'bg-slate-750'
+            } ${isOptimistic ? 'opacity-70' : ''} min-w-0 max-w-full`}>
               <p className="text-sm md:text-base">{displayContent}</p>
             </div>
-          </div>
-          <div className={`px-4 py-3 rounded-2xl rounded-br-sm min-w-[40%] max-w-[70%] border bg-slate-700 text-slate-100 border-slate-600 break-words whitespace-pre-wrap ${isOptimistic ? 'opacity-70' : ''}`}>
           </div>
         </div>
       </div>
