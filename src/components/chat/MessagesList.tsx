@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import MessageBubble from './MessageBubble';
 import StreamingMessage from './StreamingMessage';
-import TypingIndicator from './TypingIndicator';
 import { useSequentialMessageStreaming } from '@/hooks/chat/useSequentialMessageStreaming';
 import { testMessageStreamedField } from '@/utils/messageUtils';
 import { Message } from '../../types/chat';
@@ -144,6 +143,11 @@ const MessagesList: React.FC<MessagesListProps> = ({
     onStreamingComplete: handleStreamingComplete
   });
 
+  // Adjusted queue count: exclude the currently streaming item
+  const displayedQueueCount = useMemo(() => (
+    Math.max(0, queueLength - (currentStreamingMessageId ? 1 : 0))
+  ), [queueLength, currentStreamingMessageId]);
+
   // Start/stop a single 50ms flush timer while any message is streaming or queued
   useEffect(() => {
     const shouldRun = isAnyMessageStreaming || queueLength > 0;
@@ -190,12 +194,12 @@ const MessagesList: React.FC<MessagesListProps> = ({
     };
   }, [isAnyMessageStreaming, queueLength]);
 
-  // Notify parent about queue changes for smart scrolling
+  // Notify parent about queue changes for smart scrolling (use adjusted count)
   useEffect(() => {
     if (onQueueChange) {
-      onQueueChange(queueLength, isAnyMessageStreaming);
+      onQueueChange(displayedQueueCount, isAnyMessageStreaming);
     }
-  }, [queueLength, isAnyMessageStreaming, onQueueChange]);
+  }, [displayedQueueCount, isAnyMessageStreaming, onQueueChange]);
 
   // Test database streamed field on mount (debug)
   useEffect(() => {
@@ -204,15 +208,18 @@ const MessagesList: React.FC<MessagesListProps> = ({
 
   return (
     <div className="p-4 space-y-6">
-      {/* Skip All Button - show when messages are queued */}
-      {queueLength > 0 && (
-        <div className="flex justify-center mb-4">
-          <button
-            onClick={skipAllStreaming}
-            className="bg-slate-600 hover:bg-slate-500 text-white text-sm px-3 py-1 rounded-lg transition-colors"
-          >
-            Skip All Streaming ({queueLength} remaining)
-          </button>
+      {/* Queue banner (bottom-right) - show when adjusted count > 0 */}
+      {displayedQueueCount > 0 && (
+        <div className="fixed right-4 bottom-28 z-40 pointer-events-none">
+          <div className="flex items-center gap-3 bg-slate-800/90 border border-slate-700 text-slate-200 px-3 py-1.5 rounded-full shadow-lg pointer-events-auto">
+            <span className="text-xs font-medium">{displayedQueueCount} in queue</span>
+            <button
+              onClick={skipAllStreaming}
+              className="text-xs bg-slate-600 hover:bg-slate-500 text-white px-2 py-0.5 rounded-md transition-colors"
+            >
+              Skip all
+            </button>
+          </div>
         </div>
       )}
       
@@ -225,61 +232,18 @@ const MessagesList: React.FC<MessagesListProps> = ({
         const hasStreamingState = !!streamingState;
         const isCompleted = completedStreaming.has(message.id) || message.streamed === true;
 
-        // FIX: Hide unprocessed streamable messages to prevent full-content flash
+        // Hide unprocessed streamable messages to prevent full-content flash
         const isUnprocessedStreamable = isStreamable && !isCompleted && !hasStreamingState && !isCurrentlyStreaming && !isInQueue;
         if (isUnprocessedStreamable) {
           return null;
         }
 
-        // NEW: Pending streamable (has state but not queued/streaming yet) -> show typing indicator placeholder
+        // Hide pending and queued streamables (collapsed into banner)
         const isPendingStreamable = isStreamable && !isCompleted && hasStreamingState && !isCurrentlyStreaming && !isInQueue;
-        if (isPendingStreamable) {
-          const convertedMessage: Message = {
-            id: message.id,
-            sender_name: message.sender_name,
-            message: message.message,
-            turn_number: message.turn_number ?? 0,
-            message_type: message.message_type,
-            timestamp: message.timestamp.toISOString(),
-            sequence_number: message.sequence_number ?? index,
-            mode: message.mode
-          };
-          const messageCharacter = resolveCharacterForMessage(message, characters);
-          return (
-            <TypingIndicator
-              key={`typing-pending-${message.id}`}
-              message={convertedMessage}
-              character={messageCharacter}
-              queuePosition={streamingState?.position || 0}
-            />
-          );
+        if (isPendingStreamable || isInQueue) {
+          return null;
         }
         
-        // Show typing indicator for queued messages
-        if (isInQueue) {
-          const convertedMessage: Message = {
-            id: message.id,
-            sender_name: message.sender_name,
-            message: message.message,
-            turn_number: message.turn_number ?? 0,
-            message_type: message.message_type,
-            timestamp: message.timestamp.toISOString(),
-            sequence_number: message.sequence_number ?? index,
-            mode: message.mode
-          };
-
-          const messageCharacter = resolveCharacterForMessage(message, characters);
-
-          return (
-            <TypingIndicator
-              key={`typing-${message.id}`}
-              message={convertedMessage}
-              character={messageCharacter}
-              queuePosition={streamingState?.position || 0}
-            />
-          );
-        }
-
         // Show streaming version for currently streaming message
         if (shouldStream) {
           const convertedMessage: Message = {
