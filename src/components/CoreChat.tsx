@@ -11,6 +11,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useRealtimeChat } from '@/hooks/useRealtimeChat';
 import { useUnifiedScroll } from '@/hooks/useUnifiedScroll';
 import { supabase } from '@/integrations/supabase/client';
+import { CHAT_MODES, MODE_PREFIXES } from '@/constants/chatCommands';
 
 // Debug mode configuration
 const DEBUG_CHAT = import.meta.env.VITE_DEBUG_CHAT === '1';
@@ -237,15 +238,59 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     }
   }, [objectivesWithProgress, previousProgress]);
 
+  // Update header progress ring based on objectives progress
+  useEffect(() => {
+    const count = objectivesWithProgress?.length ?? 0;
+    if (!count) {
+      setProgressPercentage(0);
+      return;
+    }
+    const avg = objectivesWithProgress.reduce((sum: number, obj: any) => {
+      const pct = typeof obj?.completion_percentage === 'number'
+        ? obj.completion_percentage
+        : (typeof obj?.progress_percentage === 'number' ? obj.progress_percentage : 0);
+      return sum + pct;
+    }, 0) / count;
+    setProgressPercentage(Math.round(avg));
+  }, [objectivesWithProgress]);
+
   // Unified scroll hook
   const { containerRef, handleScroll, scrollToBottom, isAutoScrollEnabled, isNearBottom } = useUnifiedScroll(32);
   const lastMsgIdRef = useRef<string | null>(null);
   const initialScrollDone = useRef(false);
 
+  // Dynamically pad scroll container to the height of the sticky input
+  const inputHeightRef = useRef<number>(96); // fallback
+  useEffect(() => {
+    const measure = () => {
+      const el = document.querySelector('.chat-input-container') as HTMLElement | null;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      inputHeightRef.current = rect.height;
+      const container = containerRef.current;
+      if (container) {
+        container.style.paddingBottom = `${Math.ceil(rect.height + 16)}px`; // a little extra gap
+      }
+    };
+    measure();
+    const ro = new ResizeObserver(() => measure());
+    const el = document.querySelector('.chat-input-container') as HTMLElement | null;
+    if (el) ro.observe(el);
+    return () => ro.disconnect();
+  }, [containerRef]);
+
+  // Helper to scroll to bottom safely (keeping content above the input)
+  const safeScrollToBottom = useCallback((instant = false) => {
+    const container = containerRef.current;
+    if (!container) return;
+    const behavior = instant ? 'auto' : 'smooth';
+    container.scrollTo({ top: container.scrollHeight, behavior: behavior as ScrollBehavior });
+  }, [containerRef]);
+
   useLayoutEffect(() => {
     // First paint to bottom without animation once loading completes and messages ready
     if (!initialScrollDone.current && !loading && processedMessages.length > 0) {
-      scrollToBottom(true, 'auto' as any);
+      safeScrollToBottom(true);
       initialScrollDone.current = true;
       return;
     }
@@ -257,16 +302,21 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
       lastMsgIdRef.current = last.id;
     }
 
-    // Only auto-scroll on new message if user is near bottom AND hasn't manually scrolled recently
-    if (changed && isAutoScrollEnabled && isNearBottom()) {
-      // Add delay to allow any manual scroll to complete first
-      setTimeout(() => {
-        if (isAutoScrollEnabled && isNearBottom()) {
-          scrollToBottom(false, 'smooth' as any);
-        }
-      }, 100);
+    // Only auto-scroll on new message if user is near bottom right now
+    if (changed && (isAutoScrollEnabled || isNearBottom())) {
+      safeScrollToBottom(false);
     }
-  }, [processedMessages, isAutoScrollEnabled, isNearBottom, loading, scrollToBottom]);
+  }, [processedMessages, isAutoScrollEnabled, isNearBottom, loading, safeScrollToBottom]);
+
+  // After loading finishes, jump to bottom once without animation to resume like a normal chat
+  useEffect(() => {
+    if (!loading) {
+      requestAnimationFrame(() => {
+        safeScrollToBottom(true);
+        initialScrollDone.current = true;
+      });
+    }
+  }, [loading, safeScrollToBottom]);
 
   // Load characters from instance data when available
   useEffect(() => {
@@ -302,14 +352,15 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
-    const prefix = chatMode === 'focused' ? 'CHAT ' : 'ACTION ';
+    const asMode = CHAT_MODES[chatMode];
+    const prefix = MODE_PREFIXES[asMode];
     const messageContent = prefix + inputValue;
     setInputValue('');
     // Only auto-scroll if the user was near the bottom at send time
     if (isAutoScrollEnabled || isNearBottom()) {
       scrollToBottom(true, 'auto' as any);
     }
-    const messageMode = chatMode === 'focused' ? 'chat' : 'action';
+    const messageMode = asMode;
     await sendMessage(messageContent, messageMode);
   };
 
@@ -327,13 +378,33 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     // Do not force scrolling here; respect user manual scroll state
   }, []);
 
-  // Toggle global streaming class for motion reduction
+  // Toggle global streaming class for motion reduction (delay to allow indicator fade-out)
   useEffect(() => {
-    const active = isAnyStreaming || streamingQueueLength > 0;
-    if (active) document.body.classList.add('is-streaming');
-    else document.body.classList.remove('is-streaming');
-    return () => { document.body.classList.remove('is-streaming'); };
-  }, [isAnyStreaming, streamingQueueLength]);
+    let timer: number | undefined;
+    if (isAnyStreaming) {
+      timer = window.setTimeout(() => {
+        document.body.classList.add('is-streaming');
+      }, 300); // allow waiting pill to fade out smoothly
+    } else {
+      document.body.classList.remove('is-streaming');
+    }
+    return () => {
+      if (timer) window.clearTimeout(timer);
+      document.body.classList.remove('is-streaming');
+    };
+  }, [isAnyStreaming]);
+
+  // Derived awaiting state: locked input but no streaming yet
+  const isAwaitingResponse = isTyping && !isAnyStreaming;
+  const [showWaitingIndicator, setShowWaitingIndicator] = useState(false);
+  useEffect(() => {
+    if (isAwaitingResponse) {
+      setShowWaitingIndicator(true);
+      return;
+    }
+    const t = setTimeout(() => setShowWaitingIndicator(false), 250); // allow fade-out
+    return () => clearTimeout(t);
+  }, [isAwaitingResponse]);
 
   // Loading message with patience
   const [loadingStartTime] = useState(Date.now());
@@ -348,16 +419,6 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
       return () => clearTimeout(timer);
     }
   }, [loading]);
-
-  // After loading finishes, jump to bottom once without animation to resume like a normal chat
-  useEffect(() => {
-    if (!loading) {
-      requestAnimationFrame(() => {
-        scrollToBottom(true, 'auto' as any);
-        initialScrollDone.current = true;
-      });
-    }
-  }, [loading, scrollToBottom]);
 
   if (loading) {
     return (
@@ -473,6 +534,28 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
           />
         </div>
       </div>
+
+      {/* Awaiting response indicator (centered; smooth fade/slide) */}
+      {showWaitingIndicator && (
+        <div
+          className={`fixed left-1/2 -translate-x-1/2 bottom-24 z-40 pointer-events-none transition-all duration-200 allow-animations ${
+            isAwaitingResponse ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1'
+          }`}
+          role="status"
+          aria-live="polite"
+        >
+          <div className="backdrop-blur bg-slate-800/70 border border-slate-700/60 text-slate-300 px-3 py-1.5 rounded-full shadow-md">
+            <div className="flex items-center gap-2">
+              <span className="text-xs">Waiting for response</span>
+              <span className="flex items-center gap-1" aria-hidden="true">
+                <span className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce"></span>
+                <span className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></span>
+                <span className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></span>
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Message Input */}
       <ChatInput 

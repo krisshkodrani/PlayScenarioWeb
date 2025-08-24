@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, XCircle } from 'lucide-react';
@@ -21,8 +20,12 @@ const ObjectivesBreakdown: React.FC<ObjectivesBreakdownProps> = ({
       </CardHeader>
       <CardContent className="space-y-4">
         {objectives.map((objective, index) => {
-          const objectiveProgress = progress[objective.id] || progress[index.toString()] || {};
-          const percentage = objectiveProgress.progress_percentage || 0;
+          // Align with backend keys: objective_<id>, and prefer completion_percentage
+          const objectiveKey = `objective_${objective.id || index + 1}`;
+          const objectiveProgress = progress[objectiveKey] || progress[objective.id] || progress[index.toString()] || {};
+          const percentage = (typeof objectiveProgress.completion_percentage === 'number'
+            ? objectiveProgress.completion_percentage
+            : (objectiveProgress.progress_percentage || 0));
           const completed = percentage >= 75;
 
           return (
@@ -66,9 +69,11 @@ const ObjectivesBreakdown: React.FC<ObjectivesBreakdownProps> = ({
             <span className="text-cyan-400">
               {Math.round(
                 objectives.reduce((sum, obj, index) => {
-                  const prog = progress[obj.id] || progress[index.toString()] || {};
-                  return sum + (prog.progress_percentage || 0);
-                }, 0) / objectives.length
+                  const objKey = `objective_${obj.id || index + 1}`;
+                  const prog = progress[objKey] || progress[obj.id] || progress[index.toString()] || {};
+                  const pct = (typeof prog.completion_percentage === 'number') ? prog.completion_percentage : (prog.progress_percentage || 0);
+                  return sum + pct;
+                }, 0) / (objectives.length || 1)
               )}%
             </span>
           </div>

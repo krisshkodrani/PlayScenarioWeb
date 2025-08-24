@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import MessageBubble from './MessageBubble';
 import StreamingMessage from './StreamingMessage';
-import TypingIndicator from './TypingIndicator';
 import { useSequentialMessageStreaming } from '@/hooks/chat/useSequentialMessageStreaming';
 import { testMessageStreamedField } from '@/utils/messageUtils';
 import { Message } from '../../types/chat';
@@ -95,6 +94,13 @@ const MessagesList: React.FC<MessagesListProps> = ({
     }))
   ), [messages]);
 
+  // Helper to get the scroll container and check if user is near bottom
+  const getScrollContainer = () => document.querySelector('.streaming-container') as HTMLElement | null;
+  const isNearBottom = (el: HTMLElement, threshold = 200) => {
+    const remaining = el.scrollHeight - (el.scrollTop + el.clientHeight);
+    return remaining < threshold;
+  };
+
   // Single entry point from streaming hook: write to buffer only
   const handleStreamingUpdate = useCallback((messageId: string, content: string, isComplete: boolean) => {
     // Write to buffer and mark pending
@@ -113,21 +119,13 @@ const MessagesList: React.FC<MessagesListProps> = ({
   }, []);
 
   const handleStreamingComplete = useCallback((messageId: string) => {
-    // Only auto-scroll if user hasn't manually scrolled up
-    const container = document.querySelector('.streaming-container');
-    if (!container) return;
-    
-    const { scrollTop, scrollHeight, clientHeight } = container as HTMLElement;
-    const isNearBottom = scrollHeight - (scrollTop + clientHeight) < 100;
-    
-    if (isNearBottom) {
-      setTimeout(() => {
-        const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-        if (messageElement) {
-          messageElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-      }, 100);
-    }
+    // When streaming completes, if user was near bottom, keep them at bottom
+    setTimeout(() => {
+      const container = getScrollContainer();
+      if (container && isNearBottom(container)) {
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+      }
+    }, 80);
   }, []);
 
   const { 
@@ -145,6 +143,11 @@ const MessagesList: React.FC<MessagesListProps> = ({
     onStreamingComplete: handleStreamingComplete
   });
 
+  // Adjusted queue count: exclude the currently streaming item
+  const displayedQueueCount = useMemo(() => (
+    Math.max(0, queueLength - (currentStreamingMessageId ? 1 : 0))
+  ), [queueLength, currentStreamingMessageId]);
+
   // Start/stop a single 50ms flush timer while any message is streaming or queued
   useEffect(() => {
     const shouldRun = isAnyMessageStreaming || queueLength > 0;
@@ -152,9 +155,19 @@ const MessagesList: React.FC<MessagesListProps> = ({
     if (shouldRun && flushTimerRef.current == null) {
       flushTimerRef.current = window.setInterval(() => {
         if (!hasPendingRef.current) return;
+
+        const container = getScrollContainer();
+        const shouldStick = container ? isNearBottom(container) : false;
+
         // Apply buffered updates in one state set
         setStreamedContent(new Map(bufferRef.current));
         hasPendingRef.current = false;
+
+        // If user was near bottom, keep the scroll pinned to bottom so content doesn't go under input
+        if (shouldStick && container) {
+          // Use auto to avoid continuous smooth scroll jitter during streaming
+          container.scrollTo({ top: container.scrollHeight, behavior: 'auto' });
+        }
       }, 50);
     }
 
@@ -163,8 +176,13 @@ const MessagesList: React.FC<MessagesListProps> = ({
       flushTimerRef.current = null;
       // Final flush if anything pending
       if (hasPendingRef.current) {
+        const container = getScrollContainer();
+        const shouldStick = container ? isNearBottom(container) : false;
         setStreamedContent(new Map(bufferRef.current));
         hasPendingRef.current = false;
+        if (shouldStick && container) {
+          container.scrollTo({ top: container.scrollHeight, behavior: 'auto' });
+        }
       }
     }
 
@@ -176,12 +194,12 @@ const MessagesList: React.FC<MessagesListProps> = ({
     };
   }, [isAnyMessageStreaming, queueLength]);
 
-  // Notify parent about queue changes for smart scrolling
+  // Notify parent about queue changes for smart scrolling (use adjusted count)
   useEffect(() => {
     if (onQueueChange) {
-      onQueueChange(queueLength, isAnyMessageStreaming);
+      onQueueChange(displayedQueueCount, isAnyMessageStreaming);
     }
-  }, [queueLength, isAnyMessageStreaming, onQueueChange]);
+  }, [displayedQueueCount, isAnyMessageStreaming, onQueueChange]);
 
   // Test database streamed field on mount (debug)
   useEffect(() => {
@@ -190,15 +208,18 @@ const MessagesList: React.FC<MessagesListProps> = ({
 
   return (
     <div className="p-4 space-y-6">
-      {/* Skip All Button - show when messages are queued */}
-      {queueLength > 0 && (
-        <div className="flex justify-center mb-4">
-          <button
-            onClick={skipAllStreaming}
-            className="bg-slate-600 hover:bg-slate-500 text-white text-sm px-3 py-1 rounded-lg transition-colors"
-          >
-            Skip All Streaming ({queueLength} remaining)
-          </button>
+      {/* Queue banner (bottom-right) - show when adjusted count > 0 */}
+      {displayedQueueCount > 0 && (
+        <div className="fixed right-4 bottom-28 z-40 pointer-events-none">
+          <div className="flex items-center gap-3 bg-slate-800/90 border border-slate-700 text-slate-200 px-3 py-1.5 rounded-full shadow-lg pointer-events-auto">
+            <span className="text-xs font-medium">{displayedQueueCount} in queue</span>
+            <button
+              onClick={skipAllStreaming}
+              className="text-xs bg-slate-600 hover:bg-slate-500 text-white px-2 py-0.5 rounded-md transition-colors"
+            >
+              Skip all
+            </button>
+          </div>
         </div>
       )}
       
@@ -208,32 +229,21 @@ const MessagesList: React.FC<MessagesListProps> = ({
         const isCurrentlyStreaming = message.id === currentStreamingMessageId;
         const isInQueue = messageQueue.some(m => m.id === message.id) && !isCurrentlyStreaming;
         const shouldStream = isStreamable && streamingState && !completedStreaming.has(message.id) && isCurrentlyStreaming;
-        
-        // Show typing indicator for queued messages
-        if (isInQueue) {
-          const convertedMessage: Message = {
-            id: message.id,
-            sender_name: message.sender_name,
-            message: message.message,
-            turn_number: message.turn_number ?? 0,
-            message_type: message.message_type,
-            timestamp: message.timestamp.toISOString(),
-            sequence_number: message.sequence_number ?? index,
-            mode: message.mode
-          };
+        const hasStreamingState = !!streamingState;
+        const isCompleted = completedStreaming.has(message.id) || message.streamed === true;
 
-          const messageCharacter = resolveCharacterForMessage(message, characters);
-
-          return (
-            <TypingIndicator
-              key={`typing-${message.id}`}
-              message={convertedMessage}
-              character={messageCharacter}
-              queuePosition={streamingState?.position || 0}
-            />
-          );
+        // Hide unprocessed streamable messages to prevent full-content flash
+        const isUnprocessedStreamable = isStreamable && !isCompleted && !hasStreamingState && !isCurrentlyStreaming && !isInQueue;
+        if (isUnprocessedStreamable) {
+          return null;
         }
 
+        // Hide pending and queued streamables (collapsed into banner)
+        const isPendingStreamable = isStreamable && !isCompleted && hasStreamingState && !isCurrentlyStreaming && !isInQueue;
+        if (isPendingStreamable || isInQueue) {
+          return null;
+        }
+        
         // Show streaming version for currently streaming message
         if (shouldStream) {
           const convertedMessage: Message = {
@@ -275,6 +285,9 @@ const MessagesList: React.FC<MessagesListProps> = ({
           />
         );
       })}
+
+      {/* Bottom spacer removed: we now rely on scroll container padding to avoid overlap */}
+      {/* <div aria-hidden className="h-24 sm:h-28" /> */}
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -349,10 +348,10 @@ const Register: React.FC = () => {
               <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center">
                 <Coins className="w-4 h-4 text-white" />
               </div>
-              <span className="text-emerald-400 font-medium">10 Welcome Credits</span>
+              <span className="text-emerald-400 font-medium">500 Welcome Credits</span>
             </div>
             <p className="text-slate-400 text-sm">
-              You'll receive 10 free credits after verifying your email to start playing scenarios immediately!
+              You'll receive 500 free credits after verifying your email. This is a one-time bonus to get you started.
             </p>
           </div>
 
@@ -472,7 +471,7 @@ const Register: React.FC = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
-                <span className="text-slate-300">Get 10 free credits to start</span>
+                <span className="text-slate-300">Get 500 free credits to start (one-time)</span>
               </div>
             </div>
           </div>

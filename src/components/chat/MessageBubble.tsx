@@ -55,13 +55,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const { toast } = useToast();
   const messageType = message.message_type;
   // Parse JSON message for AI responses
-  // Function to remove CHAT/ACTION prefix from user messages for display
+  // Function to remove CHAT/ACTION or SAY/DO prefix from user messages for display
   const removeMessagePrefix = (messageContent: string): string => {
-    if (messageContent.startsWith('CHAT ')) {
-      return messageContent.substring(5);
-    }
-    if (messageContent.startsWith('ACTION ')) {
-      return messageContent.substring(7);
+    const prefixes = ['SAY ', 'DO ', 'CHAT ', 'ACTION '];
+    for (const p of prefixes) {
+      if (messageContent.startsWith(p)) {
+        return messageContent.substring(p.length);
+      }
     }
     return messageContent;
   };
@@ -89,10 +89,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       };
     }
   };
+
+  // Remove a trailing streaming cursor (on its own line) from AI content just in case
+  const stripStreamingCursor = (text: string) => text.replace(/(?:\r?\n|^)[▍▋▌█⎸|]\s*$/u, '');
   const parsedData = messageType === 'ai_response' ? parseAIMessage(message.message) : null;
-  const displayContent = messageType === 'user_message' 
-    ? removeMessagePrefix(message.message) 
-    : parsedData?.content || message.message;
+  const rawContent = messageType === 'user_message' ? removeMessagePrefix(message.message) : parsedData?.content || message.message;
+  const displayContent = messageType === 'ai_response' ? stripStreamingCursor(rawContent) : rawContent;
   const displayName = parsedData?.character_name || message.character_name || character?.name || (messageType === 'narration' ? 'Narrator' : 'AI');
   const handleFeedback = (type: 'positive' | 'negative') => {
     setFeedbackType(type);
@@ -148,10 +150,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     return (
       <div className="w-full">
         {/* Match AI row widths and align to the right */}
-        <div className="flex items-start justify-end gap-4 sm:w-[90%] md:w-[80%] lg:w-[72%] xl:w-[68%] ml-auto">
-          <div className="relative">
-            {/* Mode indicator badge */}
-            <div className={`absolute -top-2 -left-2 z-10 w-6 h-6 rounded-full flex items-center justify-center shadow-lg ${
+        <div className="flex items-start justify-end sm:w-[90%] md:w-[80%] lg:w-[72%] xl:w-[68%] ml-auto">
+          <div className="relative min-w-0">
+            {/* Mode indicator badge (top-right for right-aligned bubble) */}
+            <div className={`absolute -top-2 -right-2 z-10 w-6 h-6 rounded-full flex items-center justify-center shadow-lg ${
               isActionMessage 
                 ? 'bg-amber-500 text-slate-900' 
                 : 'bg-cyan-500 text-slate-900'
@@ -163,7 +165,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               )}
             </div>
             
-            <div className={`${getMessageWidth()} px-4 py-3 rounded-2xl rounded-br-sm border bg-slate-700 text-slate-100 border-slate-600 break-words whitespace-pre-wrap ${isOptimistic ? 'opacity-70' : ''}`}>
+            {/* Bubble */}
+            <div className={`backdrop-blur px-4 py-3 rounded-2xl rounded-br-sm shadow-lg border break-words whitespace-pre-wrap text-slate-200 border-slate-600 ${
+              isActionMessage 
+                ? 'bg-slate-750/40' 
+                : 'bg-slate-750'
+            } ${isOptimistic ? 'opacity-70' : ''} min-w-0 max-w-full`}>
               <p className="text-sm md:text-base">{displayContent}</p>
             </div>
           </div>
@@ -219,17 +226,16 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             </p>
             {/* Mode indicator for AI responses */}
             {message.mode && (
-              <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                isActionResponse ? 'bg-amber-500/20 text-amber-400' : 'bg-cyan-500/20 text-cyan-400'
+              <div className={`w-auto h-5 px-2 rounded-full flex items-center justify-center border text-[10px] tracking-wide uppercase ${
+                isActionResponse ? 'border-amber-500/40 text-amber-400' : 'border-cyan-500/40 text-cyan-400'
               }`}>
-                {isActionResponse ? (
-                  <Zap className="w-2.5 h-2.5" />
-                ) : (
-                  <MessageCircle className="w-2.5 h-2.5" />
-                )}
+                {isActionResponse ? 'DO' : 'SAY'}
               </div>
             )}
-            {(parsedData?.internal_state?.emotion || message.internal_state?.emotion) && <EmotionIndicator emotion={parsedData?.internal_state?.emotion || message.internal_state?.emotion} size="sm" />}
+            {/* Emotion indicator */}
+            {(parsedData?.internal_state?.emotion || message.internal_state?.emotion) && (
+              <EmotionIndicator emotion={parsedData?.internal_state?.emotion || message.internal_state?.emotion} size="sm" />
+            )}
           </div>
           
           {/* Message Content */}
