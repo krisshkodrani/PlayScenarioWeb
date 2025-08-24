@@ -30,6 +30,9 @@ export interface ScenarioData {
   difficulty?: 'beginner' | 'intermediate' | 'advanced' | 'expert';
   show_difficulty?: boolean;
   
+  // Featured image for the scenario
+  featured_image_url?: string;
+  
   // Characters for this scenario
   characters: CharacterData[];
 }
@@ -77,6 +80,7 @@ export interface Scenario {
   win_conditions?: string; // Add missing properties
   lose_conditions?: string;
   max_turns?: number;
+  featured_image_url?: string;
 }
 
 export interface ScenarioCategory {

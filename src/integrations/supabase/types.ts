@@ -413,6 +413,7 @@ export type Database = {
           created_at: string
           creator_id: string
           description: string
+          featured_image_url: string | null
           id: string
           is_public: boolean
           like_count: number
@@ -436,6 +437,7 @@ export type Database = {
           created_at?: string
           creator_id: string
           description: string
+          featured_image_url?: string | null
           id?: string
           is_public?: boolean
           like_count?: number
@@ -459,6 +461,7 @@ export type Database = {
           created_at?: string
           creator_id?: string
           description?: string
+          featured_image_url?: string | null
           id?: string
           is_public?: boolean
           like_count?: number

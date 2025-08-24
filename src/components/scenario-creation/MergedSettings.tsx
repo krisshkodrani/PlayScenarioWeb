@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { FileText, Clock, Settings, Globe, Lock } from 'lucide-react';
 import { ScenarioData } from '@/types/scenario';
+import ScenarioImageUploadSection from './ScenarioImageUploadSection';
 
 interface MergedSettingsProps {
   data: ScenarioData;
@@ -89,6 +90,12 @@ const MergedSettings: React.FC<MergedSettingsProps> = ({ data, onChange }) => {
             />
             <p className="text-xs text-slate-400">{data.scenario_opening_message.length}/300 characters</p>
           </div>
+
+          {/* Featured Image Upload */}
+          <ScenarioImageUploadSection
+            currentImageUrl={data.featured_image_url}
+            onImageChange={(imageUrl) => onChange({ featured_image_url: imageUrl || undefined })}
+          />
         </CardContent>
       </Card>
 

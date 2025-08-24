@@ -38,12 +38,30 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario, onLike, onBookmar
   const categoryInfo = getCategoryInfo(scenario.category);
 
   return (
-    <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/50 backdrop-blur border border-slate-600 rounded-xl p-6 hover:border-cyan-400/50 transition-all duration-300 group flex flex-col">
-      {/* Header with category badge */}
-      <div className="flex items-start justify-between mb-4">
+    <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/50 backdrop-blur border border-slate-600 rounded-xl overflow-hidden hover:border-cyan-400/50 transition-all duration-300 group flex flex-col">
+      {/* Featured Image */}
+      {scenario.featured_image_url ? (
+        <div className="aspect-video w-full bg-slate-900 overflow-hidden">
+          <img
+            src={scenario.featured_image_url}
+            alt={scenario.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        </div>
+      ) : (
+        <div className="aspect-video w-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
+          <div className="text-slate-500 text-center">
+            <span className="text-4xl">{categoryInfo.icon}</span>
+            <p className="text-sm mt-2">{categoryInfo.name}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="p-6">
+        {/* Header with category badge */}
+        <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-lg">{categoryInfo.icon}</span>
             <span className="text-xs px-2 py-1 bg-gradient-to-r from-cyan-400/20 to-violet-500/20 border border-cyan-400 rounded-full text-cyan-400 font-medium">
               {categoryInfo.name}
             </span>
@@ -143,6 +161,7 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario, onLike, onBookmar
         <div className="flex justify-between">
           <span>by {scenario.created_by}</span>
           <span>{scenario.play_count.toLocaleString()} plays</span>
+        </div>
         </div>
       </div>
     </div>
