@@ -308,6 +308,45 @@ export type Database = {
           },
         ]
       }
+      scenario_feedback: {
+        Row: {
+          ai_model: string | null
+          detail_level: string | null
+          feedback: Json
+          generated_at: string
+          id: string
+          instance_id: string
+          prompt_version: string | null
+          scenario_id: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          ai_model?: string | null
+          detail_level?: string | null
+          feedback: Json
+          generated_at?: string
+          id?: string
+          instance_id: string
+          prompt_version?: string | null
+          scenario_id: string
+          user_id: string
+          version?: number
+        }
+        Update: {
+          ai_model?: string | null
+          detail_level?: string | null
+          feedback?: Json
+          generated_at?: string
+          id?: string
+          instance_id?: string
+          prompt_version?: string | null
+          scenario_id?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: []
+      }
       scenario_instances: {
         Row: {
           ai_characters: Json | null
@@ -542,6 +581,45 @@ export type Database = {
           description?: string | null
           id?: string
           type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          code: string
+          description: string | null
+          id: string
+          instance_id: string
+          payload: Json | null
+          scenario_id: string
+          tier: number
+          title: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          code?: string
+          description?: string | null
+          id?: string
+          instance_id: string
+          payload?: Json | null
+          scenario_id: string
+          tier?: number
+          title: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          description?: string | null
+          id?: string
+          instance_id?: string
+          payload?: Json | null
+          scenario_id?: string
+          tier?: number
+          title?: string
+          unlocked_at?: string
           user_id?: string
         }
         Relationships: []
