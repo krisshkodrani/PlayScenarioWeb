@@ -48,6 +48,7 @@ export const mapDatabaseScenario = (dbScenario: any): Scenario => {
     win_conditions: dbScenario.win_conditions,
     lose_conditions: dbScenario.lose_conditions,
     max_turns: dbScenario.max_turns,
+    featured_image_url: dbScenario.featured_image_url,
     // Add difficulty settings as additional properties
     ...(difficultyMeta && {
       difficulty: difficultyMeta._difficulty?.charAt(0).toUpperCase() + difficultyMeta._difficulty?.slice(1),
