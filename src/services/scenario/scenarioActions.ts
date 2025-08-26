@@ -40,6 +40,7 @@ export const createScenario = async (scenarioData: ScenarioData): Promise<Scenar
         lose_conditions: scenarioData.lose_conditions,
         max_turns: scenarioData.max_turns,
         scenario_opening_message: scenarioData.scenario_opening_message,
+        featured_image_url: scenarioData.featured_image_url,
         is_public: scenarioData.is_public,
         creator_id: user.id,
         characters: [...aiCharacters, ...(playerCharacter ? [playerCharacter] : [])] as any
@@ -102,6 +103,7 @@ export const updateScenario = async (scenarioId: string, updates: Partial<Scenar
       lose_conditions: updates.lose_conditions,
       max_turns: updates.max_turns,
       scenario_opening_message: updates.scenario_opening_message,
+      featured_image_url: updates.featured_image_url,
       is_public: updates.is_public
     };
 

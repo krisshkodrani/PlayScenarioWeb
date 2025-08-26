@@ -105,6 +105,7 @@ const ScenarioEditForm: React.FC<ScenarioEditFormProps> = ({ scenarioId, isDupli
               activeTab={activeTab}
               onTabChange={setActiveTab}
               onDataChange={updateScenarioData}
+              scenarioId={scenarioId}
             />
           </div>
 

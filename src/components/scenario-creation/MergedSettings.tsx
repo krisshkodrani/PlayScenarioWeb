@@ -13,6 +13,7 @@ import ScenarioImageUploadSection from './ScenarioImageUploadSection';
 interface MergedSettingsProps {
   data: ScenarioData;
   onChange: (updates: Partial<ScenarioData>) => void;
+  scenarioId?: string;
 }
 
 const difficultyLevels = [
@@ -38,7 +39,7 @@ const difficultyLevels = [
   }
 ];
 
-const MergedSettings: React.FC<MergedSettingsProps> = ({ data, onChange }) => {
+const MergedSettings: React.FC<MergedSettingsProps> = ({ data, onChange, scenarioId }) => {
   return (
     <div className="space-y-6">
       {/* Scenario Overview */}
@@ -95,6 +96,7 @@ const MergedSettings: React.FC<MergedSettingsProps> = ({ data, onChange }) => {
           <ScenarioImageUploadSection
             currentImageUrl={data.featured_image_url}
             onImageChange={(imageUrl) => onChange({ featured_image_url: imageUrl || undefined })}
+            scenarioId={scenarioId}
           />
         </CardContent>
       </Card>
