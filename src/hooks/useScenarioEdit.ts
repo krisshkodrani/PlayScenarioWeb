@@ -50,6 +50,7 @@ export const useScenarioEdit = (scenarioId: string, isDuplicate: boolean = false
             lose_conditions: scenario.lose_conditions || '',
             max_turns: scenario.max_turns || 10,
             scenario_opening_message: scenario.scenario_opening_message || '',
+            featured_image_url: scenario.featured_image_url,
             is_public: isDuplicate ? false : scenario.is_public,
             difficulty: scenario.difficulty?.toLowerCase() as any || 'beginner',
             show_difficulty: true,
