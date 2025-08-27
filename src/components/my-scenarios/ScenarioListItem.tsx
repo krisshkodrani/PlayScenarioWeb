@@ -11,7 +11,8 @@ import {
   Users, 
   Clock,
   Edit,
-  Eye
+  Eye,
+  Image as ImageIcon
 } from 'lucide-react';
 import { Scenario } from '@/types/scenario';
 
@@ -67,6 +68,21 @@ const ScenarioListItem: React.FC<ScenarioListItemProps> = ({
     <Card className="bg-slate-800 border-slate-700 hover:bg-slate-700/50 transition-colors">
       <CardContent className="p-4">
         <div className="flex items-center justify-between gap-4">
+          {/* Featured Image Thumbnail */}
+          {scenario.featured_image_url ? (
+            <div className="w-20 h-12 rounded-lg overflow-hidden flex-shrink-0">
+              <img 
+                src={scenario.featured_image_url} 
+                alt={scenario.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="w-20 h-12 rounded-lg bg-slate-700 flex items-center justify-center flex-shrink-0">
+              <ImageIcon className="w-6 h-6 text-slate-500" />
+            </div>
+          )}
+          
           {/* Left section - Title and metadata */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-2">

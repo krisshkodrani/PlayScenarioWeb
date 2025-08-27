@@ -12,13 +12,15 @@ interface ScenarioFormTabsProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onDataChange: (updates: Partial<ScenarioData>) => void;
+  scenarioId?: string;
 }
 
 const ScenarioFormTabs: React.FC<ScenarioFormTabsProps> = ({
   scenarioData,
   activeTab,
   onTabChange,
-  onDataChange
+  onDataChange,
+  scenarioId
 }) => {
   const tabs = [
     { id: 'settings', label: 'Settings', component: MergedSettings },
@@ -45,7 +47,11 @@ const ScenarioFormTabs: React.FC<ScenarioFormTabsProps> = ({
         const Component = tab.component;
         return (
           <TabsContent key={tab.id} value={tab.id}>
-            <Component data={scenarioData} onChange={onDataChange} />
+            <Component 
+              data={scenarioData} 
+              onChange={onDataChange} 
+              {...(tab.id === 'settings' ? { scenarioId } : {})}
+            />
           </TabsContent>
         );
       })}

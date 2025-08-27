@@ -11,7 +11,8 @@ import {
   Users, 
   Clock,
   Edit,
-  Eye
+  Eye,
+  Image as ImageIcon
 } from 'lucide-react';
 import { Scenario } from '@/types/scenario';
 
@@ -64,7 +65,22 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({
   const scenarioDifficulty = (scenario as any).difficulty || scenario.difficulty;
 
   return (
-    <Card className="bg-slate-800 border-slate-700 hover:bg-slate-700/50 transition-all duration-200 group">
+    <Card className="bg-slate-800 border-slate-700 hover:bg-slate-700/50 transition-all duration-200 group overflow-hidden">
+      {/* Featured Image */}
+      {scenario.featured_image_url ? (
+        <div className="aspect-[16/9] overflow-hidden">
+          <img 
+            src={scenario.featured_image_url} 
+            alt={scenario.title}
+            className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+          />
+        </div>
+      ) : (
+        <div className="aspect-[16/9] bg-slate-700 flex items-center justify-center">
+          <ImageIcon className="w-12 h-12 text-slate-500" />
+        </div>
+      )}
+      
       <CardContent className="p-4">
         {/* Header with Status and Menu */}
         <div className="flex items-start justify-between mb-3">
