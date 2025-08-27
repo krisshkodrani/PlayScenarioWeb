@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -138,6 +137,7 @@ const Results: React.FC = () => {
           completionReason={results.completion_reason}
           status={results.status}
           objectives={results.objectives_progress}
+          instanceId={instance_id}
         />
 
         {/* Action Buttons */}

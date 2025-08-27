@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Clock, Users, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -23,6 +22,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   onToggleObjectiveDrawer,
   onToggleCharacterDrawer
 }) => {
+  const left = Math.max(0, (maxTurns ?? 0) - (currentTurn ?? 0));
   return (
     <div className="sticky top-0 bg-gradient-to-r from-slate-800 to-slate-700/95 backdrop-blur-lg border-b-2 border-cyan-400/30 shadow-xl shadow-slate-900/80 p-4 z-30 min-h-[80px]">
       <div className="flex items-center justify-between">
@@ -48,7 +48,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
               <span className="text-slate-400">{maxTurns}</span>
             </div>
             <div className="text-xs text-slate-400 ml-1">
-              {maxTurns - currentTurn > 0 ? `${maxTurns - currentTurn} left` : 'Complete'}
+              {`${left} left`}
             </div>
           </div>
           

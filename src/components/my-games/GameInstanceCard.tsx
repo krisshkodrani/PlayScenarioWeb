@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -80,9 +79,13 @@ const GameInstanceCard: React.FC<GameInstanceCardProps> = ({
     }
   };
 
+  // Use 1-based display for turns and clamp to max
+  const maxTurns = game.max_turns ?? 0;
+  const displayTurn = maxTurns > 0 ? Math.min((game.current_turn ?? 0) + 1, maxTurns) : (game.current_turn ?? 0) + 1;
+
   const getProgressPercentage = () => {
-    if (!game.max_turns) return 0;
-    return Math.min((game.current_turn / game.max_turns) * 100, 100);
+    if (!maxTurns) return 0;
+    return Math.min((displayTurn / maxTurns) * 100, 100);
   };
 
   const isInProgress = game.status === 'playing';
@@ -106,12 +109,12 @@ const GameInstanceCard: React.FC<GameInstanceCardProps> = ({
           </div>
 
           {/* Progress */}
-          {game.max_turns && (
+          {maxTurns > 0 && (
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-400">Progress</span>
                 <span className="text-white">
-                  {game.current_turn}/{game.max_turns} turns
+                  {displayTurn}/{maxTurns} turns
                 </span>
               </div>
               <Progress value={getProgressPercentage()} className="h-2" />

@@ -12,6 +12,11 @@ import { useRealtimeChat } from '@/hooks/useRealtimeChat';
 import { useUnifiedScroll } from '@/hooks/useUnifiedScroll';
 import { supabase } from '@/integrations/supabase/client';
 import { CHAT_MODES, MODE_PREFIXES } from '@/constants/chatCommands';
+// Removed modal imports; using bar actions instead
+// import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { feedbackService } from '@/services/feedbackService';
 
 // Debug mode configuration
 const DEBUG_CHAT = import.meta.env.VITE_DEBUG_CHAT === '1';
@@ -51,6 +56,12 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
   const [previousProgress, setPreviousProgress] = useState<Record<string, number>>({});
   const [streamingQueueLength, setStreamingQueueLength] = useState(0);
   const [isAnyStreaming, setIsAnyStreaming] = useState(false);
+  const [completed, setCompleted] = useState(false);
+  const [preparingResults, setPreparingResults] = useState(false);
+  // New: show actions and local system message after final AI render
+  const [showCompletionActions, setShowCompletionActions] = useState(false);
+  const [endSystemMsg, setEndSystemMsg] = useState<any | null>(null);
+  const [endSystemMsgAdded, setEndSystemMsgAdded] = useState(false);
 
   const {
     messages,
@@ -62,6 +73,21 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     isTyping,
     sendMessage
   } = useRealtimeChat({ instanceId, scenarioId });
+
+  const navigate = useNavigate();
+  const dlog = (...args: any[]) => { if (DEBUG_CHAT) console.log('[CoreChat]', ...args); };
+
+  // Derived values for header: ensure correct 1-based turn display
+  const maxTurnsForHeader = useMemo(() => (scenario?.max_turns ?? 20), [scenario?.max_turns]);
+  const headerCurrentTurn = useMemo(() => {
+    const currentZeroBased = instance?.current_turn ?? 0;
+    const currentOneBased = currentZeroBased + 1;
+    return Math.min(currentOneBased, maxTurnsForHeader);
+  }, [instance?.current_turn, maxTurnsForHeader]);
+
+  useEffect(() => {
+    dlog('header_turns', { instanceId, current_zero_based: instance?.current_turn ?? 0, headerCurrentTurn, maxTurnsForHeader });
+  }, [instanceId, instance?.current_turn, headerCurrentTurn, maxTurnsForHeader]);
 
   // Step 1: Deterministic message pipeline
   type Msg = any;
@@ -112,6 +138,12 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
   }, []);
 
   const processedMessages = useMemo(() => processMessages(messages as any[], scenario), [messages, scenario, processMessages]);
+
+  // Combine processed messages with local system completion message (not persisted)
+  const displayMessages = useMemo(() => {
+    if (!endSystemMsg) return processedMessages;
+    return [...processedMessages, endSystemMsg];
+  }, [processedMessages, endSystemMsg]);
 
   // objectivesWithProgress is now provided by useRealtimeChat hook
   // This eliminates duplicate calculations and ensures consistent data flow
@@ -271,6 +303,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
       if (container) {
         container.style.paddingBottom = `${Math.ceil(rect.height + 16)}px`; // a little extra gap
       }
+      dlog('input_container_measured', { height: rect.height });
     };
     measure();
     const ro = new ResizeObserver(() => measure());
@@ -420,6 +453,71 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     }
   }, [loading]);
 
+  // Detect completion by instance status or max turns crossed
+  useEffect(() => {
+    if (!instance || !scenario) return;
+    const isDone = instance.status === 'completed' || (
+      typeof scenario.max_turns === 'number' && instance.current_turn >= scenario.max_turns
+    );
+    if (isDone && !completed) {
+      dlog('completion_detected', { instanceId, status: instance.status, current_turn: instance.current_turn, max_turns: scenario.max_turns });
+      setCompleted(true);
+    }
+  }, [instance, scenario, completed]);
+
+  // After completion, wait for last AI render, then show actions and append local system message
+  useEffect(() => {
+    dlog('completion_render_check', { completed, isTyping, isAnyStreaming, processedCount: processedMessages.length });
+    if (!completed) return;
+    if (isTyping || isAnyStreaming) return;
+    if (!processedMessages.length) return;
+    const last = processedMessages[processedMessages.length - 1];
+    const isAILast = last?.message_type === 'ai_response' || last?.message_type === 'narration' || last?.message_type === 'system';
+    dlog('last_message_state', { lastId: last?.id, lastType: last?.message_type, isAILast });
+    if (!isAILast) return;
+
+    if (!showCompletionActions) {
+      setShowCompletionActions(true);
+      dlog('show_completion_actions', { instanceId });
+      window.dispatchEvent(new CustomEvent('scenario:end-render', { detail: { instanceId } }));
+    }
+    if (!endSystemMsgAdded) {
+      const sysMsg = {
+        id: `system-complete-${Date.now()}`,
+        sender_name: 'System',
+        message: 'Scenario concluded. Congrats! You can view your personalized feedback and achievements, or return to your dashboard.',
+        message_type: 'system',
+        timestamp: new Date().toISOString(),
+        turn_number: (instance?.current_turn ?? 0) + 1,
+        sequence_number: 9999
+      };
+      setEndSystemMsg(sysMsg);
+      setEndSystemMsgAdded(true);
+      dlog('appended_system_completion_message', { sysMsg });
+    }
+  }, [completed, isTyping, isAnyStreaming, processedMessages, showCompletionActions, endSystemMsgAdded, instance?.current_turn, instanceId]);
+
+  const handleSeeDetailed = async () => {
+    setPreparingResults(true);
+    dlog('see_detailed_clicked', { instanceId });
+    try {
+      // Kick off deep generation (idempotent on backend); don't block UX
+      await feedbackService.getResults(instanceId, 'deep', true);
+      dlog('deep_feedback_requested', { instanceId, force: true });
+    } catch (e) {
+      dlog('deep_feedback_request_error', { error: String(e) });
+    } finally {
+      dlog('navigate_results_deep', { instanceId });
+      navigate(`/results/${encodeURIComponent(instanceId)}?detail_level=deep`);
+      setPreparingResults(false);
+    }
+  };
+
+  const handleGoDashboard = () => {
+    dlog('back_to_dashboard_clicked', { instanceId });
+    navigate('/dashboard');
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-slate-900 text-white">
@@ -471,8 +569,8 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
       {/* Header */}
       <ChatHeader
         scenarioTitle={scenario.title}
-        currentTurn={instance.current_turn}
-        maxTurns={scenario.max_turns || 20}
+        currentTurn={headerCurrentTurn}
+        maxTurns={maxTurnsForHeader}
         progressPercentage={progressPercentage}
         hasObjectiveUpdates={hasObjectiveUpdates}
         hasCharacterUpdates={hasCharacterUpdates}
@@ -507,7 +605,7 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
       <div ref={containerRef} className="flex-1 overflow-y-auto scrollbar-smooth streaming-container" onScroll={handleScroll}>
         <div className="mx-auto w-full max-w-5xl xl:max-w-6xl px-4 md:px-6 py-6">
           <MessagesList
-            messages={(processedMessages as any[]).map((msg: any) => ({
+            messages={(displayMessages as any[]).map((msg: any) => ({
               id: msg.id,
               sender_name: msg.sender_name,
               message: typeof msg.message === 'object' ? JSON.stringify(msg.message) : msg.message,
@@ -557,16 +655,34 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
         </div>
       )}
 
-      {/* Message Input */}
-      <ChatInput 
-        value={inputValue}
-        onChange={setInputValue}
-        onSend={handleSendMessage}
-        disabled={isTyping}
-        mode={chatMode}
-        onModeToggle={() => setChatMode(prev => prev === 'focused' ? 'unfocused' : 'focused')}
-        onModeChange={setChatMode}
-      />
+      {/* Message Input or Completion Actions */}
+      {!showCompletionActions ? (
+        <ChatInput 
+          value={inputValue}
+          onChange={setInputValue}
+          onSend={handleSendMessage}
+          disabled={isTyping || completed}
+          mode={chatMode}
+          onModeToggle={() => setChatMode(prev => prev === 'focused' ? 'unfocused' : 'focused')}
+          onModeChange={setChatMode}
+        />
+      ) : (
+        <div className="chat-input-container sticky bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800">
+          <div className="mx-auto w-full max-w-5xl xl:max-w-6xl px-4 md:px-6 py-3 flex items-center justify-between gap-3">
+            <div className="text-slate-300 text-sm">
+              Scenario completed. What would you like to do next?
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" onClick={handleGoDashboard} disabled={preparingResults}>
+                Back to dashboard
+              </Button>
+              <Button onClick={handleSeeDetailed} disabled={preparingResults}>
+                {preparingResults ? 'Preparing detailed feedback…' : 'See detailed feedback'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Objective Drawer */}
       <ObjectiveDrawer
