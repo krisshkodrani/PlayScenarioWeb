@@ -196,7 +196,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       <div className="w-full">
         <div className="flex items-start gap-4 sm:w-[90%] md:w-[80%] lg:w-[72%] xl:w-[68%]">
           <div className="flex-1 relative min-w-0">
-            <div className="bg-slate-800/70 border border-violet-900/30 text-slate-300 px-6 py-4 rounded-xl">
+            <div className="w-full bg-slate-800/70 border border-violet-900/30 text-slate-300 px-6 py-4 rounded-xl">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-xs font-semibold uppercase tracking-wide text-violet-400">Narrator</span>
               </div>
