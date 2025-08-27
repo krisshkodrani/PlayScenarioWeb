@@ -153,11 +153,11 @@ const StreamingMessage: React.FC<StreamingMessageProps> = ({
     );
   }
 
-  // Narration messages - dynamic growth (no pre-sized ghost, no reserved height)
+  // Narration messages - full width to show chat area potential
   if (messageType === 'narration') {
     return (
       <div className="w-full group relative" data-message-id={message.id}>
-        <div className="bg-slate-800/70 border border-violet-900/30 text-slate-300 px-6 py-4 rounded-xl mx-auto shadow-lg">
+        <div className="w-full bg-slate-800/70 border border-violet-900/30 text-slate-300 px-6 py-4 rounded-xl shadow-lg">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-semibold uppercase tracking-wide text-violet-400">Narrator</span>
             {isQueued && (
