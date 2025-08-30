@@ -36,6 +36,39 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
     if (score >= 60) return 'D';
     return 'F';
   };
-  return;
+  return (
+    <Card className="bg-slate-800 border-slate-700">
+      <CardHeader>
+        <CardTitle className="text-white flex items-center gap-2">
+          <Target className="w-5 h-5 text-cyan-400" />
+          Performance Metrics
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 gap-4">
+          {metrics.map((metric) => (
+            <div key={metric.label} className="text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <metric.icon className="w-5 h-5 text-cyan-400" />
+                <span className="text-2xl font-bold text-white">{metric.value}</span>
+              </div>
+              <p className="text-sm text-slate-300">{metric.label}</p>
+            </div>
+          ))}
+        </div>
+        
+        {results.final_score && (
+          <div className="mt-6 pt-4 border-t border-slate-700">
+            <div className="text-center">
+              <p className="text-sm text-slate-300 mb-1">Performance Grade</p>
+              <span className="text-3xl font-bold text-amber-400">
+                {getPerformanceGrade(results.final_score)}
+              </span>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 };
 export default PerformanceMetrics;

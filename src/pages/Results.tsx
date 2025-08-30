@@ -7,8 +7,8 @@ import { Trophy, XCircle, Clock, CheckCircle, Star, Brain } from 'lucide-react';
 import { resultsService, GameResults, ConversationStats } from '@/services/resultsService';
 import { feedbackService, FeedbackResponse, DetailLevel } from '@/services/feedbackService';
 import PageHeader from '@/components/navigation/PageHeader';
-import ObjectivesBreakdown from '@/components/results/ObjectivesBreakdown';
 import PerformanceMetrics from '@/components/results/PerformanceMetrics';
+import HeaderObjectivesPanel from '@/components/results/HeaderObjectivesPanel';
 import ActionButtons from '@/components/results/ActionButtons';
 import LoadingResults from '@/components/results/LoadingResults';
 import ResultsNotFound from '@/components/results/ResultsNotFound';
@@ -158,28 +158,11 @@ const Results: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         <PageHeader title={results.scenario.title} subtitle={`${getOutcomeTitle()} — Results`} showBackButton={true} customBreadcrumbs={customBreadcrumbs} />
 
-        {/* Outcome Header */}
-        <Card className="bg-slate-800 border-slate-700 mb-8">
-          <CardContent className="text-center py-3">
-            {getOutcomeIcon()}
-            <h1 className={`text-4xl font-bold ${getOutcomeColor()} mt-4 mb-2`}>
-              {getOutcomeTitle()}
-            </h1>
-            <h2 className="text-2xl text-white mb-4">{results.scenario.title}</h2>
-            
-            {results.final_score && <div className="inline-flex items-center space-x-2 bg-slate-700 px-6 py-3 rounded-lg">
-                <Star className="w-6 h-6 text-yellow-400" />
-                <span className="text-2xl font-bold text-yellow-400">{results.final_score}</span>
-                <span className="text-slate-300">points</span>
-              </div>}
-          </CardContent>
-        </Card>
+        {/* Combined Header and Objectives */}
+        <HeaderObjectivesPanel results={results} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Objectives Breakdown */}
-          <ObjectivesBreakdown objectives={results.scenario.objectives} progress={results.objectives_progress} status={results.status} />
-
-          {/* Performance Metrics */}
+        {/* Performance Metrics */}
+        <div className="mb-8">
           <PerformanceMetrics results={results} stats={stats} />
         </div>
 
