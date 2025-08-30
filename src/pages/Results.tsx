@@ -21,9 +21,12 @@ import SkillsTab from '@/components/feedback/tabs/SkillsTab';
 import AchievementsTab from '@/components/feedback/tabs/AchievementsTab';
 import RecommendationsTab from '@/components/feedback/tabs/RecommendationsTab';
 import WhatIfTab from '@/components/feedback/tabs/WhatIfTab';
-
 const Results: React.FC = () => {
-  const { instance_id } = useParams<{ instance_id: string }>();
+  const {
+    instance_id
+  } = useParams<{
+    instance_id: string;
+  }>();
   const [results, setResults] = useState<GameResults | null>(null);
   const [stats, setStats] = useState<ConversationStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -34,32 +37,25 @@ const Results: React.FC = () => {
   const [feedback, setFeedback] = useState<FeedbackResponse | null>(null);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
-
   useEffect(() => {
     if (instance_id) {
       loadResults();
     }
   }, [instance_id]);
-
   useEffect(() => {
     if (instance_id) {
       loadFeedback(detail);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [instance_id, detail]);
-
   const loadResults = async () => {
     if (!instance_id) {
       setError('No instance ID provided');
       setLoading(false);
       return;
     }
-
     try {
-      const [gameResults, conversationStats] = await Promise.all([
-        resultsService.getGameResults(instance_id),
-        resultsService.getConversationStats(instance_id)
-      ]);
+      const [gameResults, conversationStats] = await Promise.all([resultsService.getGameResults(instance_id), resultsService.getConversationStats(instance_id)]);
       setResults(gameResults);
       setStats(conversationStats);
     } catch (error) {
@@ -69,7 +65,6 @@ const Results: React.FC = () => {
       setLoading(false);
     }
   };
-
   const loadFeedback = async (level: DetailLevel) => {
     if (!instance_id) return;
     setFeedbackLoading(true);
@@ -79,7 +74,9 @@ const Results: React.FC = () => {
       const res = await feedbackService.getResults(instance_id, level, force);
       setFeedback(res);
       // Persist user preference
-      try { localStorage.setItem('feedback_detail_level', level); } catch {}
+      try {
+        localStorage.setItem('feedback_detail_level', level);
+      } catch {}
     } catch (e: any) {
       console.error('Failed to load AI feedback:', e);
       setFeedbackError(e?.message || 'Failed to load AI feedback');
@@ -92,7 +89,7 @@ const Results: React.FC = () => {
   useEffect(() => {
     try {
       const saved = localStorage.getItem('feedback_detail_level') as DetailLevel | null;
-      if (saved && ['short','standard','deep'].includes(saved)) {
+      if (saved && ['short', 'standard', 'deep'].includes(saved)) {
         setDetail(saved as DetailLevel);
       }
     } catch {}
@@ -107,104 +104,83 @@ const Results: React.FC = () => {
   const hasRecommendations = (f?.suggestions?.next_attempt?.length ?? 0) > 0;
   const hasWhatIf = (f?.deep_dive?.alternative_paths?.length ?? 0) > 0;
   const tabsAvailable = hasTimeline || hasRelationships || hasSkills || hasAchievements || hasRecommendations || hasWhatIf;
-  const firstTab = hasTimeline
-    ? 'timeline'
-    : hasRelationships
-    ? 'relationships'
-    : hasSkills
-    ? 'skills'
-    : hasAchievements
-    ? 'achievements'
-    : hasRecommendations
-    ? 'recommendations'
-    : hasWhatIf
-    ? 'whatif'
-    : 'timeline';
-
+  const firstTab = hasTimeline ? 'timeline' : hasRelationships ? 'relationships' : hasSkills ? 'skills' : hasAchievements ? 'achievements' : hasRecommendations ? 'recommendations' : hasWhatIf ? 'whatif' : 'timeline';
   const getOutcomeIcon = () => {
     if (!results) return null;
-    
     switch (results.status) {
-      case 'won': return <Trophy className="w-16 h-16 text-emerald-400" />;
-      case 'lost': return <XCircle className="w-16 h-16 text-red-400" />;
-      case 'abandoned': return <Clock className="w-16 h-16 text-amber-400" />;
-      default: return <CheckCircle className="w-16 h-16 text-cyan-400" />;
+      case 'won':
+        return <Trophy className="w-16 h-16 text-emerald-400" />;
+      case 'lost':
+        return <XCircle className="w-16 h-16 text-red-400" />;
+      case 'abandoned':
+        return <Clock className="w-16 h-16 text-amber-400" />;
+      default:
+        return <CheckCircle className="w-16 h-16 text-cyan-400" />;
     }
   };
-
   const getOutcomeColor = () => {
     if (!results) return 'text-cyan-400';
-    
     switch (results.status) {
-      case 'won': return 'text-emerald-400';
-      case 'lost': return 'text-red-400';
-      case 'abandoned': return 'text-amber-400';
-      default: return 'text-cyan-400';
+      case 'won':
+        return 'text-emerald-400';
+      case 'lost':
+        return 'text-red-400';
+      case 'abandoned':
+        return 'text-amber-400';
+      default:
+        return 'text-cyan-400';
     }
   };
-
   const getOutcomeTitle = () => {
     if (!results) return 'Completed';
-    
     switch (results.status) {
-      case 'won': return 'Victory!';
-      case 'lost': return 'Defeat';
-      case 'abandoned': return 'Incomplete';
-      default: return 'Completed';
+      case 'won':
+        return 'Victory!';
+      case 'lost':
+        return 'Defeat';
+      case 'abandoned':
+        return 'Incomplete';
+      default:
+        return 'Completed';
     }
   };
-
   if (loading) return <LoadingResults />;
   if (error || !results || !stats) return <ResultsNotFound />;
 
   // Custom breadcrumbs for results page
-  const customBreadcrumbs = [
-    { label: 'Dashboard', href: '/dashboard' },
-    { label: 'Game Results' }
-  ];
-
-  return (
-    <div className="min-h-screen bg-slate-900">
+  const customBreadcrumbs = [{
+    label: 'Dashboard',
+    href: '/dashboard'
+  }, {
+    label: 'Game Results'
+  }];
+  return <div className="min-h-screen bg-slate-900">
       <div className="container mx-auto px-4 py-8">
-        <PageHeader
-          title={results.scenario.title}
-          subtitle={`${getOutcomeTitle()} — Results`}
-          showBackButton={true}
-          customBreadcrumbs={customBreadcrumbs}
-        />
+        <PageHeader title={results.scenario.title} subtitle={`${getOutcomeTitle()} — Results`} showBackButton={true} customBreadcrumbs={customBreadcrumbs} />
 
         {/* Outcome Header */}
         <Card className="bg-slate-800 border-slate-700 mb-8">
-          <CardContent className="text-center py-12">
+          <CardContent className="text-center py-3">
             {getOutcomeIcon()}
             <h1 className={`text-4xl font-bold ${getOutcomeColor()} mt-4 mb-2`}>
               {getOutcomeTitle()}
             </h1>
             <h2 className="text-2xl text-white mb-4">{results.scenario.title}</h2>
             
-            {results.final_score && (
-              <div className="inline-flex items-center space-x-2 bg-slate-700 px-6 py-3 rounded-lg">
+            {results.final_score && <div className="inline-flex items-center space-x-2 bg-slate-700 px-6 py-3 rounded-lg">
                 <Star className="w-6 h-6 text-yellow-400" />
                 <span className="text-2xl font-bold text-yellow-400">{results.final_score}</span>
                 <span className="text-slate-300">points</span>
-              </div>
-            )}
+              </div>}
           </CardContent>
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Objectives Breakdown */}
-          <ObjectivesBreakdown 
-            objectives={results.scenario.objectives}
-            progress={results.objectives_progress}
-            status={results.status}
-          />
+          <ObjectivesBreakdown objectives={results.scenario.objectives} progress={results.objectives_progress} status={results.status} />
 
           {/* Performance Metrics */}
-          <PerformanceMetrics 
-            results={results}
-            stats={stats}
-          />
+          <PerformanceMetrics results={results} stats={stats} />
         </div>
 
         {/* Dynamic AI Feedback Section */}
@@ -215,32 +191,22 @@ const Results: React.FC = () => {
               AI Analysis
             </div>
             <div className="flex gap-2">
-              {(['short','standard','deep'] as DetailLevel[]).map((lvl) => (
-                <Button
-                  key={lvl}
-                  size="sm"
-                  variant={detail === lvl ? 'default' : 'secondary'}
-                  onClick={() => setDetail(lvl)}
-                >
+              {(['short', 'standard', 'deep'] as DetailLevel[]).map(lvl => <Button key={lvl} size="sm" variant={detail === lvl ? 'default' : 'secondary'} onClick={() => setDetail(lvl)}>
                   {lvl}
-                </Button>
-              ))}
+                </Button>)}
             </div>
           </div>
 
           {/* Summary card */}
           <SummaryCard feedback={feedback} defaultTitle={`Summary — ${results.scenario.title}`} />
-           {feedback?.generated_at && (
-             <div className="text-xs text-slate-500 mb-2">Generated at {new Date(feedback.generated_at).toLocaleString()}</div>
-           )}
+           {feedback?.generated_at && <div className="text-xs text-slate-500 mb-2">Generated at {new Date(feedback.generated_at).toLocaleString()}</div>}
 
           {/* Feedback loading and error states */}
           {feedbackLoading && <div className="text-slate-400 mb-4">Loading feedback…</div>}
           {feedbackError && <div className="text-red-400 mb-4">{feedbackError}</div>}
 
           {/* Tabs */}
-          {tabsAvailable ? (
-            <Tabs defaultValue={firstTab} className="w-full">
+          {tabsAvailable ? <Tabs defaultValue={firstTab} className="w-full">
               <TabsList className="bg-slate-800 border border-slate-700">
                 {hasTimeline && <TabsTrigger value="timeline">Timeline</TabsTrigger>}
                 {hasRelationships && <TabsTrigger value="relationships">Relationships</TabsTrigger>}
@@ -250,51 +216,30 @@ const Results: React.FC = () => {
                 {hasWhatIf && <TabsTrigger value="whatif">What-If</TabsTrigger>}
               </TabsList>
 
-              {hasTimeline && (
-                <TabsContent value="timeline" className="mt-4">
+              {hasTimeline && <TabsContent value="timeline" className="mt-4">
                   <TimelineTab feedback={feedback} />
-                </TabsContent>
-              )}
-              {hasRelationships && (
-                <TabsContent value="relationships" className="mt-4">
+                </TabsContent>}
+              {hasRelationships && <TabsContent value="relationships" className="mt-4">
                   <RelationshipsTab feedback={feedback} />
-                </TabsContent>
-              )}
-              {hasSkills && (
-                <TabsContent value="skills" className="mt-4">
+                </TabsContent>}
+              {hasSkills && <TabsContent value="skills" className="mt-4">
                   <SkillsTab feedback={feedback} />
-                </TabsContent>
-              )}
-              {hasAchievements && (
-                <TabsContent value="achievements" className="mt-4">
+                </TabsContent>}
+              {hasAchievements && <TabsContent value="achievements" className="mt-4">
                   <AchievementsTab feedback={feedback} />
-                </TabsContent>
-              )}
-              {hasRecommendations && (
-                <TabsContent value="recommendations" className="mt-4">
+                </TabsContent>}
+              {hasRecommendations && <TabsContent value="recommendations" className="mt-4">
                   <RecommendationsTab feedback={feedback} />
-                </TabsContent>
-              )}
-              {hasWhatIf && (
-                <TabsContent value="whatif" className="mt-4">
+                </TabsContent>}
+              {hasWhatIf && <TabsContent value="whatif" className="mt-4">
                   <WhatIfTab feedback={feedback} />
-                </TabsContent>
-              )}
-            </Tabs>
-          ) : (
-            <div className="text-slate-400">No detailed AI feedback sections available yet.</div>
-          )}
+                </TabsContent>}
+            </Tabs> : <div className="text-slate-400">No detailed AI feedback sections available yet.</div>}
         </div>
 
         {/* Action Buttons */}
-        <ActionButtons 
-          scenarioId={results.scenario.id}
-          instanceId={instance_id}
-          status={results.status}
-        />
+        <ActionButtons scenarioId={results.scenario.id} instanceId={instance_id} status={results.status} />
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Results;
