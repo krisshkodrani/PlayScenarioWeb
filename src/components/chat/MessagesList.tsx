@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import MessageBubble from './MessageBubble';
 import StreamingMessage from './StreamingMessage';
 import { useSequentialMessageStreaming } from '@/hooks/chat/useSequentialMessageStreaming';
+import { useThrottledState } from '@/hooks/useThrottledState';
 import { testMessageStreamedField } from '@/utils/messageUtils';
 import { Message } from '../../types/chat';
 
@@ -72,12 +73,8 @@ const MessagesList: React.FC<MessagesListProps> = ({
   instanceId,
   onQueueChange
 }) => {
-  // Throttled streamed content store
-  const [streamedContent, setStreamedContent] = useState<Map<string, string>>(new Map());
+  const [streamedContent, updateStreamedContentBuffer] = useThrottledState<Map<string, string>>(new Map(), 50);
   const [completedStreaming, setCompletedStreaming] = useState<Set<string>>(new Set());
-  const bufferRef = useRef<Map<string, string>>(new Map());
-  const hasPendingRef = useRef<boolean>(false);
-  const flushTimerRef = useRef<number | null>(null);
 
   // Convert MockMessage to Message for streaming hook. Preserve provided sequence_number/turn_number
   const convertedMessages: Message[] = useMemo(() => (
@@ -104,10 +101,7 @@ const MessagesList: React.FC<MessagesListProps> = ({
   // Single entry point from streaming hook: write to buffer only
   const handleStreamingUpdate = useCallback((messageId: string, content: string, isComplete: boolean) => {
     // Write to buffer and mark pending
-    const next = new Map(bufferRef.current);
-    next.set(messageId, content);
-    bufferRef.current = next;
-    hasPendingRef.current = true;
+    updateStreamedContentBuffer(prev => new Map(prev).set(messageId, content));
 
     if (isComplete) {
       setCompletedStreaming(prev => {
@@ -116,7 +110,7 @@ const MessagesList: React.FC<MessagesListProps> = ({
         return n;
       });
     }
-  }, []);
+  }, [updateStreamedContentBuffer]);
 
   const handleStreamingComplete = useCallback((messageId: string) => {
     // When streaming completes, if user was near bottom, keep them at bottom
@@ -148,53 +142,23 @@ const MessagesList: React.FC<MessagesListProps> = ({
     Math.max(0, queueLength - (currentStreamingMessageId ? 1 : 0))
   ), [queueLength, currentStreamingMessageId]);
 
-  // Start/stop a single 50ms flush timer while any message is streaming or queued
+  // A global "settled" state for streaming.
+  const isSettled = !isAnyMessageStreaming && displayedQueueCount === 0;
+
+  // NEW: A focused effect for scroll management.
+  // It runs whenever content is updated or streaming state changes.
   useEffect(() => {
-    const shouldRun = isAnyMessageStreaming || queueLength > 0;
+    const container = getScrollContainer();
+    if (!container) return;
 
-    if (shouldRun && flushTimerRef.current == null) {
-      flushTimerRef.current = window.setInterval(() => {
-        if (!hasPendingRef.current) return;
-
-        const container = getScrollContainer();
-        const shouldStick = container ? isNearBottom(container) : false;
-
-        // Apply buffered updates in one state set
-        setStreamedContent(new Map(bufferRef.current));
-        hasPendingRef.current = false;
-
-        // If user was near bottom, keep the scroll pinned to bottom so content doesn't go under input
-        if (shouldStick && container) {
-          // Use auto to avoid continuous smooth scroll jitter during streaming
-          container.scrollTo({ top: container.scrollHeight, behavior: 'auto' });
-        }
-      }, 50);
+    const shouldStick = isNearBottom(container);
+    if (shouldStick) {
+      // Use 'auto' to prevent scroll jitter during rapid updates.
+      container.scrollTo({ top: container.scrollHeight, behavior: 'auto' });
     }
+  }, [streamedContent, isAnyMessageStreaming]); // Re-run when throttled content flushes.
 
-    if (!shouldRun && flushTimerRef.current != null) {
-      window.clearInterval(flushTimerRef.current);
-      flushTimerRef.current = null;
-      // Final flush if anything pending
-      if (hasPendingRef.current) {
-        const container = getScrollContainer();
-        const shouldStick = container ? isNearBottom(container) : false;
-        setStreamedContent(new Map(bufferRef.current));
-        hasPendingRef.current = false;
-        if (shouldStick && container) {
-          container.scrollTo({ top: container.scrollHeight, behavior: 'auto' });
-        }
-      }
-    }
-
-    return () => {
-      if (flushTimerRef.current != null) {
-        window.clearInterval(flushTimerRef.current);
-        flushTimerRef.current = null;
-      }
-    };
-  }, [isAnyMessageStreaming, queueLength]);
-
-  // Notify parent about queue changes for smart scrolling (use adjusted count)
+  // Notify parent about queue changes for smart scrolling (use adjusted count) and include active streaming state
   useEffect(() => {
     if (onQueueChange) {
       onQueueChange(displayedQueueCount, isAnyMessageStreaming);
@@ -232,16 +196,17 @@ const MessagesList: React.FC<MessagesListProps> = ({
         const hasStreamingState = !!streamingState;
         const isCompleted = completedStreaming.has(message.id) || message.streamed === true;
 
-        // Hide unprocessed streamable messages to prevent full-content flash
-        const isUnprocessedStreamable = isStreamable && !isCompleted && !hasStreamingState && !isCurrentlyStreaming && !isInQueue;
-        if (isUnprocessedStreamable) {
-          return null;
-        }
-
-        // Hide pending and queued streamables (collapsed into banner)
-        const isPendingStreamable = isStreamable && !isCompleted && hasStreamingState && !isCurrentlyStreaming && !isInQueue;
-        if (isPendingStreamable || isInQueue) {
-          return null;
+        // Hide unprocessed/pending messages only when not settled.
+        if (!isSettled) {
+          const isUnprocessedStreamable = isStreamable && !isCompleted && !hasStreamingState && !isCurrentlyStreaming && !isInQueue;
+          if (isUnprocessedStreamable) {
+            return null;
+          }
+  
+          const isPendingStreamable = isStreamable && !isCompleted && hasStreamingState && !isCurrentlyStreaming && !isInQueue;
+          if (isPendingStreamable || isInQueue) {
+            return null;
+          }
         }
         
         // Show streaming version for currently streaming message
@@ -273,13 +238,20 @@ const MessagesList: React.FC<MessagesListProps> = ({
           );
         }
 
+        // For the final static bubble, use the buffered content as a fallback.
+        const bubbleMessage = {
+          ...message,
+          message: streamedContent.get(message.id) ?? message.message,
+          streamed: message.streamed || completedStreaming.has(message.id) || (isStreamable && isSettled),
+        };
+
         const bubbleCharacter = resolveCharacterForMessage(message, characters);
 
         // Show normal message bubble (for user messages or completed streaming)
         return (
           <MessageBubble 
             key={message.id}
-            message={message as any}
+            message={bubbleMessage as any}
             character={bubbleCharacter}
             onSuggestionClick={onSuggestionClick}
           />

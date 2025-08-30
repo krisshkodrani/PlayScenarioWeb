@@ -113,7 +113,7 @@ async function getResults(instanceId: string, detailLevel: DetailLevel = 'standa
 }
 
 async function generateDetailedAndWait(instanceId: string): Promise<FeedbackResponse> {
-  // Warm deep generation explicitly with force=true
+  // Warm deep generation explicitly with force=true when caller requests explicit generation
   return getResults(instanceId, 'deep', true);
 }
 

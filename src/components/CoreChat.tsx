@@ -145,6 +145,14 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     return [...processedMessages, endSystemMsg];
   }, [processedMessages, endSystemMsg]);
 
+  // Helper: are all AI/narration messages finalized (streamed === true)?
+  const allAiStreamed = useMemo(() => {
+    if (!processedMessages || processedMessages.length === 0) return true;
+    const aiMsgs = processedMessages.filter((m: any) => m?.message_type === 'ai_response' || m?.message_type === 'narration');
+    if (aiMsgs.length === 0) return true;
+    return aiMsgs.every((m: any) => m?.streamed === true);
+  }, [processedMessages]);
+
   // objectivesWithProgress is now provided by useRealtimeChat hook
   // This eliminates duplicate calculations and ensures consistent data flow
 
@@ -467,35 +475,50 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
 
   // After completion, wait for last AI render, then show actions and append local system message
   useEffect(() => {
-    dlog('completion_render_check', { completed, isTyping, isAnyStreaming, processedCount: processedMessages.length });
+    dlog('completion_render_check', { completed, isTyping, isAnyStreaming, streamingQueueLength, processedCount: processedMessages.length });
     if (!completed) return;
-    if (isTyping || isAnyStreaming) return;
+
+    // Block if model still typing, any stream active, or queued items remain
+    if (isTyping) return;
+    if (isAnyStreaming) return;
+    if (streamingQueueLength > 0) return;
+
     if (!processedMessages.length) return;
     const last = processedMessages[processedMessages.length - 1];
     const isAILast = last?.message_type === 'ai_response' || last?.message_type === 'narration' || last?.message_type === 'system';
     dlog('last_message_state', { lastId: last?.id, lastType: last?.message_type, isAILast });
     if (!isAILast) return;
 
-    if (!showCompletionActions) {
-      setShowCompletionActions(true);
-      dlog('show_completion_actions', { instanceId });
-      window.dispatchEvent(new CustomEvent('scenario:end-render', { detail: { instanceId } }));
-    }
-    if (!endSystemMsgAdded) {
-      const sysMsg = {
-        id: `system-complete-${Date.now()}`,
-        sender_name: 'System',
-        message: 'Scenario concluded. Congrats! You can view your personalized feedback and achievements, or return to your dashboard.',
-        message_type: 'system',
-        timestamp: new Date().toISOString(),
-        turn_number: (instance?.current_turn ?? 0) + 1,
-        sequence_number: 9999
-      };
-      setEndSystemMsg(sysMsg);
-      setEndSystemMsgAdded(true);
-      dlog('appended_system_completion_message', { sysMsg });
-    }
-  }, [completed, isTyping, isAnyStreaming, processedMessages, showCompletionActions, endSystemMsgAdded, instance?.current_turn, instanceId]);
+    // Small settle delay to avoid flash during brief queue gaps
+    const t = setTimeout(() => {
+      // Re-check guards to avoid races
+      if (isTyping) return;
+      if (isAnyStreaming) return;
+      if (streamingQueueLength > 0) return;
+
+      if (!showCompletionActions) {
+        setShowCompletionActions(true);
+        dlog('show_completion_actions', { instanceId });
+        window.dispatchEvent(new CustomEvent('scenario:end-render', { detail: { instanceId } }));
+      }
+      if (!endSystemMsgAdded) {
+        const sysMsg = {
+          id: `system-complete-${Date.now()}`,
+          sender_name: 'System',
+          message: 'Scenario concluded. Congrats! You can view your personalized feedback and achievements, or return to your dashboard.',
+          message_type: 'system',
+          timestamp: new Date().toISOString(),
+          turn_number: (instance?.current_turn ?? 0) + 1,
+          sequence_number: 9999
+        };
+        setEndSystemMsg(sysMsg);
+        setEndSystemMsgAdded(true);
+        dlog('appended_system_completion_message', { sysMsg });
+      }
+    }, 150);
+
+    return () => clearTimeout(t);
+  }, [completed, isTyping, isAnyStreaming, streamingQueueLength, processedMessages, showCompletionActions, endSystemMsgAdded, instance?.current_turn, instanceId]);
 
   const handleSeeDetailed = async () => {
     setPreparingResults(true);
