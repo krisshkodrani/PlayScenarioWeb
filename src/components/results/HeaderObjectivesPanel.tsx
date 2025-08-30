@@ -34,13 +34,24 @@ const HeaderObjectivesPanel: React.FC<HeaderObjectivesPanelProps> = ({ results }
     }
   };
 
-  const completedObjectives = results.scenario.objectives.filter((_, index) => {
-    const progress = results.objectives_progress[index] || results.objectives_progress[index.toString()];
-    return progress >= 100;
+  const completedObjectives = results.scenario.objectives.filter((objective, index) => {
+    const objectiveKey = `objective_${objective.id || index + 1}`;
+    const objectiveProgress = results.objectives_progress[objectiveKey] || results.objectives_progress[objective.id] || results.objectives_progress[index.toString()] || {};
+    const percentage = (typeof objectiveProgress.completion_percentage === 'number'
+      ? objectiveProgress.completion_percentage
+      : (objectiveProgress.progress_percentage || 0));
+    return percentage >= 75;
   }).length;
 
   const totalObjectives = results.scenario.objectives.length;
-  const overallProgress = totalObjectives > 0 ? Math.round((completedObjectives / totalObjectives) * 100) : 0;
+  const overallProgress = totalObjectives > 0 ? Math.round(
+    results.scenario.objectives.reduce((sum, obj, index) => {
+      const objKey = `objective_${obj.id || index + 1}`;
+      const prog = results.objectives_progress[objKey] || results.objectives_progress[obj.id] || results.objectives_progress[index.toString()] || {};
+      const pct = (typeof prog.completion_percentage === 'number') ? prog.completion_percentage : (prog.progress_percentage || 0);
+      return sum + pct;
+    }, 0) / totalObjectives
+  ) : 0;
 
   return (
     <Card className="bg-slate-800 border-slate-700 mb-6">
@@ -82,8 +93,12 @@ const HeaderObjectivesPanel: React.FC<HeaderObjectivesPanelProps> = ({ results }
 
             <div className="space-y-2 max-h-32 overflow-y-auto">
               {results.scenario.objectives.map((objective, index) => {
-                const progress = results.objectives_progress[index] || results.objectives_progress[index.toString()] || 0;
-                const isCompleted = progress >= 100;
+                const objectiveKey = `objective_${objective.id || index + 1}`;
+                const objectiveProgress = results.objectives_progress[objectiveKey] || results.objectives_progress[objective.id] || results.objectives_progress[index.toString()] || {};
+                const percentage = (typeof objectiveProgress.completion_percentage === 'number'
+                  ? objectiveProgress.completion_percentage
+                  : (objectiveProgress.progress_percentage || 0));
+                const isCompleted = percentage >= 75;
                 
                 return (
                   <div key={index} className="flex items-center gap-3 p-2 rounded-lg bg-slate-700/50">
@@ -98,7 +113,7 @@ const HeaderObjectivesPanel: React.FC<HeaderObjectivesPanelProps> = ({ results }
                     <span className={`text-xs font-medium ${
                       isCompleted ? 'text-emerald-400' : 'text-slate-400'
                     }`}>
-                      {progress}%
+                      {percentage}%
                     </span>
                   </div>
                 );
