@@ -72,7 +72,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
         <CardTitle className="text-cyan-400">Actions</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {actions.map((action, index) => (
             <Button
               key={index}
