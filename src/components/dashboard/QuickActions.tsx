@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Search, FileText, Users, GamepadIcon, Plus, UserCheck } from 'lucide-react';
+import { Search, FileText, Users, GamepadIcon, Plus, UserCheck, MessageCircle } from 'lucide-react';
 
 interface QuickActionsProps {
   onCreateScenario: () => void;
@@ -57,6 +57,12 @@ const QuickActions: React.FC<QuickActionsProps> = ({
       icon: FileText,
       onClick: onViewMyScenarios,
       className: 'bg-purple-500 hover:bg-purple-600'
+    },
+    {
+      title: 'Discord',
+      icon: MessageCircle,
+      onClick: () => window.open('https://discord.gg/ccuKkz5t', '_blank'),
+      className: 'bg-indigo-500 hover:bg-indigo-600'
     }
   ];
 
