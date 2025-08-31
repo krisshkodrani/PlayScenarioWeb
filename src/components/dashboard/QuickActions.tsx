@@ -77,7 +77,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
             <Button
               key={index}
               onClick={action.onClick}
-              className={`h-20 p-4 flex flex-col items-center justify-center text-center transition-all duration-200 ${action.className}`}
+              className={`aspect-square p-4 flex flex-col items-center justify-center text-center transition-all duration-200 ${action.className}`}
               variant="default"
             >
               <action.icon className="w-6 h-6 mb-2" />
