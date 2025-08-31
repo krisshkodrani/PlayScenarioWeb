@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, Search, Share2, Home } from 'lucide-react';
+import { RotateCcw, Search, Share2, Home, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ActionButtonsProps {
@@ -81,6 +81,15 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
       >
         <Home className="w-4 h-4 mr-2" />
         Dashboard
+      </Button>
+
+      <Button
+        onClick={() => window.open('https://discord.gg/ccuKkz5t', '_blank')}
+        variant="outline"
+        className="border-violet-400 text-violet-400 hover:bg-violet-400 hover:text-slate-900"
+      >
+        <MessageCircle className="w-4 h-4 mr-2" />
+        Discord
       </Button>
     </div>
   );
