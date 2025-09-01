@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -53,12 +52,12 @@ const SimplifiedBasicInfo: React.FC<SimplifiedBasicInfoProps> = ({
           <p className="text-xs text-slate-400">{characterData.name.length}/50 characters</p>
         </div>
 
-        {/* Role Context Input (for smart suggestions) */}
+        {/* Role Input bound to CharacterData */}
         <div className="space-y-2">
           <Label className="text-white">Role/Position (Optional)</Label>
           <Input
-            value={characterContext.role}
-            onChange={(e) => setCharacterContext(prev => ({ ...prev, role: e.target.value }))}
+            value={characterData.role || ''}
+            onChange={(e) => setCharacterData(prev => ({ ...prev, role: e.target.value }))}
             placeholder="e.g., IT Security Analyst, CEO, Doctor..."
             className="bg-slate-700/50 backdrop-blur border border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400"
           />

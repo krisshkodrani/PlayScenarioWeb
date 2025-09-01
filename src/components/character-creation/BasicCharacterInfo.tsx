@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,12 +34,12 @@ const BasicCharacterInfo: React.FC<BasicCharacterInfoProps> = ({ data, onChange 
     onChange({ [field]: value });
   };
 
-  const handleRoleToggle = (roleId: string) => {
-    const currentRoles = data.role || [];
-    const newRoles = currentRoles.includes(roleId)
-      ? currentRoles.filter((r: string) => r !== roleId)
-      : [...currentRoles, roleId];
-    onChange({ role: newRoles });
+  const handleRoleTemplatesToggle = (roleId: string) => {
+    const current = Array.isArray(data.role_templates) ? data.role_templates : [];
+    const next = current.includes(roleId)
+      ? current.filter((r: string) => r !== roleId)
+      : [...current, roleId];
+    onChange({ role_templates: next });
   };
 
   const handleAvatarSelect = (avatarUrl: string) => {
@@ -79,23 +78,36 @@ const BasicCharacterInfo: React.FC<BasicCharacterInfoProps> = ({ data, onChange 
         </div>
       </div>
 
-      {/* Role Selection */}
+      {/* Role/Position free text bound to characterData.role */}
+      <div className="space-y-2">
+        <Label htmlFor="role-position">Role/Position (Optional)</Label>
+        <Input
+          id="role-position"
+          value={typeof data.role === 'string' ? data.role : ''}
+          onChange={(e) => onChange({ role: e.target.value })}
+          placeholder="e.g., IT Security Analyst, CEO, Doctor..."
+          className="bg-input"
+        />
+        <p className="text-xs text-muted-foreground">Used for suggestions and saved with the character</p>
+      </div>
+
+      {/* Role Templates Selection (decoupled from role string) */}
       <div className="space-y-3">
-        <Label>Character Role(s) *</Label>
+        <Label>Role Templates</Label>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {roleTemplates.map((role) => (
             <div
               key={role.id}
               className={`p-3 rounded-md border cursor-pointer transition-colors ${
-                (data.role || []).includes(role.id)
+                (Array.isArray(data.role_templates) ? data.role_templates : []).includes(role.id)
                   ? 'border-primary bg-primary/10'
                   : 'border-border hover:border-primary/50'
               }`}
-              onClick={() => handleRoleToggle(role.id)}
+              onClick={() => handleRoleTemplatesToggle(role.id)}
             >
               <div className="flex items-center justify-between mb-1">
                 <h4 className="font-medium text-sm">{role.name}</h4>
-                {(data.role || []).includes(role.id) && (
+                {(Array.isArray(data.role_templates) ? data.role_templates : []).includes(role.id) && (
                   <Badge variant="secondary">Selected</Badge>
                 )}
               </div>
@@ -103,9 +115,9 @@ const BasicCharacterInfo: React.FC<BasicCharacterInfoProps> = ({ data, onChange 
             </div>
           ))}
         </div>
-        {(data.role || []).length > 0 && (
+        {(Array.isArray(data.role_templates) ? data.role_templates : []).length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {data.role.map((roleId: string) => {
+            {(data.role_templates || []).map((roleId: string) => {
               const role = roleTemplates.find(r => r.id === roleId);
               return role ? (
                 <Badge key={roleId} variant="outline" className="flex items-center gap-1">
@@ -114,7 +126,7 @@ const BasicCharacterInfo: React.FC<BasicCharacterInfoProps> = ({ data, onChange 
                     variant="ghost"
                     size="sm"
                     className="h-auto p-0 ml-1"
-                    onClick={() => handleRoleToggle(roleId)}
+                    onClick={() => handleRoleTemplatesToggle(roleId)}
                   >
                     <X className="w-3 h-3" />
                   </Button>

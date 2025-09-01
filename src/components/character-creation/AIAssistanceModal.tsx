@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -33,7 +32,11 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
   const { createCharacter, enhanceCharacter } = useCharacterHelper();
 
   // Determine if we're creating or editing based on whether character has meaningful data
-  const isEditMode = characterData.name?.trim() || characterData.personality?.trim() || characterData.expertise_keywords?.length > 0;
+  const isEditMode = Boolean(
+    (characterData.name && characterData.name.trim()) ||
+    (characterData.personality && characterData.personality.trim()) ||
+    ((characterData.expertise_keywords?.length ?? 0) > 0)
+  );
   
   // Get appropriate mutation based on mode
   const mutation = isEditMode ? enhanceCharacter : createCharacter;
@@ -92,7 +95,7 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
   // Advanced context-aware suggestions based on current character state
   const getContextualSuggestions = () => {
     if (isEditMode) {
-      const suggestions = [];
+      const suggestions = [] as string[];
       
       // Analyze what's missing or could be improved
       if (!characterData.background || characterData.background.length < 50) {
@@ -146,7 +149,7 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
   const suggestionPrompts = getContextualSuggestions();
   
   const isProcessing = mutation.isPending;
-  const error = mutation.error;
+  const error = mutation.error as any;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -154,12 +157,12 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
         <DialogHeader>
           <DialogTitle className="text-cyan-400 flex items-center gap-2">
             <Wand2 className="w-5 h-5" />
-            AI Character Assistant {isEditMode ? '(Enhancement Mode)' : '(Creation Mode)'}
+            {isEditMode ? 'AI Character Assistant (Enhancement Mode)' : 'AI Character Assistant (Creation Mode)'}
           </DialogTitle>
           <DialogDescription className="text-slate-300">
             {isEditMode 
-              ? 'Describe how you\'d like to improve or modify your character. AI will enhance their existing traits.'
-              : 'Describe the character you want to create. AI will generate complete character details for you.'
+              ? "Describe how you'd like to improve or modify your character. AI will enhance existing traits."
+              : "Describe the character you want to create. AI will generate complete character details."
             }
           </DialogDescription>
         </DialogHeader>
@@ -167,13 +170,17 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
         <div className="space-y-6">
           <div className="space-y-3">
             <Label htmlFor="ai-prompt" className="text-white">
-              What would you like to improve?
+              {isEditMode ? 'What would you like to improve?' : 'What character would you like to create?'}
             </Label>
             <Textarea
               id="ai-prompt"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="e.g., 'Make this character more funny and engaging' or 'Add technical expertise'"
+              placeholder={
+                isEditMode
+                  ? "e.g., 'Make this character more funny and engaging' or 'Add technical expertise in cloud security'"
+                  : "e.g., 'Create a calm, detail-oriented triage nurse with 10 years of ER experience'"
+              }
               className="bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-violet-400 min-h-[100px]"
               maxLength={500}
             />
