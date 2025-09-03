@@ -47,7 +47,7 @@ const SimplifiedBasicInfo: React.FC<SimplifiedBasicInfoProps> = ({
             <Input id="title" value={data.title} onChange={e => onChange({
             title: e.target.value
           })} placeholder="Enter a compelling scenario title" className="bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400" maxLength={100} />
-            <p className="text-xs text-slate-400">{data.title.length}/100 characters</p>
+            <p className="text-xs text-slate-400">{(data.title ?? '').length}/100 characters</p>
           </div>
 
           <div className="space-y-2">
@@ -55,7 +55,7 @@ const SimplifiedBasicInfo: React.FC<SimplifiedBasicInfoProps> = ({
             <Textarea id="description" value={data.description} onChange={e => onChange({
             description: e.target.value
           })} placeholder="Describe the scenario context, setting, and what participants will experience..." rows={4} className="bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 resize-none" maxLength={500} />
-            <p className="text-xs text-slate-400">{data.description.length}/500 characters</p>
+            <p className="text-xs text-slate-400">{(data.description ?? '').length}/500 characters</p>
           </div>
 
           <div className="space-y-2">
@@ -63,7 +63,7 @@ const SimplifiedBasicInfo: React.FC<SimplifiedBasicInfoProps> = ({
             <Textarea id="initial-scene" value={data.scenario_opening_message} onChange={e => onChange({
             scenario_opening_message: e.target.value
           })} placeholder="Describe the opening scenario that will set the stage for the conversation..." rows={3} className="bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 resize-none" maxLength={300} />
-            <p className="text-xs text-slate-400">{data.scenario_opening_message.length}/300 characters</p>
+            <p className="text-xs text-slate-400">{(data.scenario_opening_message ?? '').length}/300 characters</p>
           </div>
         </CardContent>
       </Card>

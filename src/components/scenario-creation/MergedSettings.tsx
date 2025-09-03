@@ -61,7 +61,7 @@ const MergedSettings: React.FC<MergedSettingsProps> = ({ data, onChange, scenari
               className="bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400"
               maxLength={100}
             />
-            <p className="text-xs text-slate-400">{data.title.length}/100 characters</p>
+            <p className="text-xs text-slate-400">{(data.title ?? '').length}/100 characters</p>
           </div>
 
           <div className="space-y-2">
@@ -75,7 +75,7 @@ const MergedSettings: React.FC<MergedSettingsProps> = ({ data, onChange, scenari
               className="bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 resize-none"
               maxLength={500}
             />
-            <p className="text-xs text-slate-400">{data.description.length}/500 characters</p>
+            <p className="text-xs text-slate-400">{(data.description ?? '').length}/500 characters</p>
           </div>
 
           <div className="space-y-2">
@@ -89,7 +89,7 @@ const MergedSettings: React.FC<MergedSettingsProps> = ({ data, onChange, scenari
               className="bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 resize-none"
               maxLength={300}
             />
-            <p className="text-xs text-slate-400">{data.scenario_opening_message.length}/300 characters</p>
+            <p className="text-xs text-slate-400">{(data.scenario_opening_message ?? '').length}/300 characters</p>
           </div>
 
           {/* Featured Image Upload */}

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -26,19 +25,19 @@ const ScenarioProgressHeader: React.FC<ScenarioProgressHeaderProps> = ({
   const sections = [
     {
       name: 'Basic Info',
-      completed: scenarioData ? (
-        scenarioData.title.trim().length > 0 && 
-        scenarioData.description.trim().length > 0 &&
-        scenarioData.scenario_opening_message.trim().length > 0
-      ) : false
+      completed: (
+        ((scenarioData?.title ?? '').trim().length > 0) &&
+        ((scenarioData?.description ?? '').trim().length > 0) &&
+        ((scenarioData?.scenario_opening_message ?? '').trim().length > 0)
+      )
     },
     {
       name: 'Objectives',
-      completed: scenarioData ? scenarioData.objectives.length > 0 : false
+      completed: (scenarioData?.objectives?.length ?? 0) > 0
     },
     {
       name: 'Characters',
-      completed: scenarioData ? scenarioData.characters.length > 0 : false
+      completed: (scenarioData?.characters?.length ?? 0) > 0
     },
     {
       name: 'Settings',

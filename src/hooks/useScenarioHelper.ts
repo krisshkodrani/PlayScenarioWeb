@@ -50,7 +50,9 @@ interface ScenarioHelperResponse {
   win_conditions: string;
   lose_conditions: string;
   max_turns: number;
-  initial_scene_prompt: string;
+  // Backend returns scenario_opening_message; keep initial_scene_prompt as optional fallback for compatibility
+  scenario_opening_message: string;
+  initial_scene_prompt?: string;
   characters: Array<{
     name: string;
     role: string;
@@ -107,7 +109,7 @@ export function useCreateScenario(): UseMutationResult<
 export function useEnhanceScenario(): UseMutationResult<
   ScenarioHelperResponse,
   Error,
-  { 
+  {
     userRequest: string;
     currentScenarioData: {
       title?: string;
@@ -159,7 +161,7 @@ export function useScenarioHelper(): {
   enhanceScenario: UseMutationResult<
     ScenarioHelperResponse,
     Error,
-    { 
+    {
       userRequest: string;
       currentScenarioData: {
         title?: string;

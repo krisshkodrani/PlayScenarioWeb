@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -64,7 +63,9 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
               role: char.role || 'Character',
               personality: char.personality,
               expertise_keywords: char.expertise_keywords,
-              is_player_character: char.is_player_character
+              is_player_character: char.is_player_character,
+              // Preserve avatar_color so backend keeps it
+              avatar_color: char.avatar_color || 'bg-blue-500'
             }))
           }
         });
@@ -88,13 +89,16 @@ const AIAssistanceModal: React.FC<AIAssistanceModalProps> = ({
         win_conditions: response.win_conditions,
         lose_conditions: response.lose_conditions,
         max_turns: response.max_turns,
-        scenario_opening_message: response.initial_scene_prompt,
+        // Use scenario_opening_message, fallback to initial_scene_prompt for backward compatibility
+        scenario_opening_message: (response as any).scenario_opening_message || (response as any).initial_scene_prompt || '',
         characters: response.characters?.map(char => ({
           name: char.name,
           role: char.role,
           personality: char.personality,
           expertise_keywords: char.expertise_keywords,
-          is_player_character: char.is_player_character
+          is_player_character: char.is_player_character,
+          // Preserve color if provided by helper
+          avatar_color: (char as any).avatar_color
         })) || [],
         is_public: response.is_public
       });

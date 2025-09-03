@@ -93,6 +93,11 @@ export const useScenarioCreate = () => {
       errors.push('Lose conditions are required');
     }
 
+    // New: Ensure initial scene message is provided (DB NOT NULL)
+    if (!scenarioData.scenario_opening_message?.trim()) {
+      errors.push('Initial scene message is required');
+    }
+
     if (scenarioData.characters.length === 0) {
       errors.push('At least one character is required');
     } else {

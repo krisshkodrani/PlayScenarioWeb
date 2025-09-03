@@ -1,4 +1,3 @@
-
 export interface ObjectiveData {
   id: number;
   description: string;
@@ -13,6 +12,7 @@ export interface CharacterData {
   is_player_character: boolean;
   role?: string; // Add role property
   avatar_url?: string; // Avatar image URL
+  avatar_color?: string; // Tailwind background color (preserved for enhance)
 }
 
 export interface ScenarioData {
