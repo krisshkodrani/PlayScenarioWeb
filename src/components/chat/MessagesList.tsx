@@ -145,6 +145,23 @@ const MessagesList: React.FC<MessagesListProps> = ({
   // A global "settled" state for streaming.
   const isSettled = !isAnyMessageStreaming && displayedQueueCount === 0;
 
+  // Detect any recent, unstreamed streamables to guard the first-frame flash
+  const hasPendingStreamables = useMemo(() => {
+    const now = Date.now();
+    const RECENT_MS = 10000; // 10s window
+    return messages.some(m => {
+      const isStreamable = m.message_type === 'ai_response' || m.message_type === 'narration';
+      if (!isStreamable) return false;
+      const isCompleted = completedStreaming.has(m.id) || m.streamed === true;
+      if (isCompleted) return false;
+      const ts = m.timestamp instanceof Date ? m.timestamp.getTime() : new Date(m.timestamp as any).getTime();
+      const isRecent = now - ts < RECENT_MS;
+      return isRecent;
+    });
+  }, [messages, completedStreaming]);
+
+  const isEffectivelySettled = isSettled && !hasPendingStreamables;
+
   // NEW: A focused effect for scroll management.
   // It runs whenever content is updated or streaming state changes.
   useEffect(() => {
@@ -172,20 +189,7 @@ const MessagesList: React.FC<MessagesListProps> = ({
 
   return (
     <div className="p-4 space-y-6">
-      {/* Queue banner (bottom-right) - show when adjusted count > 0 */}
-      {displayedQueueCount > 0 && (
-        <div className="fixed right-4 bottom-28 z-40 pointer-events-none">
-          <div className="flex items-center gap-3 bg-slate-800/90 border border-slate-700 text-slate-200 px-3 py-1.5 rounded-full shadow-lg pointer-events-auto">
-            <span className="text-xs font-medium">{displayedQueueCount} in queue</span>
-            <button
-              onClick={skipAllStreaming}
-              className="text-xs bg-slate-600 hover:bg-slate-500 text-white px-2 py-0.5 rounded-md transition-colors"
-            >
-              Skip all
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Queue banner moved to CoreChat for consistent positioning above input */}
       
       {messages.map((message, index) => {
         const streamingState = streamingStates.get(message.id);
@@ -196,8 +200,25 @@ const MessagesList: React.FC<MessagesListProps> = ({
         const hasStreamingState = !!streamingState;
         const isCompleted = completedStreaming.has(message.id) || message.streamed === true;
 
-        // Hide unprocessed/pending messages only when not settled.
-        if (!isSettled) {
+        // No-flash per-message guard: if a fresh streamable arrives and hasn't completed,
+        // hide the static bubble on the first frame even if the global state appears settled.
+        if (isStreamable && !isCompleted) {
+          const now = Date.now();
+          const ts = message.timestamp instanceof Date ? message.timestamp.getTime() : new Date(message.timestamp as any).getTime();
+          const isRecent = now - ts < 10000; // 10s
+          const notHookedYet = !hasStreamingState && !isCurrentlyStreaming && !isInQueue;
+          if (isRecent && notHookedYet) {
+            if ((import.meta as any).env?.DEV) {
+              console.debug('[MessagesList] no-flash hide static for recent streamable', {
+                id: message.id, type: message.message_type, ts: message.timestamp
+              });
+            }
+            return null;
+          }
+        }
+
+        // Hide unprocessed/pending messages only when not settled (effective).
+        if (!isEffectivelySettled) {
           const isUnprocessedStreamable = isStreamable && !isCompleted && !hasStreamingState && !isCurrentlyStreaming && !isInQueue;
           if (isUnprocessedStreamable) {
             return null;

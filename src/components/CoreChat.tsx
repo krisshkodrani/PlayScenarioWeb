@@ -95,21 +95,9 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
     const list: Msg[] = [];
     const map = new Map<string, Msg>();
 
-    const hasTurn0Narration = raw.some((m: Msg) => m?.message_type === 'narration' && (m?.turn_number ?? -1) === 0);
-
-    if (scen?.scenario_opening_message && !hasTurn0Narration) {
-      const openingMessage: Msg = {
-        id: 'opening-synthetic',
-        sender_name: 'Narrator',
-        message: scen.scenario_opening_message,
-        message_type: 'narration',
-        timestamp: new Date(0).toISOString(), // earliest
-        turn_number: 0,
-        sequence_number: 0
-      };
-      const key = openingMessage.id || `${openingMessage.turn_number}-${openingMessage.sequence_number}-Narrator`;
-      map.set(key, openingMessage);
-    }
+    // Note: Do NOT synthesize an opening narration locally. The backend
+    // seeds the narrator message in the database during initialization so
+    // it can be streamed once by the pipeline without any pre-flash.
 
     for (const m of raw) {
       const key = m.id || `${m.turn_number ?? ''}-${m.sequence_number ?? ''}-${m.sender_name ?? ''}`;
@@ -655,6 +643,20 @@ const CoreChatInner: React.FC<CoreChatProps> = ({ instanceId, scenarioId }) => {
           />
         </div>
       </div>
+
+      {/* Awaiting response indicator (centered; smooth fade/slide) */}
+      {/* Queue indicator: always hover just above the input */}
+      {streamingQueueLength > 0 && (
+        <div
+          className="fixed right-4 z-40 pointer-events-none"
+          style={{ bottom: Math.max(20, Math.ceil(inputHeightRef.current) + 12) }}
+          aria-live="polite"
+        >
+          <div className="flex items-center gap-3 bg-slate-800/90 border border-slate-700 text-slate-200 px-3 py-1.5 rounded-full shadow-lg pointer-events-auto">
+            <span className="text-xs font-medium">{streamingQueueLength} in queue</span>
+          </div>
+        </div>
+      )}
 
       {/* Awaiting response indicator (centered; smooth fade/slide) */}
       {showWaitingIndicator && (
