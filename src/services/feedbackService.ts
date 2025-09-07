@@ -98,7 +98,8 @@ export interface FeedbackResponse {
   cached: boolean;
 }
 
-const API_BASE = (import.meta as any).env?.VITE_API_BASE || `${window.location.protocol}//${window.location.hostname}:8000/api/v1`;
+import config from '@/lib/config';
+const API_BASE = `${config.api.baseUrl}/v1`;
 
 async function getResults(instanceId: string, detailLevel: DetailLevel = 'standard', force = false): Promise<FeedbackResponse> {
   const params = new URLSearchParams({ detail_level: detailLevel });

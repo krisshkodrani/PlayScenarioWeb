@@ -64,6 +64,38 @@ This project is built with:
 
 Simply open [Lovable](https://lovable.dev/projects/cff1bed1-d096-459b-82be-875f4897983f) and click on Share -> Publish.
 
+## Deploying to Render (Staging)
+
+You can deploy this frontend as a static site on Render and point it to the backend staging API.
+
+1) Prerequisites
+- A backend staging service running on Render (see repository root `render.yaml` for a combined blueprint).
+- Backend CORS includes your frontend staging domain.
+
+2) Environment variables (Frontend)
+Set these in the Render Static Site service Environment tab (or via `render.yaml`):
+- `VITE_API_BASE_URL`: Backend base URL including `/api` (example: `https://playscenario-backend-staging.onrender.com/api`).
+- `VITE_SUPABASE_URL`: Your Supabase project URL (no trailing slash).
+- `VITE_SUPABASE_ANON_KEY`: Supabase anon key (publishable).
+
+3) Build & publish
+- Using the repository blueprint (root `render.yaml`):
+  - Render → New → Blueprint → select this repo/branch.
+  - Set the three env vars above for the `playscenario-frontend-staging` service.
+- Or manual static site setup:
+  - Build command: `npm ci --prefix PlayScenarioWeb && npm run build --prefix PlayScenarioWeb`
+  - Publish directory: `PlayScenarioWeb/dist`
+  - Add SPA rewrite: `/* -> /index.html`.
+
+4) Verify
+- Open the Render URL for the static site and sign in.
+- The app will call the backend at `VITE_API_BASE_URL`.
+- If you see network errors, verify CORS on the backend and that `VITE_API_BASE_URL` ends with `/api`.
+
+Notes
+- Local dev uses a Vite proxy (`/api -> http://localhost:8000`), so `VITE_API_BASE_URL` is not required for `npm run dev`.
+- Only use the Supabase anon key on the frontend; never expose service role keys.
+
 ## Can I connect a custom domain to my Lovable project?
 
 Yes, you can!

@@ -6,6 +6,7 @@ import { useScenarioData } from '@/hooks/chat/useScenarioData';
 import { useMessageHandling } from '@/hooks/chat/useMessageHandling';
 import { useRealtimeSubscription } from '@/hooks/chat/useRealtimeSubscription';
 import { logger } from '@/lib/logger';
+import config from '@/lib/config';
 
 export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps) => {
   const { user } = useAuth();
@@ -152,7 +153,7 @@ export const useRealtimeChat = ({ instanceId, scenarioId }: UseRealtimeChatProps
           
           try {
             // First, call the initialization endpoint to create the narrator message
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/instances/${instanceId}/initialize`, {
+            const response = await fetch(`${config.api.baseUrl}/v1/instances/${instanceId}/initialize`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               signal
