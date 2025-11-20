@@ -1,6 +1,6 @@
-# PlayScenarioAI
+# PlayScenarioWeb
 
-PlayScenarioAI is a web-based platform for creating and playing through interactive, AI-driven scenarios. It's designed for a wide range of applications, from professional training and development to entertainment and creative storytelling.
+PlayScenarioWeb is a web-based platform for creating and playing through interactive, AI-driven scenarios. It's designed for a wide range of applications, from professional training and development to entertainment and creative storytelling.
 
 ## Key Features
 
