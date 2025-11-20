@@ -1,3 +1,14 @@
+// React19: Upgraded to React 19 to leverage the latest features and performance improvements.
+// The `react` and `react-dom` packages were updated to version `19.0.0`.
+// The `@types/react` and `@types/react-dom` packages were also updated to their latest versions.
+// The `eslint-plugin-react-hooks` package was updated to version `5.1.0` to ensure compatibility with the new React features.
+// The `@vitejs/plugin-react-swc` package was replaced with `@vitejs/plugin-react` to ensure compatibility with the latest React features.
+// The `vite.config.ts` file was modified to use the new `@vitejs/plugin-react` plugin.
+// The `react-day-picker` package was replaced with `react-datepicker` due to compatibility issues with React 19.
+// The `src/components/ui/calendar.tsx` file was refactored to use the new date picker library.
+// The `useScenarioCreate` hook was refactored to use the new `useActionState` hook from React 19 for handling form submissions.
+// The dependencies were installed using the `--legacy-peer-deps` flag to bypass the strict peer dependency checks and allow the installation to proceed.
+
 # Welcome to your Lovable project
 
 ## Project info
